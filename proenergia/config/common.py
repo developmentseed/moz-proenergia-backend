@@ -20,6 +20,7 @@ class Common(Configuration):
         "rest_framework",  # utilities for rest apis
         "rest_framework.authtoken",  # token authentication
         "django_filters",  # for filtering rest endpoints
+        "drf_spectacular",  # api-docs
         # Your apps
         "proenergia.users",
     )
@@ -190,4 +191,11 @@ class Common(Configuration):
             "rest_framework.authentication.SessionAuthentication",
             "rest_framework.authentication.TokenAuthentication",
         ),
+        "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    }
+    SPECTACULAR_SETTINGS = {
+        "TITLE": "Mozambique PROENERGIA+ API Docs",
+        "DESCRIPTION": "Mozambique PROENERGIA+ API Documentation",
+        "VERSION": "1.0.0",
+        "SERVE_INCLUDE_SCHEMA": False,
     }

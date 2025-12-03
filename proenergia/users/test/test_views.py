@@ -1,10 +1,11 @@
-from django.urls import reverse
-from django.contrib.auth.hashers import check_password
-from rest_framework.test import APITestCase
-from rest_framework import status
-from faker import Faker
 import factory
 import pytest
+from django.contrib.auth.hashers import check_password
+from django.urls import reverse
+from faker import Faker
+from rest_framework import status
+from rest_framework.test import APITestCase
+
 from ..models import User
 from .factories import UserFactory
 
@@ -18,7 +19,7 @@ class TestUserListTestCase(APITestCase):
     """
 
     def setUp(self):
-        self.url = reverse("user-list")
+        self.url = reverse("users:user-list")
         self.user_data = factory.build(dict, FACTORY_CLASS=UserFactory)
 
     def test_post_request_with_no_data_fails(self):
@@ -41,7 +42,7 @@ class TestUserDetailTestCase(APITestCase):
 
     def setUp(self):
         self.user = UserFactory()
-        self.url = reverse("user-detail", kwargs={"pk": self.user.pk})
+        self.url = reverse("users:user-detail", kwargs={"pk": self.user.pk})
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.user.auth_token}")
 
     def test_get_request_returns_a_given_user(self):
