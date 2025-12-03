@@ -8,7 +8,6 @@ from rest_framework.authtoken import views
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
-admin.site.site_header = "Mozambique PROENERGIA+"
 API_BASE_URL = "api/v1"
 
 api_urls = [
