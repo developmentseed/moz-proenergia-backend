@@ -33,6 +33,7 @@ class Common(Configuration):
         "drf_spectacular",  # api-docs
         # Your apps
         "proenergia.users",
+        "proenergia.datasets",
     )
 
     # https://docs.djangoproject.com/en/2.0/topics/http/middleware/
@@ -202,6 +203,9 @@ class Common(Configuration):
             "rest_framework.authentication.TokenAuthentication",
         ),
         "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+        "DEFAULT_FILTER_BACKENDS": [
+            "django_filters.rest_framework.DjangoFilterBackend"
+        ],
     }
     # API Docs
     SPECTACULAR_SETTINGS = {
