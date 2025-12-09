@@ -15,6 +15,12 @@ api_urls = [
         f"{API_BASE_URL}/",
         include(("proenergia.users.urls", "proenergia.users"), namespace="users"),
     ),
+    path(
+        f"{API_BASE_URL}/",
+        include(
+            ("proenergia.datasets.urls", "proenergia.datasets"), namespace="datasets"
+        ),
+    ),
 ]
 
 urlpatterns = [
