@@ -9,19 +9,40 @@ class VectorDatasetAdmin(TestCase):
     def setUp(self):
         self.client = Client()
         # Create superuser for admin access
-        self.admin_user = get_user_model().objects.create_superuser(
-            username="admin", email="admin@example.com", password="testpass123"
+        self.superadmin = get_user_model().objects.create_superuser(
+            username="superadmin", email="admin@example.com", password="testpass123"
         )
 
-        # Create regular user
-        self.admin_user_2 = get_user_model().objects.create_superuser(
-            username="admin_user_2",
+        # Create admin user
+        self.admin_user = get_user_model().objects.create_user(
+            username="admin_user",
             email="admin_user_2@example.com",
             password="testpass123",
+            is_staff=True,
         )
 
-    def test_creation(self):
-        self.client.login(username="admin", password="testpass123")
+    def test_creation_superuser(self):
+        self.client.login(username="superadmin", password="testpass123")
+        url = reverse("admin:datasets_vectordataset_add")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        data = {
+            "name": "Test Dataset",
+            "description": "Test Description",
+        }
+        response = self.client.post(url, data)
+
+        # Should redirect to changelist after successful creation
+        self.assertEqual(response.status_code, 302)
+
+        # Verify that it was created with the correct user
+        dataset = VectorDataset.objects.get(name="Test Dataset")
+        self.assertEqual(dataset.created_by, self.superadmin)
+        self.assertEqual(dataset.last_updated_by, self.superadmin)
+
+    def test_creation_admin(self):
+        self.client.login(username="admin_user", password="testpass123")
         url = reverse("admin:datasets_vectordataset_add")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -40,28 +61,197 @@ class VectorDatasetAdmin(TestCase):
         self.assertEqual(dataset.created_by, self.admin_user)
         self.assertEqual(dataset.last_updated_by, self.admin_user)
 
-    def test_update(self):
+    def test_admin_forbidden_update(self):
         dataset = VectorDataset.objects.create(
             name="Test Dataset",
             description="Test Description",
-            created_by=self.admin_user,
-            last_updated_by=self.admin_user,
+            created_by=self.superadmin,
+            last_updated_by=self.superadmin,
         )
-        self.client.login(username="admin_user_2", password="testpass123")
+        self.client.login(username="admin_user", password="testpass123")
         url = reverse("admin:datasets_vectordataset_change", args=[dataset.id])
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
 
         data = {
             "name": "Test Dataset",
             "description": "Updated Description",
         }
         response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 302)
+
+        # Confirm update was not successful
+        dataset.refresh_from_db()
+        self.assertEqual(dataset.name, "Test Dataset")
+        self.assertEqual(dataset.description, "Test Description")
+        self.assertEqual(dataset.created_by, self.superadmin)
+        self.assertEqual(dataset.last_updated_by, self.superadmin)
+
+    def test_admin_successful_update(self):
+        dataset = VectorDataset.objects.create(
+            name="Test Dataset",
+            description="Test Description",
+            created_by=self.admin_user,
+            last_updated_by=self.superadmin,
+        )
+        self.client.login(username="admin_user", password="testpass123")
+        url = reverse("admin:datasets_vectordataset_change", args=[dataset.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        data = {
+            "name": "Updated Dataset",
+            "description": "Updated Description",
+        }
+        response = self.client.post(url, data)
 
         self.assertEqual(response.status_code, 302)
 
+        # Confirm that the update was successful
         dataset.refresh_from_db()
-        self.assertEqual(dataset.name, "Test Dataset")
+        self.assertEqual(dataset.name, "Updated Dataset")
         self.assertEqual(dataset.description, "Updated Description")
         self.assertEqual(dataset.created_by, self.admin_user)
-        self.assertEqual(dataset.last_updated_by, self.admin_user_2)
+        self.assertEqual(dataset.last_updated_by, self.admin_user)
+
+    def test_superadmin_successful_update(self):
+        dataset = VectorDataset.objects.create(
+            name="Test Dataset",
+            description="Test Description",
+            created_by=self.admin_user,
+            last_updated_by=self.admin_user,
+        )
+        self.client.login(username="superadmin", password="testpass123")
+        url = reverse("admin:datasets_vectordataset_change", args=[dataset.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        data = {
+            "name": "Updated Dataset",
+            "description": "Updated Description",
+        }
+        response = self.client.post(url, data)
+
+        self.assertEqual(response.status_code, 302)
+
+        # Confirm that the update was successful
+        dataset.refresh_from_db()
+        self.assertEqual(dataset.name, "Updated Dataset")
+        self.assertEqual(dataset.description, "Updated Description")
+        self.assertEqual(dataset.created_by, self.admin_user)
+        self.assertEqual(dataset.last_updated_by, self.superadmin)
+
+    def test_superadmin_actions(self):
+        dataset = VectorDataset.objects.create(
+            name="Test Dataset",
+            description="Test Description",
+            created_by=self.admin_user,
+            last_updated_by=self.admin_user,
+            is_public=False,
+            is_approved=False,
+        )
+        self.client.login(username="superadmin", password="testpass123")
+        url = reverse("admin:datasets_vectordataset_changelist")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Make dataset public")
+        self.assertContains(response, "Make dataset private")
+        self.assertContains(response, "Publish dataset")
+        self.assertContains(response, "Unpublish dataset")
+
+        # make dataset public
+        response = self.client.post(
+            url,
+            {
+                "action": "make_public",
+                "_selected_action": str(dataset.id),
+                "post": "yes",
+            },
+            follow=True,
+        )
+        dataset.refresh_from_db()
+        self.assertContains(response, f"Set {dataset.name} as public")
+        self.assertTrue(dataset.is_public)
+
+        # approve dataset
+        response = self.client.post(
+            url,
+            {
+                "action": "approve",
+                "_selected_action": str(dataset.id),
+                "post": "yes",
+            },
+            follow=True,
+        )
+        dataset.refresh_from_db()
+        self.assertContains(response, f"Set {dataset.name} as published")
+        self.assertTrue(dataset.is_approved)
+
+        # make dataset private
+        response = self.client.post(
+            url,
+            {
+                "action": "make_private",
+                "_selected_action": str(dataset.id),
+                "post": "yes",
+            },
+            follow=True,
+        )
+        dataset.refresh_from_db()
+        self.assertContains(response, f"Set {dataset.name} as private")
+        self.assertFalse(dataset.is_public)
+
+        # disapprove dataset
+        response = self.client.post(
+            url,
+            {
+                "action": "disapprove",
+                "_selected_action": str(dataset.id),
+                "post": "yes",
+            },
+            follow=True,
+        )
+        dataset.refresh_from_db()
+        self.assertContains(response, f"Set {dataset.name} as unpublished")
+        self.assertFalse(dataset.is_approved)
+
+    def test_admin_actions(self):
+        dataset = VectorDataset.objects.create(
+            name="Test Dataset",
+            description="Test Description",
+            created_by=self.admin_user,
+            last_updated_by=self.admin_user,
+            is_public=False,
+            is_approved=False,
+        )
+        self.client.login(username="admin_user", password="testpass123")
+        url = reverse("admin:datasets_vectordataset_changelist")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Make dataset public")
+        self.assertNotContains(response, "Make dataset private")
+        self.assertNotContains(response, "Publish dataset")
+        self.assertNotContains(response, "Unpublish dataset")
+
+        # confirm that posting actions don't change the public and approved statuses
+        response = self.client.post(
+            url,
+            {
+                "action": "make_public",
+                "_selected_action": str(dataset.id),
+                "post": "yes",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        response = self.client.post(
+            url,
+            {
+                "action": "approve",
+                "_selected_action": str(dataset.id),
+                "post": "yes",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        dataset.refresh_from_db()
+        self.assertFalse(dataset.is_public)
+        self.assertFalse(dataset.is_approved)
