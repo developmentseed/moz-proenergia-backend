@@ -25,10 +25,10 @@ sudo apt install -y \
     python3.11-dev \
     python3-pip
 
-# Install PostgreSQL 15 and PostGIS
+# Install PostgreSQL 16 and PostGIS
 sudo apt install -y \
-    postgresql-15 \
-    postgresql-15-postgis-3 \
+    postgresql-16 \
+    postgresql-16-postgis-3 \
     postgresql-contrib \
     libpq-dev
 

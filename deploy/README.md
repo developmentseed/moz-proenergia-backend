@@ -4,7 +4,7 @@ This directory contains deployment configurations and scripts for deploying the 
 
 ## Prerequisites
 
-- Ubuntu 22.04 LTS server
+- Ubuntu 24.04 LTS server
 - 16GB RAM recommended
 - Domain name pointing to the server
 - Root access to the server
@@ -13,7 +13,7 @@ This directory contains deployment configurations and scripts for deploying the 
 
 - **Web Server**: Nginx (reverse proxy, static files, SSL termination)
 - **Application Server**: Gunicorn (WSGI server)
-- **Database**: PostgreSQL 15 with PostGIS extension
+- **Database**: PostgreSQL 16 with PostGIS extension
 - **Process Management**: systemd
 - **SSL**: Let's Encrypt via certbot
 
