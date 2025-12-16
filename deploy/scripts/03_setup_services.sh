@@ -36,6 +36,13 @@ echo "Installing gunicorn configuration..."
 mkdir -p /etc/gunicorn
 cp /var/www/proenergia/app/deploy/configs/gunicorn/gunicorn.conf.py /etc/gunicorn/
 
+# Create runtime directory for gunicorn pidfile
+mkdir -p /var/run/proenergia
+chown proenergia:proenergia /var/run/proenergia
+
+# Create tmpfiles.d config to recreate directory on boot
+echo "d /var/run/proenergia 0755 proenergia proenergia -" > /etc/tmpfiles.d/proenergia.conf
+
 # Reload systemd and enable services
 systemctl daemon-reload
 systemctl enable proenergia
@@ -65,5 +72,5 @@ echo ""
 echo "Service management commands:"
 echo "  sudo systemctl status proenergia    - Check service status"
 echo "  sudo systemctl restart proenergia   - Restart application"
-echo "  sudo systemctl logs -f proenergia   - View logs"
+echo "  sudo journalctl -u proenergia -f    - View logs"
 echo "  sudo nginx -s reload               - Reload nginx config"

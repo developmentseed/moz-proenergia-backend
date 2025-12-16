@@ -10,7 +10,7 @@ fi
 echo "=== Setting up Python application ==="
 
 APP_DIR="/var/www/proenergia"
-REPO_URL="https://github.com/developmentseed/moz-proenergia-backend.git"
+REPO_URL="git@github.com:developmentseed/moz-proenergia-backend.git"
 
 cd $APP_DIR
 
