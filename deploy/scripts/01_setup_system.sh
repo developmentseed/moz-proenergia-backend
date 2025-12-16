@@ -18,11 +18,11 @@ sudo apt install -y \
     git \
     build-essential
 
-# Install Python 3.11 and related tools
+# Install Python 3.12 and related tools
 sudo apt install -y \
-    python3.11 \
-    python3.11-venv \
-    python3.11-dev \
+    python3 \
+    python3-venv \
+    python3-dev \
     python3-pip
 
 # Install PostgreSQL 16 and PostGIS
