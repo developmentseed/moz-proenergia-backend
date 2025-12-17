@@ -1,8 +1,9 @@
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from proenergia.datasets.models import VectorDataset
+from proenergia.datasets.models import VectorDataset, VectorFile
 
 
 class VectorDatasetAdmin(TestCase):
@@ -255,3 +256,110 @@ class VectorDatasetAdmin(TestCase):
         dataset.refresh_from_db()
         self.assertFalse(dataset.is_public)
         self.assertFalse(dataset.is_approved)
+
+
+class VectorFileAdmin(TestCase):
+    def setUp(self):
+        self.client = Client()
+        # Create superuser for admin access
+        self.superadmin = get_user_model().objects.create_superuser(
+            username="superadmin", email="admin@example.com", password="testpass123"
+        )
+
+        # Create admin user
+        self.admin_user = get_user_model().objects.create_user(
+            username="admin_user",
+            email="admin_user_2@example.com",
+            password="testpass123",
+            is_staff=True,
+        )
+        self.dataset_1 = VectorDataset.objects.create(
+            name="Boundaries",
+            description="Administratives Boundaries",
+            source="OSM",
+            is_public=True,
+            is_approved=True,
+            created_by=self.superadmin,
+            last_updated_by=self.superadmin,
+        )
+        self.dataset_2 = VectorDataset.objects.create(
+            name="Coastline",
+            source="OSM",
+            is_public=True,
+            is_approved=True,
+            created_by=self.admin_user,
+            last_updated_by=self.admin_user,
+        )
+
+    def test_vector_file_creation_superadmin(self):
+        self.client.login(username="superadmin", password="testpass123")
+        url = reverse("admin:datasets_vectorfile_add")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        self.assertContains(response, "Dataset")
+        self.assertContains(response, self.dataset_1.name)
+        self.assertContains(response, self.dataset_2.name)
+        self.assertContains(response, "File")
+        self.assertNotContains(response, "Created")
+        self.assertNotContains(response, "Created by")
+        self.assertNotContains(response, "Status")
+
+        file = SimpleUploadedFile(
+            "boundaries.geojson", b"file_content", content_type="application/json"
+        )
+
+        data = {
+            "dataset": str(self.dataset_1.id),
+            "file": file,
+        }
+        response = self.client.post(url, data)
+
+        self.assertEqual(VectorFile.objects.count(), 1)
+        vector_file = VectorFile.objects.first()
+        self.assertEqual(vector_file.created_by, self.superadmin)
+        self.assertEqual(vector_file.status, "created")
+        # Delete file
+        VectorFile.objects.all().delete()
+
+    def test_vector_file_creation_admin(self):
+        self.client.login(username="admin_user", password="testpass123")
+        url = reverse("admin:datasets_vectorfile_add")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        self.assertContains(response, "Dataset")
+        self.assertNotContains(response, self.dataset_1.name)
+        self.assertContains(response, self.dataset_2.name)
+        self.assertContains(response, "File")
+        self.assertNotContains(response, "Created")
+        self.assertNotContains(response, "Created by")
+        self.assertNotContains(response, "Status")
+
+        file = SimpleUploadedFile(
+            "boundaries.geojson", b"file_content", content_type="application/json"
+        )
+
+        data = {
+            "dataset": str(self.dataset_1.id),
+            "file": file,
+        }
+        response = self.client.post(url, data)
+
+        self.assertEqual(VectorFile.objects.count(), 0)
+
+        # upload file to allowed dataset
+        data = {
+            "dataset": str(self.dataset_2.id),
+            "file": SimpleUploadedFile(
+                "boundaries.geojson", b"file_content", content_type="application/json"
+            ),
+        }
+        response = self.client.post(url, data)
+
+        self.assertEqual(VectorFile.objects.count(), 1)
+        vector_file = VectorFile.objects.first()
+        self.assertEqual(vector_file.created_by, self.admin_user)
+        self.assertEqual(vector_file.status, "created")
+        # Delete file
+        VectorFile.objects.all().delete()
