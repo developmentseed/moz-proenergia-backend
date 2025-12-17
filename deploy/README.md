@@ -24,18 +24,33 @@ This directory contains deployment configurations and scripts for deploying the 
 ./scripts/01_setup_system.sh
 ```
 
-2. **Application Setup** (as proenergia user):
+2. **SSH Key Setup** (as proenergia user):
+```bash
+# Generate SSH key for GitHub access
+sudo -u proenergia ssh-keygen -t ed25519 -C "deploy@your-server.com" -f /home/proenergia/.ssh/id_ed25519 -N ""
+
+# Display public key - copy this to GitHub
+sudo -u proenergia cat /home/proenergia/.ssh/id_ed25519.pub
+```
+
+Add the public key as a Deploy Key in GitHub:
+- Go to: Repository Settings → Deploy Keys → Add Deploy Key
+- Paste the public key content
+- Give it a descriptive name like "Production Server Deploy Key"
+- Leave "Allow write access" unchecked (read-only is sufficient)
+
+3. **Application Setup** (as proenergia user):
 ```bash
 sudo -u proenergia ./scripts/02_setup_app.sh
 ```
 
-3. **Configure Environment** (as proenergia user):
+4. **Configure Environment** (as proenergia user):
 ```bash
 sudo -u proenergia nano /var/www/proenergia/app/.env
 ```
 Update with your actual values (domain, database password, secret key)
 
-4. **Services Setup** (as root):
+5. **Services Setup** (as root):
 ```bash
 ./scripts/03_setup_services.sh your-domain.com admin@your-domain.com
 ```

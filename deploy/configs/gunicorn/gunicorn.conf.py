@@ -27,7 +27,7 @@ proc_name = "proenergia"
 
 # Daemon mode
 daemon = False
-pidfile = "/var/run/proenergia/gunicorn.pid"
+# pidfile = "/var/run/proenergia/gunicorn.pid"  # Not needed with systemd
 
 # User and group to run as
 user = "proenergia"
