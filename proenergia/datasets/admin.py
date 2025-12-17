@@ -1,27 +1,18 @@
 from django.contrib import admin, messages
 from unfold.admin import ModelAdmin
 
-from .models import VectorDataset
+from .models import VectorDataset, VectorFile
 
 
-@admin.register(VectorDataset)
-class VectorDatasetAdmin(ModelAdmin):
-    list_display = ["id", "name", "updated", "is_public", "is_approved"]
-    fields = ["name", "description", "source"]
-    actions = ["make_public", "make_private", "approve", "disapprove"]
-
-    def save_model(self, request, obj, form, change):
-        if not change:
-            obj.created_by = request.user
-
-        obj.last_updated_by = request.user
-        super().save_model(request, obj, form, change)
-
+class PermissionBasedModelAdmin(ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if request.user.is_superuser:
             return qs
         return qs.filter(created_by=request.user)
+
+    def has_module_permission(self, request):
+        return request.user.is_staff
 
     def has_add_permission(self, request, obj=None):
         return request.user.is_staff
@@ -41,6 +32,20 @@ class VectorDatasetAdmin(ModelAdmin):
         if request.user == obj.created_by or request.user.is_superuser:
             return True
         return False
+
+
+@admin.register(VectorDataset)
+class VectorDatasetAdmin(PermissionBasedModelAdmin):
+    list_display = ["id", "name", "updated", "is_public", "is_approved"]
+    fields = ["name", "description", "source"]
+    actions = ["make_public", "make_private", "approve", "disapprove"]
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.created_by = request.user
+
+        obj.last_updated_by = request.user
+        super().save_model(request, obj, form, change)
 
     def confirmation_message(self, request, queryset, value):
         if queryset.count() == 1:
@@ -76,3 +81,29 @@ class VectorDatasetAdmin(ModelAdmin):
             for i in ["make_public", "make_private", "approve", "disapprove"]:
                 del actions[i]
         return actions
+
+
+@admin.register(VectorFile)
+class VectorFileAdmin(PermissionBasedModelAdmin):
+    list_display = ["id", "dataset", "created", "status"]
+    fields = ["dataset", "file"]
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.created_by = request.user
+
+        super().save_model(request, obj, form, change)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "dataset":
+            if request.user.is_superuser:
+                kwargs["queryset"] = VectorDataset.objects.all()
+            else:
+                kwargs["queryset"] = VectorDataset.objects.filter(
+                    created_by=request.user
+                )
+
+        elif db_field.name == "created_by":
+            kwargs["initial"] = request.user.id
+
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
