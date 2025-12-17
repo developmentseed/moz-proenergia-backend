@@ -139,6 +139,7 @@ class TestVectorDatasetListDetailViews(APITestCase):
         req = self.client.get(url)
         assert req.status_code == status.HTTP_200_OK
         assert req.data.get("name") == "Buildings"
+        assert req.data.get("raw_file") is None
 
     def tearDown(self):
         VectorFile.objects.all().delete()
