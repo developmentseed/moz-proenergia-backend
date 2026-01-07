@@ -31,6 +31,9 @@ class Common(Configuration):
         "rest_framework.authtoken",  # token authentication
         "django_filters",  # for filtering rest endpoints
         "drf_spectacular",  # api-docs
+        # Celery apps
+        "django_celery_results",
+        "django_celery_beat",
         # Your apps
         "proenergia.users",
         "proenergia.datasets",
@@ -219,4 +222,23 @@ class Common(Configuration):
         "SITE_TITLE": "Mozambique PROENERGIA+",
         "SITE_HEADER": "Mozambique PROENERGIA+",
         "SITE_SUBHEADER": "Administration Interface",
+    }
+
+    # Celery Configuration
+    CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'amqp://guest:guest@localhost:5672//')
+    CELERY_RESULT_BACKEND = 'django-db'
+    CELERY_CACHE_BACKEND = 'django-cache'
+    
+    # Celery serialization settings
+    CELERY_ACCEPT_CONTENT = ['json']
+    CELERY_TASK_SERIALIZER = 'json'
+    CELERY_RESULT_SERIALIZER = 'json'
+    CELERY_TIMEZONE = TIME_ZONE
+    
+    # Celery results retention settings
+    CELERY_RESULT_EXPIRES = 86400  # 1 day in seconds
+    
+    # Task routing (optional - for future use)
+    CELERY_TASK_ROUTES = {
+        'proenergia.tasks.*': {'queue': 'proenergia'},
     }
