@@ -107,28 +107,41 @@ python manage.py migrate
 
 ### Starting the Celery Worker
 
-In a separate terminal, start the Celery worker:
+In a separate terminal, start the Celery worker with proper environment variables:
 
 ```bash
 # Activate virtual environment
 source venv/bin/activate
 
-# Start Celery worker
+# Start Celery worker with environment variables (required for database connection)
+DJANGO_DB_URL="postgis://postgres:postgres@localhost:5432/proenergia" \
+DJANGO_SECRET_KEY="anyTextIsS3cr3t" \
+celery -A proenergia worker --loglevel=info
+
+# Alternative: Export environment variables first, then run worker
+export DJANGO_DB_URL="postgis://postgres:postgres@localhost:5432/proenergia"
+export DJANGO_SECRET_KEY="anyTextIsS3cr3t"
 celery -A proenergia worker --loglevel=info
 
 # For development with auto-reload (requires watchdog: pip install watchdog)
+DJANGO_DB_URL="postgis://postgres:postgres@localhost:5432/proenergia" \
+DJANGO_SECRET_KEY="anyTextIsS3cr3t" \
 celery -A proenergia worker --loglevel=info --pool=solo
 ```
 
+**Important**: The Celery worker needs the same environment variables as the Django application, especially `DJANGO_DB_URL` for database connectivity and `DJANGO_SECRET_KEY` for django-configurations framework compatibility.
+
 ### Starting Celery Beat (for scheduled tasks)
 
-In another terminal, start the Celery beat scheduler:
+In another terminal, start the Celery beat scheduler with environment variables:
 
 ```bash
 # Activate virtual environment
 source venv/bin/activate
 
-# Start Celery beat
+# Start Celery beat with environment variables
+DJANGO_DB_URL="postgis://postgres:postgres@localhost:5432/proenergia" \
+DJANGO_SECRET_KEY="anyTextIsS3cr3t" \
 celery -A proenergia beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 ```
 
@@ -139,7 +152,9 @@ celery -A proenergia beat --loglevel=info --scheduler django_celery_beat.schedul
 # Install Flower
 pip install flower
 
-# Start Flower
+# Start Flower with environment variables
+DJANGO_DB_URL="postgis://postgres:postgres@localhost:5432/proenergia" \
+DJANGO_SECRET_KEY="anyTextIsS3cr3t" \
 celery -A proenergia flower --address=127.0.0.1 --port=5555
 
 # Access at http://localhost:5555
@@ -236,10 +251,26 @@ Key Celery settings are configured in `proenergia/config/common.py`:
 
 1. **Start RabbitMQ**: `sudo rabbitmq-server -detached`
 2. **Start Database**: Set up PostgreSQL locally or use Docker
-3. **Run Migrations**: `python manage.py migrate`
-4. **Start Django**: `python manage.py runserver`
-5. **Start Celery Worker**: `celery -A proenergia worker --loglevel=info`
-6. **Optional - Start Flower**: `celery -A proenergia flower`
+3. **Set Environment Variables**:
+   ```bash
+   export DJANGO_DB_URL="postgis://postgres:postgres@localhost:5432/proenergia"
+   export DJANGO_SECRET_KEY="anyTextIsS3cr3t"
+   ```
+4. **Run Migrations**: `python manage.py migrate`
+5. **Start Django**: `python manage.py runserver`
+6. **Start Celery Worker** (new terminal): 
+   ```bash
+   source venv/bin/activate
+   DJANGO_DB_URL="postgis://postgres:postgres@localhost:5432/proenergia" \
+   DJANGO_SECRET_KEY="anyTextIsS3cr3t" \
+   celery -A proenergia worker --loglevel=info
+   ```
+7. **Optional - Start Flower** (new terminal): 
+   ```bash
+   DJANGO_DB_URL="postgis://postgres:postgres@localhost:5432/proenergia" \
+   DJANGO_SECRET_KEY="anyTextIsS3cr3t" \
+   celery -A proenergia flower
+   ```
 
 ## Available Task Types
 
@@ -258,7 +289,13 @@ The system includes one example task to demonstrate the async processing framewo
 1. **"No module named 'celery'"**: Ensure virtual environment is activated and dependencies installed
 2. **Connection refused to RabbitMQ**: Check that RabbitMQ server is running
 3. **Tasks not executing**: Ensure Celery worker is running and connected to the same broker
-4. **Database connection errors**: Check PostgreSQL is running and connection settings are correct
+4. **Database connection errors**: 
+   - Check PostgreSQL is running and connection settings are correct
+   - **CRITICAL**: Ensure Celery worker is started with `DJANGO_DB_URL` environment variable
+   - Example: `DJANGO_DB_URL="postgis://postgres:postgres@localhost:5432/proenergia" celery -A proenergia worker --loglevel=info`
+5. **"django-configurations settings importer wasn't correctly installed"**: 
+   - Ensure `DJANGO_SECRET_KEY` is set when running Celery commands
+   - The django-configurations framework requires this environment variable
 
 ### Logs
 

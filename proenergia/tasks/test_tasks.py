@@ -5,7 +5,7 @@ from django.test import TestCase
 from celery import current_app
 from celery.result import AsyncResult
 
-import proenergia.tasks as celery_tasks
+import proenergia.celery_tasks as celery_tasks
 
 
 class TestHelloWorldTask(TestCase):

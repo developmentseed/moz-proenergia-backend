@@ -6,7 +6,7 @@ from django.views.decorators.http import require_http_methods
 from celery.result import AsyncResult
 from django_celery_results.models import TaskResult
 
-import proenergia.tasks as celery_tasks
+import proenergia.celery_tasks as celery_tasks
 
 logger = logging.getLogger(__name__)
 

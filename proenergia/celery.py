@@ -1,9 +1,14 @@
 import os
 from celery import Celery
-from django.conf import settings
 
 # Set the default Django settings module for the 'celery' program.
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'proenergia.config.local')
+# This project uses django-configurations, so we need to set both variables.
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'proenergia.config')
+os.environ.setdefault('DJANGO_CONFIGURATION', 'Local')
+
+# This import must come after setting the environment variables
+import configurations
+configurations.setup()
 
 app = Celery('proenergia')
 
