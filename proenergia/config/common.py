@@ -31,7 +31,6 @@ class Common(Configuration):
         "rest_framework.authtoken",  # token authentication
         "django_filters",  # for filtering rest endpoints
         "drf_spectacular",  # api-docs
-        "django_jsonform",  # JSONField widgets
         # Your apps
         "proenergia.users",
         "proenergia.datasets",
