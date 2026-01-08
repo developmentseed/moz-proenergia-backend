@@ -67,3 +67,42 @@ def delete_vector_file(sender, instance, **kwargs):
         # Using default_storage for better compatibility with different storage backends
         if default_storage.exists(instance.file.name):
             default_storage.delete(instance.file.name)
+
+
+class Scenario(models.Model):
+    name = models.CharField(max_length=155, unique=True)
+    vector_dataset = models.ForeignKey(VectorDataset, on_delete=models.PROTECT)
+    filter_fields = models.JSONField(
+        default=list(),
+        help_text="A list containing JSON objects following this structure: {'label': 'Field label', 'description': 'Field description', 'column': 'File/Database column name'}",
+    )
+    popup_fields = models.JSONField(
+        default=list(),
+        help_text="A list containing JSON objects following this structure: {'label': 'Field label', 'description': 'Field description', 'column': 'File/Database column name'}",
+    )
+
+    def __str__(self):
+        return f"{self.name}"
+
+    class Meta:
+        ordering = ["id"]
+
+
+class ScenarioFile(models.Model):
+    scenario = models.ForeignKey(Scenario, models.PROTECT, related_name="files")
+    created = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, models.PROTECT, related_name="scenario_files"
+    )
+    status = models.CharField(max_length=155, choices=STATUS, default="created")
+    file = models.FileField(
+        upload_to="scenarios/",
+        unique=True,
+        validators=[FileExtensionValidator(allowed_extensions=["csv"])],
+    )
+
+    def __str__(self):
+        return f"{self.scenario} ({self.created})"
+
+    class Meta:
+        ordering = ["id"]

@@ -55,6 +55,7 @@ coverage.xml
 .static_storage/
 .media/
 media/vector/*
+media/scenarios/*
 local_settings.py
 
 # Flask stuff:
