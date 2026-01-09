@@ -35,10 +35,20 @@ class VectorDatasetSerializer(serializers.ModelSerializer):
 
 class ScenarioSerializer(serializers.ModelSerializer):
     model_file = serializers.SerializerMethodField()
+    model = serializers.ReadOnlyField(source="model.name")
+    filter_fields = serializers.ReadOnlyField(source="model.filter_fields")
+    popup_fields = serializers.ReadOnlyField(source="model.popup_fields")
 
     class Meta:
         model = Scenario
-        fields = ["id", "name", "filter_fields", "popup_fields", "model_file"]
+        fields = [
+            "id",
+            "name",
+            "model",
+            "model_file",
+            "filter_fields",
+            "popup_fields",
+        ]
 
     def get_model_file(self, obj):
         try:

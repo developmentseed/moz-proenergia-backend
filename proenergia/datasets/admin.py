@@ -2,7 +2,7 @@ from django.contrib import admin, messages
 from django.forms import ModelForm
 from unfold.admin import ModelAdmin
 
-from .models import Scenario, ScenarioFile, VectorDataset, VectorFile
+from .models import Model, Scenario, ScenarioFile, VectorDataset, VectorFile
 
 
 class PermissionBasedModelAdmin(ModelAdmin):
@@ -110,44 +110,52 @@ class VectorFileAdmin(PermissionBasedModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-class ScenarioAdminForm(ModelForm):
+class ModelAdminForm(ModelForm):
     class Meta:
-        model = Scenario
-        fields = ["name", "vector_dataset", "filter_fields", "popup_fields"]
+        model = Model
+        fields = ["name", "filter_fields", "popup_fields"]
 
     def clean(self):
         cleaned_data = super().clean()
         filter_fields = cleaned_data.get("filter_fields")
         popup_fields = cleaned_data.get("popup_fields")
 
-        if type(filter_fields) is not list:
-            self.add_error("filter_fields", "Content should be a list.")
-        else:
-            for i in enumerate(filter_fields):
-                keys = i[1].keys()
-                if (
-                    "label" not in keys
-                    or "description" not in keys
-                    or "column" not in keys
-                ):
-                    self.add_error("filter_fields", "Missing a required key.")
+        if filter_fields:
+            if type(filter_fields) is not list:
+                self.add_error("filter_fields", "Content should be a list.")
+            else:
+                for i in enumerate(filter_fields):
+                    keys = i[1].keys()
+                    if (
+                        "label" not in keys
+                        or "description" not in keys
+                        or "column" not in keys
+                    ):
+                        self.add_error("filter_fields", "Missing a required key.")
 
-        if type(popup_fields) is not list:
-            self.add_error("popup_fields", "Content should be a list")
-        else:
-            for i in enumerate(popup_fields):
-                keys = i[1].keys()
-                if (
-                    "label" not in keys
-                    or "description" not in keys
-                    or "column" not in keys
-                ):
-                    self.add_error("popup_fields", "Missing a required key.")
+        if popup_fields:
+            if type(popup_fields) is not list:
+                self.add_error("popup_fields", "Content should be a list")
+            else:
+                for i in enumerate(popup_fields):
+                    keys = i[1].keys()
+                    if (
+                        "label" not in keys
+                        or "description" not in keys
+                        or "column" not in keys
+                    ):
+                        self.add_error("popup_fields", "Missing a required key.")
+
+
+@admin.register(Model)
+class ModelAdmin(ModelAdmin):
+    form = ModelAdminForm
 
 
 @admin.register(Scenario)
 class ScenarioAdmin(ModelAdmin):
-    form = ScenarioAdminForm
+    list_display = ["id", "name", "model"]
+    fields = ["name", "model", "vector_dataset"]
 
 
 @admin.register(ScenarioFile)

@@ -69,9 +69,8 @@ def delete_vector_file(sender, instance, **kwargs):
             default_storage.delete(instance.file.name)
 
 
-class Scenario(models.Model):
+class Model(models.Model):
     name = models.CharField(max_length=155, unique=True)
-    vector_dataset = models.ForeignKey(VectorDataset, on_delete=models.PROTECT)
     filter_fields = models.JSONField(
         default=list(),
         help_text="A list containing JSON objects following this structure: {'label': 'Field label', 'description': 'Field description', 'column': 'File/Database column name'}",
@@ -80,6 +79,18 @@ class Scenario(models.Model):
         default=list(),
         help_text="A list containing JSON objects following this structure: {'label': 'Field label', 'description': 'Field description', 'column': 'File/Database column name'}",
     )
+
+    def __str__(self):
+        return f"{self.name}"
+
+    class Meta:
+        ordering = ["id"]
+
+
+class Scenario(models.Model):
+    name = models.CharField(max_length=155, unique=True)
+    model = models.ForeignKey(Model, on_delete=models.PROTECT)
+    vector_dataset = models.ForeignKey(VectorDataset, on_delete=models.PROTECT)
 
     def __str__(self):
         return f"{self.name}"

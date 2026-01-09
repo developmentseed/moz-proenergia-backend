@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from ..models import Scenario, ScenarioFile, VectorDataset
+from ..models import Model, Scenario, ScenarioFile, VectorDataset
 
 
 class TestScenarioListDetailViews(APITestCase):
@@ -36,46 +36,54 @@ class TestScenarioListDetailViews(APITestCase):
             created_by=self.superadmin_user,
             last_updated_by=self.superadmin_user,
         )
-        self.scenario_1 = Scenario.objects.create(
-            name="Least Cost Eletrification",
-            vector_dataset=self.dataset_1,
+        self.model_1 = Model.objects.create(
+            name="PUE",
             filter_fields=[
                 {
                     "label": "Population",
                     "description": "Population in 2025",
-                    "database_column": "Pop",
+                    "column": "Pop",
                 }
             ],
             popup_fields=[
                 {
                     "label": "Population",
                     "description": "Population in 2025",
-                    "database_column": "Pop",
+                    "column": "Pop",
                 }
             ],
         )
-        self.scenario_2 = Scenario.objects.create(
+        self.model_2 = Model.objects.create(
             name="Clean Cooking",
-            vector_dataset=self.dataset_2,
             filter_fields=[
                 {
                     "label": "Population",
                     "description": "Population in 2025",
-                    "database_column": "Pop",
+                    "column": "Pop",
                 },
                 {
                     "label": "State",
                     "description": "State name",
-                    "database_column": "State",
+                    "column": "State",
                 },
             ],
             popup_fields=[
                 {
                     "label": "Population",
                     "description": "Population in 2025",
-                    "database_column": "Pop",
+                    "column": "Pop",
                 }
             ],
+        )
+        self.scenario_1 = Scenario.objects.create(
+            name="Least Cost Eletrification",
+            vector_dataset=self.dataset_1,
+            model=self.model_1,
+        )
+        self.scenario_2 = Scenario.objects.create(
+            name="Clean Cooking 1",
+            vector_dataset=self.dataset_2,
+            model=self.model_2,
         )
         file = SimpleUploadedFile(
             "old.csv", b"id,col_b\n1,blah", content_type="text/csv"
@@ -100,7 +108,9 @@ class TestScenarioListDetailViews(APITestCase):
         assert req.status_code == status.HTTP_200_OK
         assert req.data.get("count") == 2
         assert req.data.get("results")[0]["name"] == "Least Cost Eletrification"
-        assert req.data.get("results")[1]["name"] == "Clean Cooking"
+        assert req.data.get("results")[1]["name"] == "Clean Cooking 1"
+        assert req.data.get("results")[0]["model"] == "PUE"
+        assert req.data.get("results")[1]["model"] == "Clean Cooking"
         assert (
             req.data.get("results")[0]["model_file"] == self.scenario_file_1.file.name
         )
@@ -111,29 +121,29 @@ class TestScenarioListDetailViews(APITestCase):
             {
                 "label": "Population",
                 "description": "Population in 2025",
-                "database_column": "Pop",
+                "column": "Pop",
             }
         ]
         assert req.data.get("results")[1]["filter_fields"] == [
             {
                 "label": "Population",
                 "description": "Population in 2025",
-                "database_column": "Pop",
+                "column": "Pop",
             },
-            {"label": "State", "description": "State name", "database_column": "State"},
+            {"label": "State", "description": "State name", "column": "State"},
         ]
         assert req.data.get("results")[0]["popup_fields"] == [
             {
                 "label": "Population",
                 "description": "Population in 2025",
-                "database_column": "Pop",
+                "column": "Pop",
             }
         ]
         assert req.data.get("results")[1]["popup_fields"] == [
             {
                 "label": "Population",
                 "description": "Population in 2025",
-                "database_column": "Pop",
+                "column": "Pop",
             }
         ]
 
@@ -147,7 +157,7 @@ class TestScenarioListDetailViews(APITestCase):
         url = reverse("datasets:scenario-detail", args=[self.scenario_2.id])
         req = self.client.get(url)
         assert req.status_code == status.HTTP_200_OK
-        assert req.data.get("name") == "Clean Cooking"
+        assert req.data.get("name") == "Clean Cooking 1"
         assert req.data.get("model_file") == self.scenario_file_2.file.name
 
     def tearDown(self):
