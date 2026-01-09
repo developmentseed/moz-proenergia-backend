@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from ..models import Model, Scenario, ScenarioFile, VectorDataset
+from ..models import DataModel, Scenario, ScenarioFile, VectorDataset
 
 
 class TestScenarioListDetailViews(APITestCase):
@@ -36,7 +36,7 @@ class TestScenarioListDetailViews(APITestCase):
             created_by=self.superadmin_user,
             last_updated_by=self.superadmin_user,
         )
-        self.model_1 = Model.objects.create(
+        self.model_1 = DataModel.objects.create(
             name="PUE",
             filter_fields=[
                 {
@@ -53,7 +53,7 @@ class TestScenarioListDetailViews(APITestCase):
                 }
             ],
         )
-        self.model_2 = Model.objects.create(
+        self.model_2 = DataModel.objects.create(
             name="Clean Cooking",
             filter_fields=[
                 {

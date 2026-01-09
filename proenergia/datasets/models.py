@@ -69,7 +69,7 @@ def delete_vector_file(sender, instance, **kwargs):
             default_storage.delete(instance.file.name)
 
 
-class Model(models.Model):
+class DataModel(models.Model):
     name = models.CharField(max_length=155, unique=True)
     filter_fields = models.JSONField(
         default=list(),
@@ -89,7 +89,7 @@ class Model(models.Model):
 
 class Scenario(models.Model):
     name = models.CharField(max_length=155, unique=True)
-    model = models.ForeignKey(Model, on_delete=models.PROTECT)
+    model = models.ForeignKey(DataModel, on_delete=models.PROTECT)
     vector_dataset = models.ForeignKey(VectorDataset, on_delete=models.PROTECT)
 
     def __str__(self):

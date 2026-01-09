@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from proenergia.datasets.models import Model
+from proenergia.datasets.models import DataModel
 
 
 class TestScenarioAdmin(TestCase):
@@ -14,7 +14,7 @@ class TestScenarioAdmin(TestCase):
             email="superadmin@example.com",
             password="testpass123",
         )
-        self.url = reverse("admin:datasets_model_add")
+        self.url = reverse("admin:datasets_datamodel_add")
 
     def test_validation(self):
         self.client.login(username="superadmin", password="testpass123")
@@ -40,7 +40,7 @@ class TestScenarioAdmin(TestCase):
             ),
         }
         self.client.post(self.url, data)
-        self.assertEqual(Model.objects.count(), 1)
+        self.assertEqual(DataModel.objects.count(), 1)
 
         # same name
         data = {
@@ -65,7 +65,7 @@ class TestScenarioAdmin(TestCase):
             ),
         }
         self.client.post(self.url, data)
-        self.assertEqual(Model.objects.count(), 1)
+        self.assertEqual(DataModel.objects.count(), 1)
         # missing column in filter fields
         data = {
             "name": "PUE",
@@ -88,7 +88,7 @@ class TestScenarioAdmin(TestCase):
             ),
         }
         self.client.post(self.url, data)
-        self.assertEqual(Model.objects.count(), 1)
+        self.assertEqual(DataModel.objects.count(), 1)
         # missing label in filter fields
         data = {
             "name": "Clean Cooking",
@@ -112,7 +112,7 @@ class TestScenarioAdmin(TestCase):
         }
         self.client.post(self.url, data)
         # missing column in popup_fields
-        self.assertEqual(Model.objects.count(), 1)
+        self.assertEqual(DataModel.objects.count(), 1)
         data = {
             "name": "Another Model",
             "filter_fields": json.dumps(
@@ -134,9 +134,9 @@ class TestScenarioAdmin(TestCase):
             ),
         }
         self.client.post(self.url, data)
-        self.assertEqual(Model.objects.count(), 1)
+        self.assertEqual(DataModel.objects.count(), 1)
         # missing label in popup_fields
-        self.assertEqual(Model.objects.count(), 1)
+        self.assertEqual(DataModel.objects.count(), 1)
         data = {
             "name": "Least Cost Eletrification 2",
             "filter_fields": json.dumps(
@@ -158,4 +158,4 @@ class TestScenarioAdmin(TestCase):
             ),
         }
         self.client.post(self.url, data)
-        self.assertEqual(Model.objects.count(), 1)
+        self.assertEqual(DataModel.objects.count(), 1)

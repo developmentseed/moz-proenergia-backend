@@ -2,7 +2,7 @@ from django.contrib import admin, messages
 from django.forms import ModelForm
 from unfold.admin import ModelAdmin
 
-from .models import Model, Scenario, ScenarioFile, VectorDataset, VectorFile
+from .models import DataModel, Scenario, ScenarioFile, VectorDataset, VectorFile
 
 
 class PermissionBasedModelAdmin(ModelAdmin):
@@ -110,9 +110,9 @@ class VectorFileAdmin(PermissionBasedModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-class ModelAdminForm(ModelForm):
+class DataModelAdminForm(ModelForm):
     class Meta:
-        model = Model
+        model = DataModel
         fields = ["name", "filter_fields", "popup_fields"]
 
     def clean(self):
@@ -147,9 +147,9 @@ class ModelAdminForm(ModelForm):
                         self.add_error("popup_fields", "Missing a required key.")
 
 
-@admin.register(Model)
-class ModelAdmin(ModelAdmin):
-    form = ModelAdminForm
+@admin.register(DataModel)
+class DataModelAdmin(ModelAdmin):
+    form = DataModelAdminForm
 
 
 @admin.register(Scenario)
