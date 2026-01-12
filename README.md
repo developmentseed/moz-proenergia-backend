@@ -2,7 +2,7 @@
 
 [![Built with](https://img.shields.io/badge/Built_with-Cookiecutter_Django_Rest-F7B633.svg)](https://github.com/agconti/cookiecutter-django-rest)
 
-Mozambique Proenergia backend with async task processing capabilities.
+Mozambique Proenergia backend.
 
 ## Prerequisites
 
@@ -12,13 +12,7 @@ Mozambique Proenergia backend with async task processing capabilities.
 
 ## Quick Setup
 
-### Option 1: Docker Development
-
-```bash
-docker-compose up
-```
-
-### Option 2: Local Development
+### Local Development
 
 **1. Set up Python environment:**
 
@@ -86,7 +80,7 @@ celery -A proenergia flower --address=127.0.0.1 --port=5555
 ```
 Access at http://localhost:5555
 
-## Testing
+## Testing Celery
 
 **Test endpoints:**
 ```bash
@@ -119,19 +113,12 @@ pytest proenergia/tasks/test_tasks.py -v
 - `DJANGO_SECRET_KEY` - Django secret key
 - `CELERY_BROKER_URL` - RabbitMQ connection (default: `amqp://guest:guest@localhost:5672//`)
 
-**Celery settings** (in `proenergia/config/common.py`):
-- Broker: RabbitMQ
-- Result Backend: Django database  
-- Serialization: JSON
-- Result retention: 1 day
-
 ## Available Tasks
 
 **Hello World Task** (`hello_world_task`): Demo task with 2-second delay for testing async processing framework.
 
 ## Troubleshooting
 
-- **"No module named 'celery'"**: Activate virtual environment and install dependencies
 - **Connection refused to RabbitMQ**: Check `sudo rabbitmqctl status`  
 - **Tasks not executing**: Ensure Celery worker is running with proper environment variables
 - **Database connection errors**: Set `DJANGO_DB_URL` when starting Celery worker
@@ -139,7 +126,7 @@ pytest proenergia/tasks/test_tasks.py -v
 
 **Logs:**
 - Django: console output from `runserver`
-- Celery: console output from worker 
+- Celery: console output from worker and TaskResults in Django Admin
 - Task results: Django admin → "Django Celery Results"
 - Flower: http://localhost:5555 (if running)
 

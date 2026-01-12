@@ -237,8 +237,3 @@ class Common(Configuration):
     
     # Celery results retention settings
     CELERY_RESULT_EXPIRES = 86400  # 1 day in seconds
-    
-    # Task routing (optional - for future use)
-    CELERY_TASK_ROUTES = {
-        'proenergia.tasks.*': {'queue': 'proenergia'},
-    }
