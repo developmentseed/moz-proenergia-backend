@@ -27,7 +27,7 @@ def hello_world_task(self, name="World"):
             "message": f"Hello, {name}!",
             "task_id": task_id,
             "status": "success",
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
         logger.info(f"Completed hello_world_task {task_id} successfully")

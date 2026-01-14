@@ -23,9 +23,7 @@ api_urls = [
     ),
     path(
         f"{API_BASE_URL}/tasks/",
-        include(
-            ("proenergia.tasks.urls", "proenergia.tasks"), namespace="tasks"
-        ),
+        include(("proenergia.tasks.urls", "proenergia.tasks"), namespace="tasks"),
     ),
 ]
 
