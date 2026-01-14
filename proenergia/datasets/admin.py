@@ -1,7 +1,8 @@
 from django.contrib import admin, messages
+from django.forms import ModelForm
 from unfold.admin import ModelAdmin
 
-from .models import VectorDataset, VectorFile
+from .models import DataModel, Scenario, ScenarioFile, VectorDataset, VectorFile
 
 
 class PermissionBasedModelAdmin(ModelAdmin):
@@ -107,3 +108,64 @@ class VectorFileAdmin(PermissionBasedModelAdmin):
             kwargs["initial"] = request.user.id
 
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
+class DataModelAdminForm(ModelForm):
+    class Meta:
+        model = DataModel
+        fields = ["name", "filter_fields", "popup_fields"]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        filter_fields = cleaned_data.get("filter_fields")
+        popup_fields = cleaned_data.get("popup_fields")
+
+        if filter_fields:
+            if type(filter_fields) is not list:
+                self.add_error("filter_fields", "Content should be a list.")
+            else:
+                for i in enumerate(filter_fields):
+                    keys = i[1].keys()
+                    if (
+                        "label" not in keys
+                        or "description" not in keys
+                        or "column" not in keys
+                    ):
+                        self.add_error("filter_fields", "Missing a required key.")
+
+        if popup_fields:
+            if type(popup_fields) is not list:
+                self.add_error("popup_fields", "Content should be a list")
+            else:
+                for i in enumerate(popup_fields):
+                    keys = i[1].keys()
+                    if (
+                        "label" not in keys
+                        or "description" not in keys
+                        or "column" not in keys
+                    ):
+                        self.add_error("popup_fields", "Missing a required key.")
+
+
+@admin.register(DataModel)
+class DataModelAdmin(ModelAdmin):
+    form = DataModelAdminForm
+
+
+@admin.register(Scenario)
+class ScenarioAdmin(ModelAdmin):
+    list_display = ["id", "name", "model"]
+    fields = ["name", "model", "vector_dataset"]
+
+
+@admin.register(ScenarioFile)
+class ScenarioFileAdmin(ModelAdmin):
+    list_display = ["id", "scenario", "created", "status"]
+    fields = ["scenario", "file"]
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.created_by = request.user
+
+        obj.last_updated_by = request.user
+        super().save_model(request, obj, form, change)

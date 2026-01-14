@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import VectorDataset, VectorFile
+from .models import Scenario, ScenarioFile, VectorDataset, VectorFile
 
 
 class VectorDatasetSerializer(serializers.ModelSerializer):
@@ -30,4 +30,30 @@ class VectorDatasetSerializer(serializers.ModelSerializer):
             vector_file = obj.files.latest("created")
             return vector_file.file.name
         except VectorFile.DoesNotExist:
+            return None
+
+
+class ScenarioSerializer(serializers.ModelSerializer):
+    model_file = serializers.SerializerMethodField()
+    model = serializers.ReadOnlyField(source="model.name")
+    filter_fields = serializers.ReadOnlyField(source="model.filter_fields")
+    popup_fields = serializers.ReadOnlyField(source="model.popup_fields")
+
+    class Meta:
+        model = Scenario
+        fields = [
+            "id",
+            "name",
+            "model",
+            "model_file",
+            "filter_fields",
+            "popup_fields",
+        ]
+
+    def get_model_file(self, obj):
+        try:
+            # update status to ready when we have the file conversion working
+            model_file = obj.files.latest("created")
+            return model_file.file.name
+        except ScenarioFile.DoesNotExist:
             return None
