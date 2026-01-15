@@ -21,8 +21,8 @@ class TestVectorDatasetListDetailViews(APITestCase):
             is_staff=True,
         )
         self.dataset_1 = VectorDataset.objects.create(
-            name="Boundaries",
-            description="Administratives Boundaries",
+            name="Administrative Boundaries",
+            description="Administrative Boundaries",
             source="OSM",
             is_public=True,
             is_approved=True,
@@ -65,17 +65,20 @@ class TestVectorDatasetListDetailViews(APITestCase):
         req = self.client.get(self.url)
         assert req.status_code == status.HTTP_200_OK
         assert req.data.get("count") == 1
-        assert req.data.get("results")[0]["name"] == "Boundaries"
-        assert req.data.get("results")[0]["description"] == "Administratives Boundaries"
+        assert req.data.get("results")[0]["name"] == "Administrative Boundaries"
+        assert req.data.get("results")[0]["description"] == "Administrative Boundaries"
 
     def test_vector_datasets_list_admin_user(self):
         self.client.force_authenticate(user=self.admin_user)
         req = self.client.get(self.url)
         assert req.status_code == status.HTTP_200_OK
         assert req.data.get("count") == 1
-        assert req.data.get("results")[0]["name"] == "Boundaries"
-        assert req.data.get("results")[0]["description"] == "Administratives Boundaries"
-        assert req.data.get("results")[0]["raw_file"] == self.vector_file_2.file.name
+        assert req.data.get("results")[0]["name"] == "Administrative Boundaries"
+        assert req.data.get("results")[0]["description"] == "Administrative Boundaries"
+        assert (
+            req.data.get("results")[0]["raw_file"]
+            == "vector/administrative-boundaries_v2.geojson"
+        )
 
     def test_vector_datasets_list_superadmin_user(self):
         self.client.force_authenticate(user=self.superadmin_user)
@@ -96,12 +99,12 @@ class TestVectorDatasetListDetailViews(APITestCase):
         url = reverse("datasets:vector-detail", args=[self.dataset_1.id])
         req = self.client.get(url)
         assert req.status_code == status.HTTP_200_OK
-        assert req.data.get("name") == "Boundaries"
-        assert req.data.get("description") == "Administratives Boundaries"
+        assert req.data.get("name") == "Administrative Boundaries"
+        assert req.data.get("description") == "Administrative Boundaries"
         assert req.data.get("created")
         assert req.data.get("updated")
         assert req.data.get("source") == "OSM"
-        assert req.data.get("raw_file") == self.vector_file_2.file.name
+        assert req.data.get("raw_file") == "vector/administrative-boundaries_v2.geojson"
 
         url = reverse("datasets:vector-detail", args=[self.dataset_2.id])
         req = self.client.get(url)
@@ -112,7 +115,7 @@ class TestVectorDatasetListDetailViews(APITestCase):
         url = reverse("datasets:vector-detail", args=[self.dataset_1.id])
         req = self.client.get(url)
         assert req.status_code == status.HTTP_200_OK
-        assert req.data.get("name") == "Boundaries"
+        assert req.data.get("name") == "Administrative Boundaries"
         # only superadmin can access private/non-approved dataset
         url = reverse("datasets:vector-detail", args=[self.dataset_2.id])
         req = self.client.get(url)
@@ -133,7 +136,7 @@ class TestVectorDatasetListDetailViews(APITestCase):
         req = self.client.get(url)
         assert req.status_code == status.HTTP_200_OK
         assert req.data.get("name") == "Roads"
-        assert req.data.get("raw_file") == "vector/new.kml"
+        assert req.data.get("raw_file") == "vector/roads_v1.kml"
 
         url = reverse("datasets:vector-detail", args=[self.dataset_3.id])
         req = self.client.get(url)

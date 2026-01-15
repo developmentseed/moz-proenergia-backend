@@ -1,9 +1,12 @@
+from os.path import splitext
+
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models.fields.files import default_storage
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
+from django.utils.text import slugify
 
 
 class VectorDataset(models.Model):
@@ -36,6 +39,15 @@ STATUS = [
 ]
 
 
+def generate_vector_file_name(instance, filename):
+    """Generate a filename with the slugified dataset name,
+    the version of the dataset and the file extension."""
+    name, extension = splitext(filename)
+    version = instance.dataset.files.count() + 1
+
+    return f"vector/{slugify(instance.dataset.name)}_v{version}{extension}"
+
+
 class VectorFile(models.Model):
     dataset = models.ForeignKey(VectorDataset, models.PROTECT, related_name="files")
     created = models.DateTimeField(auto_now_add=True)
@@ -44,7 +56,7 @@ class VectorFile(models.Model):
     )
     status = models.CharField(max_length=155, choices=STATUS, default="created")
     file = models.FileField(
-        upload_to="vector/",
+        upload_to=generate_vector_file_name,
         unique=True,
         validators=[
             FileExtensionValidator(allowed_extensions=["geojson", "gpkg", "zip", "kml"])
@@ -99,6 +111,15 @@ class Scenario(models.Model):
         ordering = ["id"]
 
 
+def generate_scenario_file_name(instance, filename):
+    """Generate a filename with the slugified scenario name,
+    the version of the scenario and the file extension."""
+    name, extension = splitext(filename)
+    version = instance.scenario.files.count() + 1
+
+    return f"scenarios/{slugify(instance.scenario.name)}_v{version}{extension}"
+
+
 class ScenarioFile(models.Model):
     scenario = models.ForeignKey(Scenario, models.PROTECT, related_name="files")
     created = models.DateTimeField(auto_now_add=True)
@@ -107,7 +128,7 @@ class ScenarioFile(models.Model):
     )
     status = models.CharField(max_length=155, choices=STATUS, default="created")
     file = models.FileField(
-        upload_to="scenarios/",
+        upload_to=generate_scenario_file_name,
         unique=True,
         validators=[FileExtensionValidator(allowed_extensions=["csv"])],
     )
