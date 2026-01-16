@@ -24,7 +24,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update -qq -y
-          sudo apt-get install -y binutils libproj-dev python3-gdal libgeos-dev libyaml-dev tippecanoe gdal
+          sudo apt-get install -y binutils libproj-dev gdal-bin python3-gdal libgeos-dev libyaml-dev tippecanoe
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Run Tests
