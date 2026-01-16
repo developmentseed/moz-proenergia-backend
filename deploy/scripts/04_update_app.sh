@@ -25,10 +25,10 @@ echo "Checking for requirements changes..."
 pip install -r requirements.txt --upgrade
 
 echo "Running database migrations..."
-python manage.py migrate --settings=proenergia.config.production
+python manage.py migrate
 
 echo "Collecting static files..."
-python manage.py collectstatic --noinput --settings=proenergia.config.production
+python manage.py collectstatic --noinput
 
 echo "Restarting application service..."
 sudo systemctl restart proenergia

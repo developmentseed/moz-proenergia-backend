@@ -52,15 +52,15 @@ fi
 
 # Run database migrations
 echo "Running database migrations..."
-python manage.py migrate --settings=proenergia.config.production
+python manage.py migrate
 
 # Collect static files
 echo "Collecting static files..."
-python manage.py collectstatic --noinput --settings=proenergia.config.production
+python manage.py collectstatic --noinput
 
 # Create superuser (optional)
 echo "To create a superuser, run:"
-echo "python manage.py createsuperuser --settings=proenergia.config.production"
+echo "python manage.py createsuperuser"
 
 echo "=== Application setup complete ==="
 echo "Make sure to:"
