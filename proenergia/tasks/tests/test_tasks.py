@@ -1,18 +1,12 @@
 from unittest.mock import patch
+
 from django.test import TestCase
-from celery import current_app
 
 import proenergia.celery_tasks as celery_tasks
 
 
 class TestHelloWorldTask(TestCase):
     """Test cases for the hello world task."""
-
-    def setUp(self):
-        """Configure Celery to execute tasks synchronously for testing."""
-        current_app.conf.task_always_eager = True
-        current_app.conf.task_eager_propagates = True
-        current_app.conf.task_store_eager_result = True
 
     def test_hello_world_task_success(self):
         """Test hello world task executes successfully."""
@@ -43,8 +37,9 @@ class TestHelloWorldTask(TestCase):
 
     def test_task_result_database_storage(self):
         """Test that essential task results are stored in TaskResult for Django Admin."""
-        from django_celery_results.models import TaskResult
         import json
+
+        from django_celery_results.models import TaskResult
 
         # Clear any existing task results
         TaskResult.objects.all().delete()
