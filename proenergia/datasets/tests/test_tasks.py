@@ -62,5 +62,4 @@ class TestGeneratePmtiles(APITestCase):
         vf = VectorFile.objects.first()
         self.assertEqual(vf.status, "created")
 
-        self.assertEqual(mock_generate_pmtiles.call_count, 1)
-        mock_generate_pmtiles.assert_any_call(vf.id)
+        mock_generate_pmtiles.assert_called_once_with(vf.id)

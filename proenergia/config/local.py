@@ -21,6 +21,7 @@ class Local(Common):
     TESTING = "test" in sys.argv
     if TESTING:
         MEDIA_ROOT = tempfile.mkdtemp()
+        CELERY_TASK_ALWAYS_EAGER = True
         CELERY_TASK_STORE_EAGER_RESULT = True
         CELERY_TASK_EAGER_PROPAGATES = True
 
