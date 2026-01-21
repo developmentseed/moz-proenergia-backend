@@ -1,23 +1,12 @@
 from django.urls import reverse
+from django_celery_results.models import TaskResult
 from rest_framework import status
 from rest_framework.test import APITestCase
-from celery import current_app
-from django_celery_results.models import TaskResult
 
 import proenergia.celery_tasks as celery_tasks
 
 
-class TestTaskViewsBase(APITestCase):
-    """Base class for task view tests with common setup."""
-
-    def setUp(self):
-        """Configure Celery for synchronous testing."""
-        current_app.conf.task_always_eager = True
-        current_app.conf.task_eager_propagates = True
-        current_app.conf.task_store_eager_result = True
-
-
-class TestCheckTaskStatusView(TestTaskViewsBase):
+class TestCheckTaskStatusView(APITestCase):
     """Test cases for the task status endpoint."""
 
     def test_get_task_status_success(self):
@@ -71,7 +60,7 @@ class TestCheckTaskStatusView(TestTaskViewsBase):
         )
 
 
-class TestListRecentTasksView(TestTaskViewsBase):
+class TestListRecentTasksView(APITestCase):
     """Test cases for the task listing endpoint."""
 
     def test_list_tasks_default(self):
