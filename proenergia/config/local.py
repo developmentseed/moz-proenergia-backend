@@ -15,5 +15,8 @@ class Local(Common):
     EMAIL_PORT = 1025
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
+    CELERY_TASK_STORE_EAGER_RESULT = True
+    CELERY_TASK_EAGER_PROPAGATES = True
+
     # GDAL_LIBRARY_PATH = "/opt/homebrew/opt/gdal/lib/libgdal.dylib"
     # GEOS_LIBRARY_PATH = "/opt/homebrew/opt/geos/lib/libgeos_c.dylib"
