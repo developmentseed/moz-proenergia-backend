@@ -6,9 +6,12 @@ from rest_framework.permissions import (
 )
 
 from .filters import VectorDatasetFilter
-from .models import Scenario, VectorDataset
+from .models import DataModel, VectorDataset
 from .pagination import StandardResultsSetPagination
-from .serializers import ScenarioSerializer, VectorDatasetSerializer
+from .serializers import (
+    DataModelSerializer,
+    VectorDatasetSerializer,
+)
 
 
 class PublicApprovedDataset(BasePermission):
@@ -39,13 +42,13 @@ class VectorDatasetDetailView(RetrieveAPIView):
     permission_classes = [PublicApprovedDataset]
 
 
-class ScenarioListView(ListAPIView):
-    queryset = Scenario.objects.all()
-    serializer_class = ScenarioSerializer
+class DataModelListView(ListAPIView):
+    queryset = DataModel.objects.all()
+    serializer_class = DataModelSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
 
-class ScenarioDetailView(RetrieveAPIView):
-    queryset = Scenario.objects.all()
-    serializer_class = ScenarioSerializer
+class DataModelDetailView(RetrieveAPIView):
+    queryset = DataModel.objects.all()
+    serializer_class = DataModelSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]

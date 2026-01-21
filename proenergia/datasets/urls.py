@@ -11,10 +11,10 @@ urlpatterns = [
         views.VectorDatasetDetailView.as_view(),
         name="vector-detail",
     ),
-    path("scenario/", views.ScenarioListView.as_view(), name="scenario-list"),
+    path("model/", views.DataModelListView.as_view(), name="model-list"),
     path(
-        "scenario/<int:pk>/",
-        views.ScenarioDetailView.as_view(),
-        name="scenario-detail",
+        "model/<int:pk>/",
+        views.DataModelDetailView.as_view(),
+        name="model-detail",
     ),
 ]

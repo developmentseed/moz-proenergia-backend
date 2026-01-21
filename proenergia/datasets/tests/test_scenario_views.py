@@ -7,7 +7,7 @@ from rest_framework.test import APITestCase
 from ..models import DataModel, Scenario, ScenarioFile, VectorDataset
 
 
-class TestScenarioListDetailViews(APITestCase):
+class TestDataModelViews(APITestCase):
     def setUp(self):
         # Clean up any leftover files from previous test runs
         ScenarioFile.objects.all().delete()
@@ -103,20 +103,23 @@ class TestScenarioListDetailViews(APITestCase):
             file=file,
             created_by=self.superadmin_user,
         )
-        self.url = reverse("datasets:scenario-list")
+        self.url = reverse("datasets:model-list")
 
-    def test_scenario_list_unauthenticated(self):
+    def test_model_list_unauthenticated(self):
         req = self.client.get(self.url)
         assert req.status_code == status.HTTP_200_OK
         assert req.data.get("count") == 2
-        assert req.data.get("results")[0]["name"] == "Least Cost Electrification"
-        assert req.data.get("results")[1]["name"] == "Clean Cooking 1"
-        assert req.data.get("results")[0]["model"] == "PUE"
-        assert req.data.get("results")[1]["model"] == "Clean Cooking"
-        assert req.data.get("results")[0]["model_file"].startswith(
+        assert req.data.get("results")[0]["name"] == "PUE"
+        assert req.data.get("results")[1]["name"] == "Clean Cooking"
+        assert (
+            req.data.get("results")[0]["scenarios"][0]["name"]
+            == "Least Cost Electrification"
+        )
+        assert req.data.get("results")[1]["scenarios"][0]["name"] == "Clean Cooking 1"
+        assert req.data.get("results")[0]["scenarios"][0]["model_file"].startswith(
             "scenarios/least-cost-electrification_v1"
         )
-        assert req.data.get("results")[1]["model_file"].startswith(
+        assert req.data.get("results")[1]["scenarios"][0]["model_file"].startswith(
             "scenarios/clean-cooking-1_v1"
         )
         assert req.data.get("results")[0]["filter_fields"] == [
@@ -149,8 +152,8 @@ class TestScenarioListDetailViews(APITestCase):
             }
         ]
 
-    def test_scenario_detail_unauthenticated(self):
-        url = reverse("datasets:scenario-detail", args=[self.scenario_1.id])
+    def test_model_detail_unauthenticated(self):
+        url = reverse("datasets:model-detail", args=[self.model_1.id])
         # upload files again
         file = SimpleUploadedFile(
             "old.csv", b"id,col_b\n1,blah", content_type="text/csv"
@@ -171,16 +174,21 @@ class TestScenarioListDetailViews(APITestCase):
         # execute request
         req = self.client.get(url)
         assert req.status_code == status.HTTP_200_OK
-        assert req.data.get("name") == "Least Cost Electrification"
+        assert req.data.get("name") == "PUE"
+        assert req.data["scenarios"][0]["name"] == "Least Cost Electrification"
         assert (
-            req.data.get("model_file") == "scenarios/least-cost-electrification_v2.csv"
+            req.data["scenarios"][0]["model_file"]
+            == "scenarios/least-cost-electrification_v2.csv"
         )
 
-        url = reverse("datasets:scenario-detail", args=[self.scenario_2.id])
+        url = reverse("datasets:model-detail", args=[self.model_2.id])
         req = self.client.get(url)
         assert req.status_code == status.HTTP_200_OK
-        assert req.data.get("name") == "Clean Cooking 1"
-        assert req.data.get("model_file") == "scenarios/clean-cooking-1_v2.csv"
+        assert req.data.get("name") == "Clean Cooking"
+        assert req.data["scenarios"][0]["name"] == "Clean Cooking 1"
+        assert (
+            req.data["scenarios"][0]["model_file"] == "scenarios/clean-cooking-1_v2.csv"
+        )
 
     def tearDown(self):
         ScenarioFile.objects.all().delete()

@@ -101,7 +101,9 @@ class DataModel(models.Model):
 
 class Scenario(models.Model):
     name = models.CharField(max_length=155, unique=True)
-    model = models.ForeignKey(DataModel, on_delete=models.PROTECT)
+    model = models.ForeignKey(
+        DataModel, on_delete=models.PROTECT, related_name="scenarios"
+    )
     vector_dataset = models.ForeignKey(VectorDataset, on_delete=models.PROTECT)
 
     def __str__(self):

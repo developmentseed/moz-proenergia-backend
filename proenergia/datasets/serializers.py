@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Scenario, ScenarioFile, VectorDataset, VectorFile
+from .models import DataModel, Scenario, ScenarioFile, VectorDataset, VectorFile
 
 
 class VectorDatasetSerializer(serializers.ModelSerializer):
@@ -35,19 +35,13 @@ class VectorDatasetSerializer(serializers.ModelSerializer):
 
 class ScenarioSerializer(serializers.ModelSerializer):
     model_file = serializers.SerializerMethodField()
-    model = serializers.ReadOnlyField(source="model.name")
-    filter_fields = serializers.ReadOnlyField(source="model.filter_fields")
-    popup_fields = serializers.ReadOnlyField(source="model.popup_fields")
 
     class Meta:
         model = Scenario
         fields = [
             "id",
             "name",
-            "model",
             "model_file",
-            "filter_fields",
-            "popup_fields",
         ]
 
     def get_model_file(self, obj):
@@ -57,3 +51,11 @@ class ScenarioSerializer(serializers.ModelSerializer):
             return model_file.file.name
         except ScenarioFile.DoesNotExist:
             return None
+
+
+class DataModelSerializer(serializers.ModelSerializer):
+    scenarios = ScenarioSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = DataModel
+        fields = ["id", "name", "filter_fields", "popup_fields", "scenarios"]
