@@ -19,7 +19,7 @@ class TestScenarioAdmin(TestCase):
     def test_validation(self):
         self.client.login(username="superadmin", password="testpass123")
         data = {
-            "name": "Least Cost Eletrification",
+            "name": "Least Cost Electrification",
             "filter_fields": json.dumps(
                 [
                     {
@@ -44,7 +44,7 @@ class TestScenarioAdmin(TestCase):
 
         # same name
         data = {
-            "name": "Least Cost Eletrification",
+            "name": "Least Cost Electrification",
             "filter_fields": json.dumps(
                 [
                     {
@@ -138,7 +138,7 @@ class TestScenarioAdmin(TestCase):
         # missing label in popup_fields
         self.assertEqual(DataModel.objects.count(), 1)
         data = {
-            "name": "Least Cost Eletrification 2",
+            "name": "Least Cost Electrification 2",
             "filter_fields": json.dumps(
                 [
                     {
