@@ -7,7 +7,9 @@ Mozambique Proenergia backend.
 ## Prerequisites
 
 - [Docker](https://docs.docker.com/docker-for-mac/install/) (for Docker setup)
-- RabbitMQ (for Celery task processing)  
+- [RabbitMQ](https://docs.celeryq.dev/en/stable/getting-started/backends-and-brokers/rabbitmq.html) (for Celery task processing)
+- [Tippecanoe](https://github.com/felt/tippecanoe) (for PMTiles generation)
+- [gdal-bin](https://gdal.org/en/stable/download.html#binaries) (for file conversion)
 - Python 3.8+ and PostgreSQL (for local development)
 
 ## Quick Setup
