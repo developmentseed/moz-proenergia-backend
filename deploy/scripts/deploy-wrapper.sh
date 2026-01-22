@@ -7,6 +7,7 @@ set -e
 
 SCRIPT_NAME="ProEnergia Deployment"
 APP_DIR="/var/www/proenergia/app"
+UPDATE_SCRIPT="$APP_DIR/deploy/scripts/04_update_app_nosudo.sh"
 LOG_FILE="/var/log/proenergia/deployment.log"
 
 # Color codes for output
@@ -34,37 +35,18 @@ fi
 
 log "=== Starting $SCRIPT_NAME ==="
 
-# Function to run commands as proenergia user
-run_as_proenergia() {
-    sudo -u proenergia -H bash -c "$1"
-}
+# Step 1: Run update script as proenergia user
+echo -e "${YELLOW}Running application update...${NC}"
+sudo -u proenergia -H bash -c "$UPDATE_SCRIPT" || error_exit "Update script failed"
+log "Application updated successfully"
 
-# Step 1: Git operations as proenergia user
-echo -e "${YELLOW}Step 1: Pulling latest code...${NC}"
-run_as_proenergia "cd $APP_DIR && git fetch origin && git pull origin main" || error_exit "Git pull failed"
-log "Code updated successfully"
-
-# Step 2: Python environment operations as proenergia user
-echo -e "${YELLOW}Step 2: Updating Python dependencies...${NC}"
-run_as_proenergia "cd $APP_DIR && source venv/bin/activate && pip install -r requirements.txt --upgrade" || error_exit "Pip install failed"
-log "Dependencies updated"
-
-# Step 3: Django operations as proenergia user
-echo -e "${YELLOW}Step 3: Running Django migrations...${NC}"
-run_as_proenergia "cd $APP_DIR && source venv/bin/activate && python manage.py migrate" || error_exit "Migration failed"
-log "Migrations completed"
-
-echo -e "${YELLOW}Step 4: Collecting static files...${NC}"
-run_as_proenergia "cd $APP_DIR && source venv/bin/activate && python manage.py collectstatic --noinput" || error_exit "Collectstatic failed"
-log "Static files collected"
-
-# Step 5: Service operations as root
-echo -e "${YELLOW}Step 5: Restarting application service...${NC}"
+# Step 2: Service operations as root
+echo -e "${YELLOW}Restarting application service...${NC}"
 systemctl restart proenergia || error_exit "Service restart failed"
 log "Service restarted"
 
-# Step 6: Health check
-echo -e "${YELLOW}Step 6: Running health check...${NC}"
+# Step 3: Health check
+echo -e "${YELLOW}Running health check...${NC}"
 sleep 5
 
 # Check if service is active
@@ -87,7 +69,7 @@ fi
 
 # Show recent git commits
 echo -e "\n${GREEN}Recent commits deployed:${NC}"
-run_as_proenergia "cd $APP_DIR && git log --oneline -5"
+sudo -u proenergia -H bash -c "cd $APP_DIR && git log --oneline -5"
 
 log "=== $SCRIPT_NAME completed successfully ==="
 echo -e "\n${GREEN}=== Deployment complete ===${NC}"

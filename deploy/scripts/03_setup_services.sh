@@ -59,6 +59,20 @@ certbot --nginx -d $DOMAIN --email $EMAIL --agree-tos --non-interactive --redire
 systemctl enable certbot.timer
 systemctl start certbot.timer
 
+# Install deployment wrapper script
+echo "Installing deployment wrapper script..."
+cp /var/www/proenergia/app/deploy/scripts/deploy-wrapper.sh /usr/local/bin/deploy-proenergia
+chmod +x /usr/local/bin/deploy-proenergia
+
+# Install sudoers configuration for deployment
+echo "Configuring deployment permissions..."
+cp /var/www/proenergia/app/deploy/configs/sudoers/proenergia-deploy /etc/sudoers.d/
+chmod 440 /etc/sudoers.d/proenergia-deploy
+visudo -c || echo "WARNING: Sudoers syntax check failed - please review manually"
+
+# Make update script executable
+chmod +x /var/www/proenergia/app/deploy/scripts/04_update_app_nosudo.sh
+
 # Open firewall ports if ufw is active
 if ufw status | grep -q "Status: active"; then
     echo "Configuring firewall..."
@@ -66,6 +80,12 @@ if ufw status | grep -q "Status: active"; then
     ufw allow ssh
 fi
 
+# Setup automated deployment webhook
+echo ""
+echo "Setting up automated deployment webhook..."
+/var/www/proenergia/app/deploy/scripts/05_setup_webhook.sh
+
+echo ""
 echo "=== Services setup complete ==="
 echo "Your application should now be available at https://$DOMAIN"
 echo ""
@@ -74,3 +94,6 @@ echo "  sudo systemctl status proenergia    - Check service status"
 echo "  sudo systemctl restart proenergia   - Restart application"
 echo "  sudo journalctl -u proenergia -f    - View logs"
 echo "  sudo nginx -s reload               - Reload nginx config"
+echo ""
+echo "Deployment commands:"
+echo "  sudo deploy-proenergia             - Deploy latest changes from git"

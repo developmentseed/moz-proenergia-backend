@@ -1,75 +1,81 @@
-# ProEnergia Django Deployment
+# ProEnergia Deployment
 
-This directory contains deployment configurations and scripts for deploying the ProEnergia Django application on Ubuntu LTS.
+This directory contains deployment scripts for the ProEnergia Django application on Ubuntu 24.04 LTS.
 
 ## Prerequisites
 
-- Ubuntu 24.04 LTS server
-- 16GB RAM recommended
-- Domain name pointing to the server
+- Ubuntu 24.04 LTS server with 16GB+ RAM
+- Domain name pointing to your server
 - Root access to the server
 
-## Deployment Architecture
+## Initial Setup
 
-- **Web Server**: Nginx (reverse proxy, static files, SSL termination)
-- **Application Server**: Gunicorn (WSGI server)
-- **Database**: PostgreSQL 16 with PostGIS extension
-- **Process Management**: systemd
-- **SSL**: Let's Encrypt via certbot
+Run these scripts in order as root:
 
-## Quick Deployment
-
-1. **System Setup** (as root):
+### 1. System Setup
 ```bash
+cd /root
+git clone git@github.com:developmentseed/moz-proenergia-backend.git
+cd moz-proenergia-backend/deploy
 ./scripts/01_setup_system.sh
 ```
 
-2. **SSH Key Setup** (as proenergia user):
+### 2. Configure GitHub Access
 ```bash
-# Generate SSH key for GitHub access
+# Generate SSH key for the proenergia user
 sudo -u proenergia ssh-keygen -t ed25519 -C "deploy@your-server.com" -f /home/proenergia/.ssh/id_ed25519 -N ""
 
-# Display public key - copy this to GitHub
+# Display the public key
 sudo -u proenergia cat /home/proenergia/.ssh/id_ed25519.pub
 ```
 
-Add the public key as a Deploy Key in GitHub:
-- Go to: Repository Settings → Deploy Keys → Add Deploy Key
-- Paste the public key content
-- Give it a descriptive name like "Production Server Deploy Key"
-- Leave "Allow write access" unchecked (read-only is sufficient)
+Add this key to GitHub:
+- Go to Repository Settings → Deploy Keys → Add Deploy Key
+- Paste the public key and give it a name like "Production Server"
 
-3. **Application Setup** (as proenergia user):
+### 3. Application Setup
 ```bash
 sudo -u proenergia ./scripts/02_setup_app.sh
 ```
 
-4. **Configure Environment** (as proenergia user):
+### 4. Configure Environment
 ```bash
 sudo -u proenergia nano /var/www/proenergia/app/.env
 ```
-Update with your actual values (domain, database password, secret key)
+Update with your actual values (domain, database password, secret key).
 
-5. **Services Setup** (as root):
+### 5. Services & Webhook Setup
 ```bash
 ./scripts/03_setup_services.sh your-domain.com admin@your-domain.com
 ```
 
-## Environment Configuration
+This will:
+- Configure nginx and SSL
+- Set up the application service
+- Install the deployment script
+- **Set up the webhook listener and display a webhook secret**
 
-Copy `deploy/.env.production` to `/var/www/proenergia/app/.env` and update:
+### 6. Configure GitHub Webhook
 
-- `DJANGO_SECRET_KEY`: Generate a secure random key
-- `ALLOWED_HOSTS`: Your domain name(s)
-- `CSRF_TRUSTED_ORIGINS`: Your HTTPS domain(s)
-- `DATABASE_URL`: Update password if changed
+Using the webhook secret displayed in step 5:
 
-## Application Updates
+1. Go to your repository Settings → Webhooks → Add webhook
+2. **Payload URL**: `https://your-domain.com/deploy-webhook`
+3. **Content type**: `application/json`
+4. **Secret**: Enter the webhook secret from step 5
+5. **Events**: Select "Just the push event"
+6. Click "Add webhook"
 
-To deploy updates:
+## Deployment
+
+### Automatic Deployment
+Once configured, pushes to the `main` branch automatically deploy to your server.
+
+### Manual Deployment
+To manually deploy the latest changes:
 
 ```bash
-sudo -u proenergia ./scripts/04_update_app.sh
+ssh ubuntu@your-server.com 'sudo deploy-proenergia'
 ```
 
 ## Service Management
@@ -78,50 +84,19 @@ sudo -u proenergia ./scripts/04_update_app.sh
 # Check application status
 sudo systemctl status proenergia
 
-# Restart application
-sudo systemctl restart proenergia
-
 # View application logs
 sudo journalctl -u proenergia -f
 
-# Restart nginx
-sudo systemctl restart nginx
-
-# View nginx logs
-sudo tail -f /var/log/nginx/access.log
-sudo tail -f /var/log/nginx/error.log
+# Restart application
+sudo systemctl restart proenergia
 ```
 
 ## File Locations
 
 - **Application**: `/var/www/proenergia/app/`
 - **Logs**: `/var/log/proenergia/`
-- **Nginx Config**: `/etc/nginx/sites-available/proenergia.conf`
-- **Systemd Service**: `/etc/systemd/system/proenergia.service`
-- **Gunicorn Config**: `/etc/gunicorn/gunicorn.conf.py`
+- **Deploy script**: `/usr/local/bin/deploy-proenergia`
 
 ## Troubleshooting
 
-### Application won't start
-- Check logs: `sudo journalctl -u proenergia -f`
-- Verify environment file exists and is readable
-- Check database connectivity
-
-### 502 Bad Gateway
-- Verify gunicorn is running: `sudo systemctl status proenergia`
-- Check gunicorn logs: `/var/log/proenergia/gunicorn_error.log`
-
-### SSL Issues
-- Renew certificate: `sudo certbot renew`
-- Check certificate status: `sudo certbot certificates`
-
-### Database Issues
-- Check PostgreSQL status: `sudo systemctl status postgresql`
-- Connect to database: `sudo -u postgres psql proenergia_db`
-
-## Performance Tuning
-
-- Gunicorn workers: Currently set to `CPU cores * 2 + 1`
-- Memory limits: 8GB soft, 10GB hard (adjust based on usage)
-- Static file caching: 1 day (configured in nginx)
-- Consider adding Redis for caching if needed
+For detailed troubleshooting, monitoring, and rollback procedures, see [DEBUGGING.md](DEBUGGING.md).
