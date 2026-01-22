@@ -31,6 +31,7 @@ class Common(Configuration):
         "rest_framework.authtoken",  # token authentication
         "django_filters",  # for filtering rest endpoints
         "drf_spectacular",  # api-docs
+        "corsheaders",
         # Celery apps
         "django_celery_results",
         "django_celery_beat",
@@ -43,6 +44,7 @@ class Common(Configuration):
     MIDDLEWARE = (
         "django.middleware.security.SecurityMiddleware",
         "django.contrib.sessions.middleware.SessionMiddleware",
+        "corsheaders.middleware.CorsMiddleware",
         "django.middleware.common.CommonMiddleware",
         "django.middleware.csrf.CsrfViewMiddleware",
         "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -239,3 +241,6 @@ class Common(Configuration):
 
     # Celery results retention settings
     CELERY_RESULT_EXPIRES = 86400  # 1 day in seconds
+
+    # CORS
+    CORS_ALLOW_ALL_ORIGINS = True

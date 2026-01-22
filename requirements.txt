@@ -15,6 +15,7 @@ django_unique_upload==0.2.1
 # Rest apis
 djangorestframework==3.16.1
 django-filter==25.2
+django-cors-headers==4.9.0
 
 # Admin tools
 django-unfold==0.72.0
