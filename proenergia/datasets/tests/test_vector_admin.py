@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
@@ -291,7 +293,8 @@ class VectorFileAdmin(TestCase):
             last_updated_by=self.admin_user,
         )
 
-    def test_vector_file_creation_superadmin(self):
+    @patch("proenergia.datasets.models.generate_pmtiles.delay")
+    def test_vector_file_creation_superadmin(self, mock_generate_pmtiles):
         self.client.login(username="superadmin", password="testpass123")
         url = reverse("admin:datasets_vectorfile_add")
         response = self.client.get(url)
@@ -322,7 +325,8 @@ class VectorFileAdmin(TestCase):
         # Delete file
         VectorFile.objects.all().delete()
 
-    def test_vector_file_creation_admin(self):
+    @patch("proenergia.datasets.models.generate_pmtiles.delay")
+    def test_vector_file_creation_admin(self, mock_generate_pmtiles):
         self.client.login(username="admin_user", password="testpass123")
         url = reverse("admin:datasets_vectorfile_add")
         response = self.client.get(url)

@@ -2,8 +2,7 @@ import subprocess
 from os.path import basename, dirname, join, splitext
 
 from celery import shared_task
-
-from proenergia.datasets.models import VectorFile
+from django.apps import apps
 
 
 def to_pmtiles(file_path: str):
@@ -46,26 +45,24 @@ def to_pmtiles(file_path: str):
 
 
 @shared_task
-def generate_pmtiles(vf: VectorFile):
+def generate_pmtiles(id: int):
+    VectorFile = apps.get_model("datasets", "VectorFile")
+
+    vf = VectorFile.objects.get(id=id)
     vf.status = "processing"
-    vf.save()
+    vf.save(update_fields=["status"])
+
     try:
         to_pmtiles(vf.file.path)
         vf.status = "ready"
-        vf.save()
+        vf.save(update_fields=["status"])
     except subprocess.CalledProcessError as e:
         print(f"Command failed with exit code {e.returncode}")
         print(f"STDOUT: {e.stdout}")
         print(f"STDERR: {e.stderr}")
         vf.status = "error"
-        vf.save()
+        vf.save(update_fields=["status"])
     except Exception as e:
         print(f"Unexpected error: {e}")
         vf.status = "error"
-        vf.save()
-
-
-@shared_task
-def convert_pending_vector_files():
-    files = VectorFile.objects.filter(status="created")
-    generate_pmtiles.map(vf for vf in files)
+        vf.save(update_fields=["status"])

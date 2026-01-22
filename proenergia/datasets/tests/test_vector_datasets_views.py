@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
@@ -8,7 +10,8 @@ from ..models import VectorDataset, VectorFile
 
 
 class TestVectorDatasetListDetailViews(APITestCase):
-    def setUp(self):
+    @patch("proenergia.datasets.models.generate_pmtiles.delay")
+    def setUp(self, mock_generate_pmtiles):
         self.superadmin_user = get_user_model().objects.create_superuser(
             username="superadmin",
             email="superadmin@example.com",
@@ -121,7 +124,8 @@ class TestVectorDatasetListDetailViews(APITestCase):
         req = self.client.get(url)
         assert req.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_vector_datasets_detail_superadmin(self):
+    @patch("proenergia.datasets.models.generate_pmtiles.delay")
+    def test_vector_datasets_detail_superadmin(self, mock_generate_pmtiles):
         file = SimpleUploadedFile(
             "new.kml", b"file_content", content_type="application/json"
         )

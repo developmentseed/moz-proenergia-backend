@@ -1,5 +1,6 @@
 import os
 import sys
+import tempfile
 
 from .common import Common
 
@@ -17,7 +18,10 @@ class Local(Common):
     EMAIL_PORT = 1025
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-    if "test" in sys.argv:
+    TESTING = "test" in sys.argv
+    if TESTING:
+        MEDIA_ROOT = tempfile.mkdtemp()
+        CELERY_TASK_ALWAYS_EAGER = True
         CELERY_TASK_STORE_EAGER_RESULT = True
         CELERY_TASK_EAGER_PROPAGATES = True
 

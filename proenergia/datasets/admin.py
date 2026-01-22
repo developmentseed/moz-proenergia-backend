@@ -109,6 +109,9 @@ class VectorFileAdmin(PermissionBasedModelAdmin):
 
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
+    def has_change_permission(self, request, obj=None):
+        return False
+
 
 class DataModelAdminForm(ModelForm):
     class Meta:

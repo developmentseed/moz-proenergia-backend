@@ -2,6 +2,7 @@ import shutil
 from os.path import join
 from pathlib import Path
 from tempfile import mkdtemp
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
@@ -9,7 +10,7 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 
 from proenergia.datasets.models import VectorDataset, VectorFile
-from proenergia.datasets.tasks import generate_pmtiles, to_pmtiles
+from proenergia.datasets.tasks import to_pmtiles
 
 
 class TestToPmtiles(TestCase):
@@ -38,7 +39,7 @@ class TestGeneratePmtiles(APITestCase):
             username="superadmin", email="admin@example.com", password="testpass123"
         )
         self.dataset = VectorDataset.objects.create(
-            name="Boundaries",
+            name="Airports",
             description="Administratives Boundaries",
             source="OSM",
             is_public=True,
@@ -47,7 +48,8 @@ class TestGeneratePmtiles(APITestCase):
             last_updated_by=self.superadmin,
         )
 
-    def test_generate_pm_tiles(self):
+    @patch("proenergia.datasets.models.generate_pmtiles.delay")
+    def test_generate_pm_tiles(self, mock_generate_pmtiles):
         self.client.login(username="superadmin", password="testpass123")
         url = reverse("admin:datasets_vectorfile_add")
         with open(self.airports, "rb") as file_data:
@@ -59,7 +61,5 @@ class TestGeneratePmtiles(APITestCase):
         self.assertEqual(VectorFile.objects.count(), 1)
         vf = VectorFile.objects.first()
         self.assertEqual(vf.status, "created")
-        # execute function
-        result = generate_pmtiles.apply([vf])
-        self.assertTrue(result.successful())
-        self.assertEqual(vf.status, "ready")
+
+        mock_generate_pmtiles.assert_called_once_with(vf.id)

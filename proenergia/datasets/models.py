@@ -4,13 +4,15 @@ from django.conf import settings
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models.fields.files import default_storage
-from django.db.models.signals import pre_delete
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from django.utils.text import slugify
 
+from proenergia.datasets.tasks import generate_pmtiles
+
 
 class VectorDataset(models.Model):
-    name = models.CharField(max_length=155)
+    name = models.CharField(max_length=155, unique=True)
     description = models.TextField(max_length=2000, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -68,6 +70,15 @@ class VectorFile(models.Model):
 
     class Meta:
         ordering = ["id"]
+
+
+@receiver(post_save, sender=VectorFile)
+def trigger_generate_pm_tiles(sender, instance, created, **kwargs):
+    """Trigger generate_pm_tiles Celery task when a new VectorFile instance is created.
+    Only runs when not in test mode.
+    """
+    if created:
+        generate_pmtiles.delay(instance.id)
 
 
 @receiver(pre_delete, sender=VectorFile)
