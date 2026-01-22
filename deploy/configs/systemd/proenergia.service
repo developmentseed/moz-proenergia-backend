@@ -9,7 +9,7 @@ User=proenergia
 Group=proenergia
 WorkingDirectory=/var/www/proenergia/app
 Environment=PATH=/var/www/proenergia/app/venv/bin
-Environment=DJANGO_SETTINGS_MODULE=proenergia.config.production
+Environment=DJANGO_SETTINGS_MODULE=proenergia.config
 Environment=DJANGO_CONFIGURATION=Production
 EnvironmentFile=/var/www/proenergia/app/.env
 ExecStart=/var/www/proenergia/app/venv/bin/gunicorn \
