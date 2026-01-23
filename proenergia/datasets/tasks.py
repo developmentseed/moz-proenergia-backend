@@ -1,8 +1,34 @@
+import json
 import subprocess
 from os.path import basename, dirname, join, splitext
 
+import geopandas as gpd
+import pandas as pd
 from celery import shared_task
 from django.apps import apps
+
+from proenergia.datasets.utils import detect_csv_delimiter, get_file_variant
+
+
+def call_tippecanoe(input_path, output_path):
+    subprocess.run(
+        [
+            "tippecanoe",
+            "-Z5",
+            "-z14",
+            "-zg",
+            "--projection=EPSG:4326",
+            "-o",
+            output_path,
+            "-l",
+            "data",
+            input_path,
+            "--force",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
 
 
 def to_pmtiles(file_path: str):
@@ -24,24 +50,7 @@ def to_pmtiles(file_path: str):
             capture_output=True,  # Capture stdout and stderr
             text=True,  # Return strings instead of bytes
         )
-    subprocess.run(
-        [
-            "tippecanoe",
-            "-Z5",
-            "-z14",
-            "-zg",
-            "--projection=EPSG:4326",
-            "-o",
-            pmtiles_path,
-            "-l",
-            "data",
-            fgb_path or file_path,
-            "--force",
-        ],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+    call_tippecanoe(fgb_path or file_path, pmtiles_path)
 
 
 @shared_task
@@ -70,4 +79,34 @@ def generate_pmtiles(id: int):
 
 @shared_task
 def generate_scenario_pmtiles(id: int):
-    return None
+    ScenarioFile = apps.get_model("datasets", "ScenarioFile")
+    sf = ScenarioFile.objects.get(id=id)
+    vf = sf.scenario.vector_dataset.latest_file()
+    if not vf:
+        print(
+            f"There is not a VectorFile associated with the Scenario {sf.scenario.name}"
+        )
+        sf.status = "error"
+        sf.save(update_fields=["status"])
+
+    sf.status = "processing"
+    sf.save(update_fields=["status"])
+
+    try:
+        vector = gpd.read_file(get_file_variant(vf.file.path, "fgb"))
+        model = sf.scenario.model
+        delimiter = detect_csv_delimiter(sf.file.path)
+        model_data = pd.read_csv(sf.file.path, sep=delimiter)
+        columns = [f.get("column") for f in json.loads(model.filter_fields)] + ["id"]
+        fgb_path = get_file_variant(sf.file.path, "fgb")
+        vector.merge(model_data[columns], on="id").to_file(
+            fgb_path, driver="FlatGeobuf"
+        )
+        call_tippecanoe(fgb_path, get_file_variant(sf.file.path, "pmtiles"))
+
+        sf.status = "ready"
+        sf.save(update_fields=["status"])
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        sf.status = "error"
+        sf.save(update_fields=["status"])

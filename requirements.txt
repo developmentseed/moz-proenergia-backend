@@ -37,3 +37,7 @@ coverage==7.6.9
 celery==5.4.0
 django-celery-results==2.5.1
 django-celery-beat==2.8.0
+
+# Pandas
+pandas==3.0.0
+geopandas==1.1.2
