@@ -44,20 +44,21 @@ sudo -u proenergia nano /var/www/proenergia/app/.env
 ```
 Update with your actual values (domain, database password, secret key).
 
-### 5. Services & Webhook Setup
+### 5. Complete Setup (Services, SSL, Webhook)
 ```bash
 ./scripts/03_setup_services.sh your-domain.com admin@your-domain.com
 ```
 
-This will:
-- Configure nginx and SSL
-- Set up the application service
-- Install the deployment script
-- **Set up the webhook listener and display a webhook secret**
+This automatically:
+- Configures nginx with SSL (Let's Encrypt)
+- Sets up the application service (systemd)
+- Installs the deployment script
+- **Sets up webhook listener for automated deployment**
+- **Displays a webhook secret - save this!**
 
-### 6. Configure GitHub Webhook
+### 6. Enable Automated Deployment
 
-Using the webhook secret displayed in step 5:
+Using the webhook secret from step 5:
 
 1. Go to your repository Settings → Webhooks → Add webhook
 2. **Payload URL**: `https://your-domain.com/deploy-webhook`
@@ -68,15 +69,9 @@ Using the webhook secret displayed in step 5:
 
 ## Deployment
 
-### Automatic Deployment
-Once configured, pushes to the `main` branch automatically deploy to your server.
-
-### Manual Deployment
-To manually deploy the latest changes:
-
-```bash
-ssh ubuntu@your-server.com 'sudo deploy-proenergia'
-```
+After initial setup, deployments are automatic:
+- **Automatic**: Push to `main` branch → GitHub webhook → Server deploys
+- **Manual**: `ssh ubuntu@your-server.com 'sudo deploy-proenergia'`
 
 ## Service Management
 

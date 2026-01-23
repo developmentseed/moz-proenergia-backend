@@ -31,11 +31,3 @@ echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
 echo "=== Application update complete ==="
-echo ""
-echo "NOTE: This version does not restart the service."
-echo "To restart the service, run one of these commands:"
-echo "  - As ubuntu user: sudo systemctl restart proenergia"
-echo "  - Using wrapper: sudo /usr/local/bin/deploy-proenergia"
-echo ""
-echo "To check service status:"
-echo "  systemctl status proenergia"

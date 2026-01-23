@@ -55,44 +55,21 @@ else
     exit 1
 fi
 
-# Add webhook location to nginx config if not already present
-NGINX_CONFIG="/etc/nginx/sites-available/proenergia.conf"
-if [ -f "$NGINX_CONFIG" ]; then
-    if ! grep -q "/deploy-webhook" "$NGINX_CONFIG"; then
-        echo "Adding webhook endpoint to nginx configuration..."
-        
-        # Insert webhook location before the closing } of server block
-        sed -i '/^[[:space:]]*location \/ {/i\
-    # Webhook endpoint for automated deployment\
-    location /deploy-webhook {\
-        limit_except POST { deny all; }\
-        proxy_pass http://127.0.0.1:9001/webhook;\
-        proxy_set_header Host $host;\
-        proxy_set_header X-Real-IP $remote_addr;\
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\
-        proxy_pass_header X-GitHub-Event;\
-        proxy_pass_header X-Hub-Signature-256;\
-        proxy_pass_header X-GitHub-Delivery;\
-        proxy_connect_timeout 10s;\
-        proxy_send_timeout 10s;\
-        proxy_read_timeout 10s;\
-        access_log /var/log/nginx/webhook_access.log;\
-        error_log /var/log/nginx/webhook_error.log;\
-    }\
-' "$NGINX_CONFIG"
-        
-        # Test and reload nginx
-        if nginx -t; then
-            systemctl reload nginx
-            echo "✓ Nginx configuration updated"
-        else
-            echo "✗ Nginx configuration test failed"
-            echo "Please check the configuration manually"
-        fi
-    else
-        echo "Webhook endpoint already configured in nginx"
-    fi
+# Test and reload nginx (webhook location is already in the template)
+if nginx -t; then
+    systemctl reload nginx
+    echo "✓ Nginx configuration valid"
+else
+    echo "✗ Nginx configuration test failed"
+    echo "Please check the configuration manually"
+    exit 1
 fi
+
+# Save webhook secret for reference
+WEBHOOK_SECRET_FILE="/var/www/proenergia/webhook_secret.txt"
+echo "$WEBHOOK_SECRET" > "$WEBHOOK_SECRET_FILE"
+chmod 600 "$WEBHOOK_SECRET_FILE"
+chown proenergia:proenergia "$WEBHOOK_SECRET_FILE"
 
 echo ""
 echo "=== Webhook setup complete ==="
