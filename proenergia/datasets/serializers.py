@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import DataModel, Scenario, ScenarioFile, VectorDataset, VectorFile
+from .models import DataModel, Scenario, ScenarioFile, VectorDataset
 
 
 class VectorDatasetSerializer(serializers.ModelSerializer):
@@ -25,12 +25,8 @@ class VectorDatasetSerializer(serializers.ModelSerializer):
         ]
 
     def get_raw_file(self, obj):
-        try:
-            # update status to ready when we have the file conversion working
-            vector_file = obj.files.latest("created")
-            return vector_file.file.name
-        except VectorFile.DoesNotExist:
-            return None
+        vector_file = obj.latest_file()
+        return vector_file.file.name if vector_file else None
 
 
 class ScenarioSerializer(serializers.ModelSerializer):
@@ -46,9 +42,8 @@ class ScenarioSerializer(serializers.ModelSerializer):
 
     def get_model_file(self, obj):
         try:
-            # update status to ready when we have the file conversion working
-            model_file = obj.files.latest("created")
-            return model_file.file.name
+            model_file = obj.latest_file()
+            return model_file.file.name if model_file else None
         except ScenarioFile.DoesNotExist:
             return None
 

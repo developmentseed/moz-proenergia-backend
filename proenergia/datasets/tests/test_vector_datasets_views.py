@@ -53,6 +53,7 @@ class TestVectorDatasetListDetailViews(APITestCase):
             dataset=self.dataset_1,
             file=file,
             created_by=self.superadmin_user,
+            status="ready",
         )
         file = SimpleUploadedFile(
             "new.geojson", b"file_content", content_type="application/json"
@@ -61,6 +62,7 @@ class TestVectorDatasetListDetailViews(APITestCase):
             dataset=self.dataset_1,
             file=file,
             created_by=self.superadmin_user,
+            status="ready",
         )
         self.url = reverse("datasets:vector-list")
 
@@ -133,6 +135,7 @@ class TestVectorDatasetListDetailViews(APITestCase):
             dataset=self.dataset_2,
             file=file,
             created_by=self.superadmin_user,
+            status="ready",
         )
         self.client.force_authenticate(user=self.superadmin_user)
 

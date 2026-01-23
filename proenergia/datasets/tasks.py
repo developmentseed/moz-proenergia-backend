@@ -66,3 +66,8 @@ def generate_pmtiles(id: int):
         print(f"Unexpected error: {e}")
         vf.status = "error"
         vf.save(update_fields=["status"])
+
+
+@shared_task
+def generate_scenario_pmtiles(id: int):
+    return None

@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
@@ -8,7 +10,8 @@ from ..models import DataModel, Scenario, ScenarioFile, VectorDataset
 
 
 class TestDataModelViews(APITestCase):
-    def setUp(self):
+    @patch("proenergia.datasets.models.generate_scenario_pmtiles.delay")
+    def setUp(self, mock_task):
         # Clean up any leftover files from previous test runs
         ScenarioFile.objects.all().delete()
         self.superadmin_user = get_user_model().objects.create_superuser(
@@ -94,6 +97,7 @@ class TestDataModelViews(APITestCase):
             scenario=self.scenario_1,
             file=file,
             created_by=self.superadmin_user,
+            status="ready",
         )
         file = SimpleUploadedFile(
             "new.csv", b"id,col_b\n1,blah", content_type="text/csv"
@@ -102,10 +106,12 @@ class TestDataModelViews(APITestCase):
             scenario=self.scenario_2,
             file=file,
             created_by=self.superadmin_user,
+            status="ready",
         )
         self.url = reverse("datasets:model-list")
 
-    def test_model_list_unauthenticated(self):
+    @patch("proenergia.datasets.models.generate_scenario_pmtiles.delay")
+    def test_model_list_unauthenticated(self, mock_task):
         req = self.client.get(self.url)
         assert req.status_code == status.HTTP_200_OK
         assert req.data.get("count") == 2
@@ -152,7 +158,8 @@ class TestDataModelViews(APITestCase):
             }
         ]
 
-    def test_model_detail_unauthenticated(self):
+    @patch("proenergia.datasets.models.generate_scenario_pmtiles.delay")
+    def test_model_detail_unauthenticated(self, mock_task):
         url = reverse("datasets:model-detail", args=[self.model_1.id])
         # upload files again
         file = SimpleUploadedFile(
@@ -162,6 +169,7 @@ class TestDataModelViews(APITestCase):
             scenario=self.scenario_1,
             file=file,
             created_by=self.superadmin_user,
+            status="ready",
         )
         file = SimpleUploadedFile(
             "new.csv", b"id,col_b\n1,blah", content_type="text/csv"
@@ -170,6 +178,7 @@ class TestDataModelViews(APITestCase):
             scenario=self.scenario_2,
             file=file,
             created_by=self.superadmin_user,
+            status="ready",
         )
         # execute request
         req = self.client.get(url)

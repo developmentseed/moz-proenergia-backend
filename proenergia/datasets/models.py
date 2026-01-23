@@ -1,6 +1,7 @@
 from os.path import splitext
 
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models.fields.files import default_storage
@@ -8,7 +9,7 @@ from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from django.utils.text import slugify
 
-from proenergia.datasets.tasks import generate_pmtiles
+from proenergia.datasets.tasks import generate_pmtiles, generate_scenario_pmtiles
 
 
 class VectorDataset(models.Model):
@@ -28,6 +29,12 @@ class VectorDataset(models.Model):
 
     def __str__(self):
         return self.name
+
+    def latest_file(self):
+        try:
+            return self.files.filter(status="ready").latest("created")
+        except ObjectDoesNotExist:
+            return None
 
     class Meta:
         ordering = ["id"]
@@ -73,10 +80,8 @@ class VectorFile(models.Model):
 
 
 @receiver(post_save, sender=VectorFile)
-def trigger_generate_pm_tiles(sender, instance, created, **kwargs):
-    """Trigger generate_pm_tiles Celery task when a new VectorFile instance is created.
-    Only runs when not in test mode.
-    """
+def trigger_generate_pmtiles(sender, instance, created, **kwargs):
+    """Trigger generate_pm_tiles Celery task when a new VectorFile instance is created."""
     if created:
         generate_pmtiles.delay(instance.id)
 
@@ -120,6 +125,12 @@ class Scenario(models.Model):
     def __str__(self):
         return f"{self.name}"
 
+    def latest_file(self):
+        try:
+            return self.files.filter(status="ready").latest("created")
+        except ObjectDoesNotExist:
+            return None
+
     class Meta:
         ordering = ["id"]
 
@@ -151,3 +162,10 @@ class ScenarioFile(models.Model):
 
     class Meta:
         ordering = ["id"]
+
+
+@receiver(post_save, sender=ScenarioFile)
+def trigger_generate_scenario_pmtiles(sender, instance, created, **kwargs):
+    """Trigger generate_scenario_pmtiles Celery task when a new ScenarioFile instance is created."""
+    if created:
+        generate_scenario_pmtiles.delay(instance.id)
