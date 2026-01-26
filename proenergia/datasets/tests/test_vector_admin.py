@@ -293,7 +293,7 @@ class VectorFileAdmin(TestCase):
             last_updated_by=self.admin_user,
         )
 
-    @patch("proenergia.datasets.models.generate_pmtiles.delay")
+    @patch("proenergia.datasets.tasks.generate_pmtiles.delay")
     def test_vector_file_creation_superadmin(self, mock_generate_pmtiles):
         self.client.login(username="superadmin", password="testpass123")
         url = reverse("admin:datasets_vectorfile_add")
@@ -325,7 +325,7 @@ class VectorFileAdmin(TestCase):
         # Delete file
         VectorFile.objects.all().delete()
 
-    @patch("proenergia.datasets.models.generate_pmtiles.delay")
+    @patch("proenergia.datasets.tasks.generate_pmtiles.delay")
     def test_vector_file_creation_admin(self, mock_generate_pmtiles):
         self.client.login(username="admin_user", password="testpass123")
         url = reverse("admin:datasets_vectorfile_add")

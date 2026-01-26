@@ -6,12 +6,13 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from ..models import DataModel, Scenario, ScenarioFile, VectorDataset
+from ..models import DataModel, Scenario, ScenarioFile, VectorDataset, VectorFile
 
 
 class TestDataModelViews(APITestCase):
-    @patch("proenergia.datasets.models.generate_scenario_pmtiles.delay")
-    def setUp(self, mock_task):
+    @patch("proenergia.datasets.tasks.generate_scenario_pmtiles.delay")
+    @patch("proenergia.datasets.tasks.generate_pmtiles.delay")
+    def setUp(self, mock_1, mock_2):
         # Clean up any leftover files from previous test runs
         ScenarioFile.objects.all().delete()
         self.superadmin_user = get_user_model().objects.create_superuser(
@@ -33,6 +34,15 @@ class TestDataModelViews(APITestCase):
             is_approved=True,
             created_by=self.superadmin_user,
             last_updated_by=self.superadmin_user,
+        )
+        file = SimpleUploadedFile(
+            "old.geojson", b"file_content", content_type="application/json"
+        )
+        self.vector_file_1 = VectorFile.objects.create(
+            dataset=self.dataset_1,
+            file=file,
+            created_by=self.superadmin_user,
+            status="ready",
         )
         self.dataset_2 = VectorDataset.objects.create(
             name="Population Clusters",
@@ -110,7 +120,7 @@ class TestDataModelViews(APITestCase):
         )
         self.url = reverse("datasets:model-list")
 
-    @patch("proenergia.datasets.models.generate_scenario_pmtiles.delay")
+    @patch("proenergia.datasets.tasks.generate_scenario_pmtiles.delay")
     def test_model_list_unauthenticated(self, mock_task):
         req = self.client.get(self.url)
         assert req.status_code == status.HTTP_200_OK
@@ -158,7 +168,7 @@ class TestDataModelViews(APITestCase):
             }
         ]
 
-    @patch("proenergia.datasets.models.generate_scenario_pmtiles.delay")
+    @patch("proenergia.datasets.tasks.generate_scenario_pmtiles.delay")
     def test_model_detail_unauthenticated(self, mock_task):
         url = reverse("datasets:model-detail", args=[self.model_1.id])
         # upload files again

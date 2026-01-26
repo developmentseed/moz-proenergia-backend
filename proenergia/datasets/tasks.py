@@ -77,6 +77,23 @@ def generate_pmtiles(id: int):
         vf.save(update_fields=["status"])
 
 
+def merge_vector_scenario_files(
+    vector_file_path: str, scenario_file_path: str, filter_fields, merged_file_path: str
+):
+    """Merge a vector geospatial file and a scenario CSV file using geopandas.
+    Add the columns from the CSV based on the filter_fields definition.
+    The resulting file will be a FlatGeobuf.
+    """
+    vector = gpd.read_file(vector_file_path)
+    delimiter = detect_csv_delimiter(scenario_file_path)
+    model_data = pd.read_csv(scenario_file_path, sep=delimiter)
+    columns = [f.get("column") for f in json.loads(filter_fields)] + ["id"]
+    vector.merge(model_data[columns], on="id").to_file(
+        merged_file_path, driver="FlatGeobuf"
+    )
+    print(f"Merged file created on {merged_file_path}.")
+
+
 @shared_task
 def generate_scenario_pmtiles(id: int):
     ScenarioFile = apps.get_model("datasets", "ScenarioFile")
@@ -93,14 +110,13 @@ def generate_scenario_pmtiles(id: int):
     sf.save(update_fields=["status"])
 
     try:
-        vector = gpd.read_file(get_file_variant(vf.file.path, "fgb"))
         model = sf.scenario.model
-        delimiter = detect_csv_delimiter(sf.file.path)
-        model_data = pd.read_csv(sf.file.path, sep=delimiter)
-        columns = [f.get("column") for f in json.loads(model.filter_fields)] + ["id"]
         fgb_path = get_file_variant(sf.file.path, "fgb")
-        vector.merge(model_data[columns], on="id").to_file(
-            fgb_path, driver="FlatGeobuf"
+        merge_vector_scenario_files(
+            get_file_variant(vf.file.path, "fgb"),
+            sf.file.path,
+            model.filter_fields,
+            fgb_path,
         )
         call_tippecanoe(fgb_path, get_file_variant(sf.file.path, "pmtiles"))
 
