@@ -1,5 +1,9 @@
 import os
 from celery import Celery
+from dotenv import load_dotenv
+
+# Load environment variables from .env file if it exists
+load_dotenv()
 
 # Set the default Django settings module for the 'celery' program.
 # This project uses django-configurations, so we need to set both variables.

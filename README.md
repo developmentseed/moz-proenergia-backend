@@ -23,14 +23,19 @@ Mozambique Proenergia backend.
 createdb proenergia
 createdb proenergia_test
 
-# Set environment variables
-export DJANGO_DB_URL="postgis://user:password@localhost:5432/proenergia"
-export DJANGO_SECRET_KEY="anyTextIsS3cr3t"
-
 # Install dependencies
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+
+# Set up environment variables (choose one method):
+# Method 1: Copy and configure .env file (recommended)
+cp .env.example .env
+# Edit .env file with your database credentials
+
+# Method 2: Export variables directly
+export DJANGO_DB_URL="postgis://user:password@localhost:5432/proenergia"
+export DJANGO_SECRET_KEY="anyTextIsS3cr3t"
 ```
 
 **2. Install RabbitMQ:**
@@ -61,23 +66,18 @@ python manage.py runserver
 **Start Celery worker** (separate terminal):
 ```bash
 source venv/bin/activate
-DJANGO_DB_URL="postgis://postgres:postgres@localhost:5432/proenergia" \
-DJANGO_SECRET_KEY="anyTextIsS3cr3t" \
+# If using .env file, variables are loaded automatically
 celery -A proenergia worker --loglevel=info
 ```
 
 **Optional - Start Celery beat for scheduled tasks:**
 ```bash
-DJANGO_DB_URL="postgis://postgres:postgres@localhost:5432/proenergia" \
-DJANGO_SECRET_KEY="anyTextIsS3cr3t" \
 celery -A proenergia beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 ```
 
 **Optional - Monitor with Flower:**
 ```bash
 pip install flower
-DJANGO_DB_URL="postgis://postgres:postgres@localhost:5432/proenergia" \
-DJANGO_SECRET_KEY="anyTextIsS3cr3t" \
 celery -A proenergia flower --address=127.0.0.1 --port=5555
 ```
 Access at http://localhost:5555
@@ -110,10 +110,26 @@ pytest proenergia/tasks/test_tasks.py -v
 
 ## Configuration
 
+### Environment Variables
+
+Environment variables can be configured in two ways:
+
+1. **Using a `.env` file** (recommended for local development):
+   - Copy `.env.example` to `.env` in the project root
+   - Edit the values in `.env` file
+   - Variables are automatically loaded when running Django or Celery commands
+
+2. **Using export commands** (takes precedence over `.env` file):
+   - Export variables in your shell before running commands
+   - Useful for CI/CD or production environments
+
 **Key environment variables:**
 - `DJANGO_DB_URL` - Database connection string  
 - `DJANGO_SECRET_KEY` - Django secret key
 - `CELERY_BROKER_URL` - RabbitMQ connection (default: `amqp://guest:guest@localhost:5672//`)
+- `DJANGO_DEBUG` - Debug mode (default: `False`)
+
+See `.env.example` for a complete list of available variables.
 
 ## Available Tasks
 
@@ -123,8 +139,8 @@ pytest proenergia/tasks/test_tasks.py -v
 
 - **Connection refused to RabbitMQ**: Check `sudo rabbitmqctl status`  
 - **Tasks not executing**: Ensure Celery worker is running with proper environment variables
-- **Database connection errors**: Set `DJANGO_DB_URL` when starting Celery worker
-- **Settings import errors**: Ensure `DJANGO_SECRET_KEY` is set for Celery commands
+- **Database connection errors**: Check `DJANGO_DB_URL` in your `.env` file or environment
+- **Settings import errors**: Ensure `DJANGO_SECRET_KEY` is set in `.env` file or environment
 
 **Logs:**
 - Django: console output from `runserver`
