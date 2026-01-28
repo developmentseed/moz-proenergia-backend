@@ -10,7 +10,7 @@ from django.apps import apps
 from proenergia.datasets.utils import detect_csv_delimiter, get_file_variant
 
 
-def call_tippecanoe(input_path, output_path):
+def call_tippecanoe(input_path: str, output_path: str):
     subprocess.run(
         [
             "tippecanoe",
@@ -87,7 +87,7 @@ def merge_vector_scenario_files(
     vector = gpd.read_file(vector_file_path)
     delimiter = detect_csv_delimiter(scenario_file_path)
     model_data = pd.read_csv(scenario_file_path, sep=delimiter)
-    columns = [f.get("column") for f in json.loads(filter_fields)] + ["id"]
+    columns = [f.get("column") for f in filter_fields] + ["id"]
     vector.merge(model_data[columns], on="id").to_file(
         merged_file_path, driver="FlatGeobuf"
     )
