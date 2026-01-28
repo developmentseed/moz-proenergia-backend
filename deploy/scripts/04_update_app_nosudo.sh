@@ -30,27 +30,4 @@ python manage.py migrate
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
-echo "Restarting application service..."
-sudo systemctl restart proenergia
-
-echo "Waiting for service to start..."
-sleep 5
-
-echo "Checking service status..."
-if systemctl is-active --quiet proenergia; then
-    echo "✓ Service is running"
-else
-    echo "✗ Service failed to start"
-    echo "Check logs: sudo journalctl -u proenergia -f"
-    exit 1
-fi
-
-echo "Running basic health check..."
-if curl -f -s http://localhost:8000/admin/ > /dev/null; then
-    echo "✓ Application is responding"
-else
-    echo "⚠ Application may not be responding correctly"
-    echo "Check logs: sudo journalctl -u proenergia -f"
-fi
-
-echo "=== Update complete ==="
+echo "=== Application update complete ==="
