@@ -1,4 +1,3 @@
-import json
 import shutil
 from os.path import join
 from pathlib import Path
@@ -79,20 +78,18 @@ class TestMergeVectorScenarioFiles(TestCase):
         vector = "./proenergia/datasets/fixtures/sample.fgb"
         scenario = "./proenergia/datasets/fixtures/scenario.csv"
         scenario_fgb = join(mkdtemp(), "scenario.fgb")
-        filter_fields = json.dumps(
-            [
-                {
-                    "label": "Cost",
-                    "description": "Cost to eletrify",
-                    "column": "cost",
-                },
-                {
-                    "label": "Location",
-                    "description": "Location of the entity",
-                    "column": "location",
-                },
-            ]
-        )
+        filter_fields = [
+            {
+                "label": "Cost",
+                "description": "Cost to eletrify",
+                "column": "cost",
+            },
+            {
+                "label": "Location",
+                "description": "Location of the entity",
+                "column": "location",
+            },
+        ]
         merge_vector_scenario_files(vector, scenario, filter_fields, scenario_fgb)
         merged_gdf = gpd.read_file(scenario_fgb)
 
