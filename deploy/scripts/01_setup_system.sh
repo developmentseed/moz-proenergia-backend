@@ -70,6 +70,10 @@ sudo mkdir -p /var/log/proenergia
 sudo chown -R proenergia:proenergia /var/www/proenergia
 sudo chown -R proenergia:proenergia /var/log/proenergia
 
+# Create deployment log with proper permissions
+sudo touch /var/log/proenergia/deployment.log
+sudo chmod 666 /var/log/proenergia/deployment.log
+
 echo "=== System setup complete ==="
 echo "Next steps:"
 echo "1. Run 02_setup_app.sh as the proenergia user"
