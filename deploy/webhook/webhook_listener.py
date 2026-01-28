@@ -122,14 +122,17 @@ class WebhookHandler(BaseHTTPRequestHandler):
     def trigger_deployment(self):
         """Execute the deployment script"""
         try:
+            # Open log file for deployment output
+            log_file = open("/var/log/proenergia/deployment.log", "a")
+            
             # Run deployment in background to avoid blocking the webhook response
-            subprocess.Popen(
+            process = subprocess.Popen(
                 ["sudo", DEPLOY_SCRIPT],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stdout=log_file,
+                stderr=log_file,
                 stdin=subprocess.DEVNULL,
             )
-            logger.info("Deployment script started")
+            logger.info(f"Deployment script started with PID: {process.pid}")
         except Exception as e:
             logger.error(f"Failed to trigger deployment: {e}")
             raise
