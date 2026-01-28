@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 def main():
     # Load environment variables from .env file if it exists
     load_dotenv()
-    
+
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "proenergia.config")
     os.environ.setdefault("DJANGO_CONFIGURATION", "Local")
 
