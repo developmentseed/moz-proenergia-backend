@@ -6,6 +6,10 @@ https://docs.djangoproject.com/en/2.0/howto/deployment/wsgi/gunicorn/
 """
 
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file if it exists
+load_dotenv()
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "proenergia.config")
 os.environ.setdefault("DJANGO_CONFIGURATION", "Production")
