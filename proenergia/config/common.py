@@ -214,7 +214,7 @@ class Common(Configuration):
     }
     # API Docs
     SPECTACULAR_SETTINGS = {
-        "TITLE": "Mozambique PROENERGIA API Docs",
+        "TITLE": "Mozambique PROENERGIA++ API Docs",
         "DESCRIPTION": "Mozambique PROENERGIA+ API Documentation",
         "VERSION": "1.0.0",
         "SERVE_INCLUDE_SCHEMA": False,
