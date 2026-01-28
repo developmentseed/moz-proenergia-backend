@@ -1,14 +1,18 @@
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from ..models import DataModel, Scenario, ScenarioFile, VectorDataset
+from ..models import DataModel, Scenario, ScenarioFile, VectorDataset, VectorFile
 
 
 class TestDataModelViews(APITestCase):
-    def setUp(self):
+    @patch("proenergia.datasets.tasks.generate_scenario_pmtiles.delay")
+    @patch("proenergia.datasets.tasks.generate_pmtiles.delay")
+    def setUp(self, mock_1, mock_2):
         # Clean up any leftover files from previous test runs
         ScenarioFile.objects.all().delete()
         self.superadmin_user = get_user_model().objects.create_superuser(
@@ -30,6 +34,15 @@ class TestDataModelViews(APITestCase):
             is_approved=True,
             created_by=self.superadmin_user,
             last_updated_by=self.superadmin_user,
+        )
+        file = SimpleUploadedFile(
+            "old.geojson", b"file_content", content_type="application/json"
+        )
+        self.vector_file_1 = VectorFile.objects.create(
+            dataset=self.dataset_1,
+            file=file,
+            created_by=self.superadmin_user,
+            status="ready",
         )
         self.dataset_2 = VectorDataset.objects.create(
             name="Population Clusters",
@@ -94,6 +107,7 @@ class TestDataModelViews(APITestCase):
             scenario=self.scenario_1,
             file=file,
             created_by=self.superadmin_user,
+            status="ready",
         )
         file = SimpleUploadedFile(
             "new.csv", b"id,col_b\n1,blah", content_type="text/csv"
@@ -102,10 +116,12 @@ class TestDataModelViews(APITestCase):
             scenario=self.scenario_2,
             file=file,
             created_by=self.superadmin_user,
+            status="ready",
         )
         self.url = reverse("datasets:model-list")
 
-    def test_model_list_unauthenticated(self):
+    @patch("proenergia.datasets.tasks.generate_scenario_pmtiles.delay")
+    def test_model_list_unauthenticated(self, mock_task):
         req = self.client.get(self.url)
         assert req.status_code == status.HTTP_200_OK
         assert req.data.get("count") == 2
@@ -152,7 +168,8 @@ class TestDataModelViews(APITestCase):
             }
         ]
 
-    def test_model_detail_unauthenticated(self):
+    @patch("proenergia.datasets.tasks.generate_scenario_pmtiles.delay")
+    def test_model_detail_unauthenticated(self, mock_task):
         url = reverse("datasets:model-detail", args=[self.model_1.id])
         # upload files again
         file = SimpleUploadedFile(
@@ -162,6 +179,7 @@ class TestDataModelViews(APITestCase):
             scenario=self.scenario_1,
             file=file,
             created_by=self.superadmin_user,
+            status="ready",
         )
         file = SimpleUploadedFile(
             "new.csv", b"id,col_b\n1,blah", content_type="text/csv"
@@ -170,6 +188,7 @@ class TestDataModelViews(APITestCase):
             scenario=self.scenario_2,
             file=file,
             created_by=self.superadmin_user,
+            status="ready",
         )
         # execute request
         req = self.client.get(url)
