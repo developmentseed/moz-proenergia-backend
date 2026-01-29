@@ -10,8 +10,8 @@ from ..models import DataModel, Scenario, ScenarioFile, VectorDataset, VectorFil
 
 
 class TestDataModelViews(APITestCase):
-    @patch("proenergia.datasets.tasks.generate_scenario_pmtiles.delay")
-    @patch("proenergia.datasets.tasks.generate_pmtiles.delay")
+    @patch("proenergia.datasets.tasks.generate_scenario_pmtiles.delay_on_commit")
+    @patch("proenergia.datasets.tasks.generate_pmtiles.delay_on_commit")
     def setUp(self, mock_1, mock_2):
         # Clean up any leftover files from previous test runs
         ScenarioFile.objects.all().delete()
@@ -120,7 +120,7 @@ class TestDataModelViews(APITestCase):
         )
         self.url = reverse("datasets:model-list")
 
-    @patch("proenergia.datasets.tasks.generate_scenario_pmtiles.delay")
+    @patch("proenergia.datasets.tasks.generate_scenario_pmtiles.delay_on_commit")
     def test_model_list_unauthenticated(self, mock_task):
         req = self.client.get(self.url)
         assert req.status_code == status.HTTP_200_OK
@@ -168,7 +168,7 @@ class TestDataModelViews(APITestCase):
             }
         ]
 
-    @patch("proenergia.datasets.tasks.generate_scenario_pmtiles.delay")
+    @patch("proenergia.datasets.tasks.generate_scenario_pmtiles.delay_on_commit")
     def test_model_detail_unauthenticated(self, mock_task):
         url = reverse("datasets:model-detail", args=[self.model_1.id])
         # upload files again

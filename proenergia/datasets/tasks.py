@@ -1,3 +1,4 @@
+import logging
 import subprocess
 from os.path import basename, dirname, join, splitext
 
@@ -7,6 +8,8 @@ from celery import shared_task
 from django.apps import apps
 
 from proenergia.datasets.utils import detect_csv_delimiter, get_file_variant
+
+logger = logging.getLogger(__name__)
 
 
 def call_tippecanoe(input_path: str, output_path: str):
@@ -53,7 +56,7 @@ def to_pmtiles(file_path: str):
 
 
 @shared_task
-def generate_pmtiles(id: int):
+def generate_pmtiles(self, id: int):
     VectorFile = apps.get_model("datasets", "VectorFile")
 
     vf = VectorFile.objects.get(id=id)
@@ -65,13 +68,13 @@ def generate_pmtiles(id: int):
         vf.status = "ready"
         vf.save(update_fields=["status"])
     except subprocess.CalledProcessError as e:
-        print(f"Command failed with exit code {e.returncode}")
-        print(f"STDOUT: {e.stdout}")
-        print(f"STDERR: {e.stderr}")
+        logger.error(f"Command failed with exit code {e.returncode}")
+        logger.error(f"STDOUT: {e.stdout}")
+        logger.error(f"STDERR: {e.stderr}")
         vf.status = "error"
         vf.save(update_fields=["status"])
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        logger.error(f"Unexpected error: {e}")
         vf.status = "error"
         vf.save(update_fields=["status"])
 
@@ -90,16 +93,17 @@ def merge_vector_scenario_files(
     vector.merge(model_data[columns], on="id").to_file(
         merged_file_path, driver="FlatGeobuf"
     )
-    print(f"Merged file created on {merged_file_path}.")
+    logger.info(f"Merged file created on {merged_file_path}.")
 
 
 @shared_task
-def generate_scenario_pmtiles(id: int):
+def generate_scenario_pmtiles(self, id: int):
     ScenarioFile = apps.get_model("datasets", "ScenarioFile")
+
     sf = ScenarioFile.objects.get(id=id)
     vf = sf.scenario.vector_dataset.latest_file()
     if not vf:
-        print(
+        logger.error(
             f"There is not a VectorFile associated with the Scenario {sf.scenario.name}"
         )
         sf.status = "error"
