@@ -55,19 +55,11 @@ def to_pmtiles(file_path: str):
     call_tippecanoe(fgb_path or file_path, pmtiles_path)
 
 
-@shared_task(bind=True, max_retries=5, default_retry_delay=2)
+@shared_task
 def generate_pmtiles(self, id: int):
     VectorFile = apps.get_model("datasets", "VectorFile")
 
-    try:
-        vf = VectorFile.objects.get(id=id)
-    except VectorFile.DoesNotExist as e:
-        # Retry with exponential backoff
-        logger.warning(
-            f"VectorFile {id} not found, retrying... (attempt {self.request.retries + 1})"
-        )
-        raise self.retry(exc=e, countdown=2**self.request.retries)
-
+    vf = VectorFile.objects.get(id=id)
     vf.status = "processing"
     vf.save(update_fields=["status"])
 
@@ -104,19 +96,11 @@ def merge_vector_scenario_files(
     logger.info(f"Merged file created on {merged_file_path}.")
 
 
-@shared_task(bind=True, max_retries=5, default_retry_delay=2)
+@shared_task
 def generate_scenario_pmtiles(self, id: int):
     ScenarioFile = apps.get_model("datasets", "ScenarioFile")
 
-    try:
-        sf = ScenarioFile.objects.get(id=id)
-    except ScenarioFile.DoesNotExist as e:
-        # Retry with exponential backoff
-        logger.warning(
-            f"ScenarioFile {id} not found, retrying... (attempt {self.request.retries + 1})"
-        )
-        raise self.retry(exc=e, countdown=2**self.request.retries)
-
+    sf = ScenarioFile.objects.get(id=id)
     vf = sf.scenario.vector_dataset.latest_file()
     if not vf:
         logger.error(
