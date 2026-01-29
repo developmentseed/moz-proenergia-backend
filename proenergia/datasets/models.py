@@ -83,7 +83,7 @@ class VectorFile(models.Model):
 def trigger_generate_pmtiles(sender, instance, created, **kwargs):
     """Trigger generate_pm_tiles Celery task when a new VectorFile instance is created."""
     if created:
-        generate_pmtiles.delay_on_commit(instance.id)
+        generate_pmtiles.delay(instance.id)
 
 
 @receiver(pre_delete, sender=VectorFile)
@@ -168,4 +168,4 @@ class ScenarioFile(models.Model):
 def trigger_generate_scenario_pmtiles(sender, instance, created, **kwargs):
     """Trigger generate_scenario_pmtiles Celery task when a new ScenarioFile instance is created."""
     if created:
-        generate_scenario_pmtiles.delay_on_commit(instance.id)
+        generate_scenario_pmtiles.delay(instance.id)
