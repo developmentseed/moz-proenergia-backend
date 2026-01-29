@@ -38,6 +38,9 @@ sudo apt install -y nginx
 # Install certbot for SSL
 sudo apt install -y certbot python3-certbot-nginx
 
+# Install tippecanoe and GDAL
+sudo apt install -y tippecanoe gdal-bin
+
 # Start and enable PostgreSQL
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
