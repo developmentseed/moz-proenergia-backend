@@ -10,7 +10,7 @@ from ..models import VectorDataset, VectorFile
 
 
 class TestVectorDatasetListDetailViews(APITestCase):
-    @patch("proenergia.datasets.models.generate_pmtiles.delay")
+    @patch("proenergia.datasets.models.generate_pmtiles.delay_on_commit")
     def setUp(self, mock_generate_pmtiles):
         self.superadmin_user = get_user_model().objects.create_superuser(
             username="superadmin",
@@ -126,7 +126,7 @@ class TestVectorDatasetListDetailViews(APITestCase):
         req = self.client.get(url)
         assert req.status_code == status.HTTP_403_FORBIDDEN
 
-    @patch("proenergia.datasets.models.generate_pmtiles.delay")
+    @patch("proenergia.datasets.models.generate_pmtiles.delay_on_commit")
     def test_vector_datasets_detail_superadmin(self, mock_generate_pmtiles):
         file = SimpleUploadedFile(
             "new.kml", b"file_content", content_type="application/json"

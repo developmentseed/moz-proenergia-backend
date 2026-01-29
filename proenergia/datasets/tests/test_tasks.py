@@ -56,7 +56,7 @@ class TestGeneratePmtiles(APITestCase):
             last_updated_by=self.superadmin,
         )
 
-    @patch("proenergia.datasets.tasks.generate_pmtiles.delay")
+    @patch("proenergia.datasets.tasks.generate_pmtiles.delay_on_commit")
     def test_generate_pm_tiles(self, mock_generate_pmtiles):
         self.client.login(username="superadmin", password="testpass123")
         url = reverse("admin:datasets_vectorfile_add")
@@ -100,8 +100,8 @@ class TestMergeVectorScenarioFiles(TestCase):
         self.assertTrue("location" in merged_gdf.columns)
         self.assertFalse("country" in merged_gdf.columns)
 
-    @patch("proenergia.datasets.tasks.generate_pmtiles.delay")
-    @patch("proenergia.datasets.tasks.generate_scenario_pmtiles.delay")
+    @patch("proenergia.datasets.tasks.generate_pmtiles.delay_on_commit")
+    @patch("proenergia.datasets.tasks.generate_scenario_pmtiles.delay_on_commit")
     def test_generate_scenario_pmtiles(self, mock_scenario, mock_2):
         self.superadmin = get_user_model().objects.create_superuser(
             username="superadmin", email="admin@example.com", password="testpass123"

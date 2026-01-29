@@ -1,9 +1,10 @@
 import json
 import logging
+
+from celery.result import AsyncResult
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from celery.result import AsyncResult
 from django_celery_results.models import TaskResult
 
 import proenergia.celery_tasks as celery_tasks
