@@ -1,0 +1,45 @@
+[Unit]
+Description=ProEnergia Celery Beat Scheduler
+After=network.target rabbitmq-server.service postgresql.service
+Wants=rabbitmq-server.service postgresql.service
+
+[Service]
+Type=exec
+User=proenergia
+Group=proenergia
+WorkingDirectory=/var/www/proenergia/app
+Environment=PATH=/var/www/proenergia/app/venv/bin
+Environment=DJANGO_SETTINGS_MODULE=proenergia.config
+Environment=DJANGO_CONFIGURATION=Production
+EnvironmentFile=/var/www/proenergia/app/.env
+
+# Start Celery Beat with database scheduler
+ExecStart=/var/www/proenergia/app/venv/bin/celery -A proenergia beat \
+    --loglevel=${CELERY_LOG_LEVEL:-info} \
+    --scheduler django_celery_beat.schedulers:DatabaseScheduler
+
+# Graceful shutdown
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=10
+
+# Restart policy
+Restart=on-failure
+RestartSec=5
+StartLimitBurst=3
+StartLimitInterval=60
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/proenergia /var/log/proenergia /var/run/proenergia-celery
+
+# Resource limits (Beat uses minimal resources)
+LimitNOFILE=4096
+MemoryHigh=256M
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target

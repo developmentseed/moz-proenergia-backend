@@ -7,6 +7,8 @@ This document contains detailed troubleshooting information for the ProEnergia d
 - **Web Server**: Nginx (reverse proxy, static files, SSL termination)
 - **Application Server**: Gunicorn (WSGI server)
 - **Database**: PostgreSQL 16 with PostGIS extension
+- **Message Broker**: RabbitMQ (for Celery)
+- **Task Queue**: Celery (background tasks and scheduling)
 - **Process Management**: systemd
 - **Deployment**: Webhook listener + deployment wrapper script
 
@@ -26,6 +28,8 @@ This document contains detailed troubleshooting information for the ProEnergia d
 - **Deploy Script**: `/usr/local/bin/deploy-proenergia`
 - **Update Script**: `/var/www/proenergia/app/deploy/scripts/04_update_app_nosudo.sh`
 - **Sudoers Config**: `/etc/sudoers.d/proenergia-deploy`
+- **Celery Worker Service**: `/etc/systemd/system/proenergia-celery.service`
+- **Celery Beat Service**: `/etc/systemd/system/proenergia-celerybeat.service`
 
 ## Monitoring
 
@@ -70,6 +74,37 @@ tail -f /var/log/proenergia/gunicorn_error.log
 
 # Monitor resource usage
 htop  # or top
+```
+
+### Celery and RabbitMQ Monitoring
+```bash
+# Check Celery worker status
+sudo systemctl status proenergia-celery
+
+# Check Celery beat status
+sudo systemctl status proenergia-celerybeat
+
+# View Celery worker logs
+sudo journalctl -u proenergia-celery -f
+
+# View Celery beat logs
+sudo journalctl -u proenergia-celerybeat -f
+
+# Check RabbitMQ status
+sudo systemctl status rabbitmq-server
+sudo rabbitmqctl status
+
+# List RabbitMQ queues
+sudo rabbitmqctl list_queues name messages consumers
+
+# Check RabbitMQ users and vhosts
+sudo rabbitmqctl list_users
+sudo rabbitmqctl list_vhosts
+
+# Monitor Celery tasks (from app directory)
+cd /var/www/proenergia/app
+sudo -u proenergia bash -c "source venv/bin/activate && celery -A proenergia inspect active"
+sudo -u proenergia bash -c "source venv/bin/activate && celery -A proenergia inspect stats"
 ```
 
 ## Common Issues and Solutions
@@ -196,6 +231,79 @@ This means nginx can't connect to Gunicorn.
    ```bash
    sudo systemctl status certbot.timer
    sudo journalctl -u certbot.timer
+   ```
+
+### Celery Worker Not Processing Tasks
+
+1. Check worker is running:
+   ```bash
+   sudo systemctl status proenergia-celery
+   ps aux | grep celery
+   ```
+
+2. Check RabbitMQ connectivity:
+   ```bash
+   sudo rabbitmqctl status
+   sudo rabbitmqctl list_queues
+   ```
+
+3. Verify broker URL in .env:
+   ```bash
+   sudo grep CELERY_BROKER_URL /var/www/proenergia/app/.env
+   ```
+
+4. Test Celery connection manually:
+   ```bash
+   cd /var/www/proenergia/app
+   sudo -u proenergia bash -c "source venv/bin/activate && celery -A proenergia inspect ping"
+   ```
+
+5. Check for import errors:
+   ```bash
+   cd /var/www/proenergia/app
+   sudo -u proenergia bash -c "source venv/bin/activate && python -c 'from proenergia.celery import app; print(app)'"
+   ```
+
+### Celery Tasks Timing Out
+
+1. Check task time limits in .env:
+   ```bash
+   grep CELERY_TASK_TIME_LIMIT /var/www/proenergia/app/.env
+   ```
+
+2. Monitor long-running tasks:
+   ```bash
+   sudo -u proenergia bash -c "cd /var/www/proenergia/app && source venv/bin/activate && celery -A proenergia inspect active"
+   ```
+
+3. Increase time limits if needed:
+   ```bash
+   sudo nano /var/www/proenergia/app/.env
+   # Update CELERY_TASK_TIME_LIMIT and CELERY_TASK_SOFT_TIME_LIMIT
+   sudo systemctl restart proenergia-celery
+   ```
+
+### RabbitMQ Connection Refused
+
+1. Check RabbitMQ is running:
+   ```bash
+   sudo systemctl status rabbitmq-server
+   sudo systemctl start rabbitmq-server
+   ```
+
+2. Verify user permissions:
+   ```bash
+   sudo rabbitmqctl list_users
+   sudo rabbitmqctl list_user_permissions proenergia
+   ```
+
+3. Reset RabbitMQ user if needed:
+   ```bash
+   sudo rabbitmqctl delete_user proenergia
+   sudo rabbitmqctl add_user proenergia NEW_PASSWORD
+   sudo rabbitmqctl set_permissions -p proenergia proenergia ".*" ".*" ".*"
+   # Update password in /var/www/proenergia/app/.env
+   sudo systemctl restart proenergia-celery
    ```
 
 ### Database Issues
@@ -352,12 +460,17 @@ journalctl --disk-usage  # Check journal size
 # Service management
 sudo systemctl {start|stop|restart|status} proenergia
 sudo systemctl {start|stop|restart|status} proenergia-webhook
+sudo systemctl {start|stop|restart|status} proenergia-celery
+sudo systemctl {start|stop|restart|status} proenergia-celerybeat
+sudo systemctl {start|stop|restart|status} rabbitmq-server
 sudo systemctl {start|stop|restart|status} nginx
 sudo systemctl {start|stop|restart|status} postgresql
 
 # Log viewing
 sudo journalctl -u proenergia -f          # App logs
 sudo journalctl -u proenergia-webhook -f  # Webhook logs
+sudo journalctl -u proenergia-celery -f    # Celery worker logs
+sudo journalctl -u proenergia-celerybeat -f # Celery beat logs
 tail -f /var/log/proenergia/*.log        # All ProEnergia logs
 tail -f /var/log/nginx/*.log             # Nginx logs
 
