@@ -1,0 +1,49 @@
+[Unit]
+Description=ProEnergia Celery Worker
+After=network.target rabbitmq-server.service postgresql.service
+Wants=rabbitmq-server.service postgresql.service
+
+[Service]
+Type=exec
+User=proenergia
+Group=proenergia
+WorkingDirectory=/var/www/proenergia/app
+Environment=PATH=/var/www/proenergia/app/venv/bin
+Environment=DJANGO_SETTINGS_MODULE=proenergia.config
+Environment=DJANGO_CONFIGURATION=Production
+EnvironmentFile=/var/www/proenergia/app/.env
+
+# Start Celery with configurable workers (default 2)
+ExecStart=/bin/bash -c '/var/www/proenergia/app/venv/bin/celery -A proenergia worker \
+    --loglevel=${CELERY_LOG_LEVEL:-info} \
+    --concurrency=${CELERY_WORKER_CONCURRENCY:-4} \
+    --max-tasks-per-child=${CELERY_WORKER_MAX_TASKS_PER_CHILD:-1000} \
+    --time-limit=${CELERY_TASK_TIME_LIMIT:-1800} \
+    --soft-time-limit=${CELERY_TASK_SOFT_TIME_LIMIT:-1740}'
+
+# Graceful shutdown
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=300
+SendSIGKILL=no
+
+# Restart policy
+Restart=on-failure
+RestartSec=5
+StartLimitBurst=3
+StartLimitInterval=60
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/proenergia /var/log/proenergia /var/run/proenergia-celery
+
+# Resource limits
+LimitNOFILE=65536
+MemoryHigh=3G
+MemoryMax=4G
+
+[Install]
+WantedBy=multi-user.target

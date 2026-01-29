@@ -56,7 +56,18 @@ This automatically:
 - **Sets up webhook listener for automated deployment**
 - **Displays a webhook secret - save this!**
 
-### 6. Enable Automated Deployment
+### 6. Setup Celery and RabbitMQ
+```bash
+./scripts/06_setup_rabbitmq_celery.sh
+```
+
+This will:
+- Install and configure RabbitMQ
+- Set up Celery worker and beat services
+- Auto-generate secure RabbitMQ credentials
+- Add configuration to your .env file
+
+### 7. Enable Automated Deployment
 
 Using the webhook secret from step 5:
 
@@ -84,6 +95,12 @@ sudo journalctl -u proenergia -f
 
 # Restart application
 sudo systemctl restart proenergia
+
+# Celery services
+sudo systemctl status proenergia-celery      # Check worker status
+sudo systemctl status proenergia-celerybeat  # Check beat status
+sudo journalctl -u proenergia-celery -f      # View worker logs
+sudo journalctl -u proenergia-celerybeat -f  # View beat logs
 ```
 
 ## File Locations

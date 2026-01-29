@@ -31,14 +31,23 @@ fi
 
 log "Application updated"
 
-# Restart service
+# Restart services
 if ! systemctl restart proenergia; then
     log "ERROR: Service restart failed"
     echo "Error: Service restart failed. Check logs: journalctl -u proenergia -f"
     exit 1
 fi
 
-log "Service restarted"
+# Restart Celery services if they are enabled
+if systemctl is-enabled --quiet proenergia-celery 2>/dev/null; then
+    systemctl restart proenergia-celery || log "WARNING: Celery worker restart failed"
+fi
+
+if systemctl is-enabled --quiet proenergia-celerybeat 2>/dev/null; then
+    systemctl restart proenergia-celerybeat || log "WARNING: Celery beat restart failed"
+fi
+
+log "Services restarted"
 log "Deployment completed successfully"
 
 echo "Deployment complete"
