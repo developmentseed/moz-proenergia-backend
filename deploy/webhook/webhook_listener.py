@@ -124,7 +124,7 @@ class WebhookHandler(BaseHTTPRequestHandler):
         try:
             # Open log file for deployment output
             log_file = open("/var/log/proenergia/deployment.log", "a")
-            
+
             # Run deployment in background to avoid blocking the webhook response
             process = subprocess.Popen(
                 ["sudo", DEPLOY_SCRIPT],
