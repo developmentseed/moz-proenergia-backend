@@ -38,6 +38,9 @@ sudo apt install -y nginx
 # Install certbot for SSL
 sudo apt install -y certbot python3-certbot-nginx
 
+# Install tippecanoe and GDAL
+sudo apt install -y tippecanoe gdal-bin
+
 # Start and enable PostgreSQL
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
@@ -69,6 +72,10 @@ sudo mkdir -p /var/www/proenergia
 sudo mkdir -p /var/log/proenergia
 sudo chown -R proenergia:proenergia /var/www/proenergia
 sudo chown -R proenergia:proenergia /var/log/proenergia
+
+# Create deployment log with proper permissions
+sudo touch /var/log/proenergia/deployment.log
+sudo chmod 666 /var/log/proenergia/deployment.log
 
 echo "=== System setup complete ==="
 echo "Next steps:"

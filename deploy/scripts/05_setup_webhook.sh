@@ -34,11 +34,10 @@ WEBHOOK_SECRET=$(openssl rand -hex 32)
 # Update service file with the secret
 sed -i "s/CHANGE_ME_TO_SECURE_SECRET/$WEBHOOK_SECRET/" /etc/systemd/system/proenergia-webhook.service
 
-# Add sudoers permission for webhook to trigger deployment
-if ! grep -q "proenergia ALL=(root) NOPASSWD: /usr/local/bin/deploy-proenergia" /etc/sudoers.d/proenergia-deploy 2>/dev/null; then
-    echo "proenergia ALL=(root) NOPASSWD: /usr/local/bin/deploy-proenergia" >> /etc/sudoers.d/proenergia-deploy
-    chmod 440 /etc/sudoers.d/proenergia-deploy
-fi
+# Install sudoers configuration (already contains proenergia rule)
+echo "Installing sudoers configuration..."
+cp /var/www/proenergia/app/deploy/configs/sudoers/proenergia-deploy /etc/sudoers.d/
+chmod 440 /etc/sudoers.d/proenergia-deploy
 
 # Start webhook service
 echo "Starting webhook listener service..."

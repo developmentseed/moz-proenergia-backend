@@ -5,6 +5,9 @@
 # Allow ubuntu user to run the deployment wrapper
 ubuntu ALL=(root) NOPASSWD: /usr/local/bin/deploy-proenergia
 
+# Allow proenergia user to run the deployment wrapper (needed for webhook)
+proenergia ALL=(root) NOPASSWD: /usr/local/bin/deploy-proenergia
+
 # Allow proenergia user to check service status (read-only operations)
 proenergia ALL=(root) NOPASSWD: /bin/systemctl is-active proenergia
 proenergia ALL=(root) NOPASSWD: /bin/systemctl status proenergia

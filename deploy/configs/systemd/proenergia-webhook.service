@@ -14,11 +14,11 @@ Restart=always
 RestartSec=10
 
 # Security settings
-NoNewPrivileges=true
+NoNewPrivileges=false
 PrivateTmp=true
 ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=/var/log/proenergia
+ProtectHome=false
+ReadWritePaths=/var/log/proenergia /var/www/proenergia/app
 
 # Logging
 StandardOutput=journal
