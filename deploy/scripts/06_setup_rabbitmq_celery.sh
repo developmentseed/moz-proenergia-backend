@@ -19,8 +19,8 @@ systemctl enable rabbitmq-server
 
 echo "Configuring RabbitMQ..."
 
-# Generate a secure password for RabbitMQ
-RABBITMQ_PASSWORD=$(openssl rand -base64 32)
+# Generate a secure password for RabbitMQ (alphanumeric only to avoid URL encoding issues)
+RABBITMQ_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | tr -d " ")
 
 # Create RabbitMQ user and vhost for Celery
 rabbitmqctl add_user proenergia "$RABBITMQ_PASSWORD" 2>/dev/null || echo "User already exists"
