@@ -2,7 +2,14 @@ from django.contrib import admin, messages
 from django.forms import ModelForm
 from unfold.admin import ModelAdmin
 
-from .models import DataModel, Scenario, ScenarioFile, VectorDataset, VectorFile
+from .models import (
+    DataModel,
+    Scenario,
+    ScenarioData,
+    ScenarioFile,
+    VectorDataset,
+    VectorFile,
+)
 
 
 class PermissionBasedModelAdmin(ModelAdmin):
@@ -172,3 +179,8 @@ class ScenarioFileAdmin(ModelAdmin):
 
         obj.last_updated_by = request.user
         super().save_model(request, obj, form, change)
+
+
+@admin.register(ScenarioData)
+class ScenarioDataAdmin(ModelAdmin):
+    list_display = ["id", "feature_id", "scenario"]

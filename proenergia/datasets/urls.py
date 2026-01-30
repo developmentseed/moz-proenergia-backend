@@ -17,4 +17,9 @@ urlpatterns = [
         views.DataModelDetailView.as_view(),
         name="model-detail",
     ),
+    path(
+        "scenario/<int:scenario_id>/feature/<int:pk>/",
+        views.ScenarioDataDetailView.as_view(),
+        name="feature-detail",
+    ),
 ]

@@ -10,7 +10,11 @@ from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from django.utils.text import slugify
 
-from proenergia.datasets.tasks import generate_pmtiles, generate_scenario_pmtiles
+from proenergia.datasets.tasks import (
+    generate_pmtiles,
+    generate_scenario_pmtiles,
+    import_scenario_data_csv,
+)
 
 
 class VectorDataset(models.Model):
@@ -170,6 +174,7 @@ def trigger_generate_scenario_pmtiles(sender, instance, created, **kwargs):
     """Trigger generate_scenario_pmtiles Celery task when a new ScenarioFile instance is created."""
     if created:
         generate_scenario_pmtiles.delay(instance.id)
+        import_scenario_data_csv.delay(instance.id)
 
 
 class ScenarioData(models.Model):

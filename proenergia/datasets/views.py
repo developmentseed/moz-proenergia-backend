@@ -1,4 +1,4 @@
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
 from rest_framework.permissions import (
     SAFE_METHODS,
     BasePermission,
@@ -6,10 +6,11 @@ from rest_framework.permissions import (
 )
 
 from .filters import VectorDatasetFilter
-from .models import DataModel, VectorDataset
+from .models import DataModel, ScenarioData, VectorDataset
 from .pagination import StandardResultsSetPagination
 from .serializers import (
     DataModelSerializer,
+    ScenarioDataSerializer,
     VectorDatasetSerializer,
 )
 
@@ -52,3 +53,17 @@ class DataModelDetailView(RetrieveAPIView):
     queryset = DataModel.objects.all()
     serializer_class = DataModelSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+
+
+class ScenarioDataDetailView(RetrieveAPIView):
+    queryset = ScenarioData.objects.all()
+    serializer_class = ScenarioDataSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_object(self):
+        queryset = self.get_queryset()
+        filter = {
+            "feature_id": self.kwargs.get("pk"),
+            "scenario__id": self.kwargs.get("scenario_id"),
+        }
+        return get_object_or_404(queryset, **filter)

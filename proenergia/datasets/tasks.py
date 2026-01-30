@@ -152,28 +152,54 @@ def generate_scenario_pmtiles(self, id: int):
         sf.save(update_fields=["status"])
 
 
-class CSVImporter:
+class DataImporter:
     def __init__(self, scenario_file_id: int, chunk_size: int = 5000):
         ScenarioFile = apps.get_model("datasets", "ScenarioFile")
         self.scenario_file = ScenarioFile.objects.get(id=scenario_file_id)
+        self.delimiter = detect_csv_delimiter(self.scenario_file.file.path)
+        self.ScenarioData = apps.get_model("datasets", "ScenarioData")
         self.chunk_size = chunk_size
         self.total_rows = 0
         self.batch_times = []
+        self.imported_ids = []
+
+    @staticmethod
+    def convert_value(value: str):
+        """Convert string values to appropriate types (int, float, or keep as string)"""
+        if not value:
+            return value
+
+        # Try to convert to number
+        try:
+            # Try integer first
+            if "." not in value:
+                return int(value)
+            # Otherwise try float
+            return float(value)
+        except (ValueError, AttributeError):
+            # Keep as string if conversion fails
+            return value
 
     def stream_csv_chunks(self) -> Iterator[List[Dict]]:
         """Stream CSV in chunks to minimize memory usage"""
         with open(self.scenario_file.file.path, "r", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
+            reader = csv.DictReader(f, delimiter=self.delimiter)
             current_chunk = []
 
             for i, row in enumerate(reader, 1):
                 # Process row: extract ID, rest goes to JSON
                 external_id = row.pop("id")  # Assuming 'id' column exists
+                self.imported_ids.append(external_id)
+
+                # Convert numeric strings to appropriate types
+                metadata = {
+                    key: self.convert_value(value) for key, value in row.items()
+                }
 
                 processed_row = {
                     "feature_id": external_id,
-                    "scenario_id": self.scenario_file.id,
-                    "metadata": row,  # All remaining columns as JSON
+                    "scenario_id": self.scenario_file.scenario.id,
+                    "metadata": metadata,
                 }
                 current_chunk.append(processed_row)
 
@@ -189,7 +215,6 @@ class CSVImporter:
         if not objects:
             return
 
-        ScenarioData = apps.get_model("datasets", "ScenarioData")
         # Prepare values for bulk insert
         values_list = []
         params = []
@@ -201,7 +226,7 @@ class CSVImporter:
             )
 
         query = f"""
-            INSERT INTO {ScenarioData._meta.db_table}
+            INSERT INTO {self.ScenarioData._meta.db_table}
             (feature_id, scenario_id, metadata)
             VALUES {",".join(values_list)}
             ON CONFLICT (feature_id, scenario_id) DO UPDATE
@@ -233,6 +258,14 @@ class CSVImporter:
         avg_batch_time = (
             sum(self.batch_times) / len(self.batch_times) if self.batch_times else 0
         )
+        deletion = (
+            self.ScenarioData.objects.filter(scenario=self.scenario_file.scenario)
+            .exclude(feature_id__in=self.imported_ids)
+            .delete()
+        )
+        logger.info(
+            f"Deleted {deletion[0]} ScenarioData items during #{self.scenario_file.id} ScenarioFile import process."
+        )
 
         return {
             "total_rows": self.total_rows,
@@ -240,3 +273,12 @@ class CSVImporter:
             "rows_per_second": self.total_rows / total_time if total_time > 0 else 0,
             "avg_batch_time": avg_batch_time,
         }
+
+
+@shared_task
+def import_scenario_data_csv(scenario_file_id: int):
+    importer = DataImporter(scenario_file_id)
+    stats = importer.import_csv()
+    logger.info(
+        f"ScenarioFile #{scenario_file_id} imported successfully. Rows count: {stats.get('total_rows')}, in {stats.get('total_time')}s"
+    )

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import DataModel, Scenario, ScenarioFile, VectorDataset
+from .models import DataModel, Scenario, ScenarioData, ScenarioFile, VectorDataset
 
 
 class VectorDatasetSerializer(serializers.ModelSerializer):
@@ -54,3 +54,9 @@ class DataModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = DataModel
         fields = ["id", "name", "filter_fields", "popup_fields", "scenarios"]
+
+
+class ScenarioDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ScenarioData
+        fields = ["metadata"]
