@@ -1,6 +1,7 @@
 from os.path import splitext
 
 from django.conf import settings
+from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import FileExtensionValidator
 from django.db import models
@@ -169,3 +170,20 @@ def trigger_generate_scenario_pmtiles(sender, instance, created, **kwargs):
     """Trigger generate_scenario_pmtiles Celery task when a new ScenarioFile instance is created."""
     if created:
         generate_scenario_pmtiles.delay(instance.id)
+
+
+class ScenarioData(models.Model):
+    feature_id = models.IntegerField()
+    scenario = models.ForeignKey(Scenario, models.PROTECT, related_name="data")
+    metadata = models.JSONField(default=dict)
+
+    def __str__(self):
+        return f"{self.feature_id} - {self.scenario}"
+
+    class Meta:
+        ordering = ["id"]
+        unique_together = [["feature_id", "scenario"]]
+        indexes = [
+            models.Index(fields=["feature_id", "scenario"]),
+            GinIndex(fields=["metadata"]),
+        ]
