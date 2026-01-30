@@ -36,3 +36,6 @@ group = "proenergia"
 # Server mechanics
 preload_app = True
 sendfile = True
+
+# Temp directory for worker heartbeat files
+worker_tmp_dir = "/tmp"

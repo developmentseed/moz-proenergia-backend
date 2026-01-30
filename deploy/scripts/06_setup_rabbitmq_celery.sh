@@ -19,13 +19,13 @@ systemctl enable rabbitmq-server
 
 echo "Configuring RabbitMQ..."
 
-# Generate a secure password for RabbitMQ
-RABBITMQ_PASSWORD=$(openssl rand -base64 32)
+# Generate a secure password for RabbitMQ (alphanumeric only to avoid URL encoding issues)
+RABBITMQ_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | tr -d " ")
 
-# Create RabbitMQ user and vhost for Celery
+# Create RabbitMQ user for Celery (using default vhost)
 rabbitmqctl add_user proenergia "$RABBITMQ_PASSWORD" 2>/dev/null || echo "User already exists"
-rabbitmqctl add_vhost proenergia 2>/dev/null || echo "Vhost already exists"
-rabbitmqctl set_permissions -p proenergia proenergia ".*" ".*" ".*"
+# Set permissions on default vhost
+rabbitmqctl set_permissions -p / proenergia ".*" ".*" ".*"
 rabbitmqctl set_user_tags proenergia administrator
 
 echo "Installing Celery systemd services..."
@@ -46,7 +46,7 @@ ENV_FILE="/var/www/proenergia/app/.env"
 if ! grep -q "CELERY_BROKER_URL" "$ENV_FILE"; then
     echo "" >> "$ENV_FILE"
     echo "# Celery Configuration" >> "$ENV_FILE"
-    echo "CELERY_BROKER_URL=\"amqp://proenergia:${RABBITMQ_PASSWORD}@localhost:5672/proenergia\"" >> "$ENV_FILE"
+    echo "CELERY_BROKER_URL=\"amqp://proenergia:${RABBITMQ_PASSWORD}@localhost:5672//\"" >> "$ENV_FILE"
     echo "CELERY_WORKERS=2" >> "$ENV_FILE"
     echo "CELERY_WORKER_CONCURRENCY=4" >> "$ENV_FILE"
     echo "CELERY_WORKER_MAX_TASKS_PER_CHILD=1000" >> "$ENV_FILE"

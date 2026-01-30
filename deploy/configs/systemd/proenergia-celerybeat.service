@@ -8,7 +8,7 @@ Type=exec
 User=proenergia
 Group=proenergia
 WorkingDirectory=/var/www/proenergia/app
-Environment=PATH=/var/www/proenergia/app/venv/bin
+Environment=PATH=/var/www/proenergia/app/venv/bin:/usr/local/bin:/usr/bin:/bin
 Environment=DJANGO_SETTINGS_MODULE=proenergia.config
 Environment=DJANGO_CONFIGURATION=Production
 EnvironmentFile=/var/www/proenergia/app/.env
