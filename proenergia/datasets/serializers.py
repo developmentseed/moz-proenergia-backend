@@ -59,4 +59,20 @@ class DataModelSerializer(serializers.ModelSerializer):
 class ScenarioDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = ScenarioData
-        fields = ["metadata"]
+        fields = ["feature_id", "metadata"]
+
+    def to_representation(self, instance):
+        """Flatten metadata contents to the root level of the response"""
+        representation = super().to_representation(instance)
+
+        # Extract metadata and remove it from root
+        metadata = representation.pop("metadata", {})
+
+        # Add feature_id first, then all metadata fields
+        result = {"feature_id": representation["feature_id"]}
+
+        # Merge metadata fields into root
+        if metadata:
+            result.update(metadata)
+
+        return result
