@@ -89,3 +89,46 @@ class TestScenarioDataDetailViews(APITestCase):
         assert res.data.get("cost") == 12334.5
         assert res.data.get("location") == "Chifunde"
         assert res.data.get("country") == "Mozambique"
+
+    def test_summary_numeric_field(self):
+        """Test summary statistics for numeric field (cost)"""
+        url = reverse("datasets:scenario-summary", args=[self.scenario_1.id, "cost"])
+        res = self.client.get(url)
+        assert res.status_code == 200
+        assert res.data.get("key") == "cost"
+        assert res.data.get("type") == "numeric"
+        assert res.data.get("count") == 11
+        assert res.data.get("min") == 2523
+        assert res.data.get("max") == 898623
+        assert res.data.get("sum") == 1417142.2
+
+    def test_summary_string_field(self):
+        """Test summary statistics for string field (location)"""
+        url = reverse(
+            "datasets:scenario-summary", args=[self.scenario_1.id, "location"]
+        )
+        res = self.client.get(url)
+        assert res.status_code == 200
+        assert res.data.get("key") == "location"
+        assert res.data.get("type") == "string"
+        assert res.data.get("count") == 11
+        values = res.data.get("values")
+        assert values.get("Maputo") == 6
+        assert values.get("Tete") == 3
+        assert values.get("Chifunde") == 1
+        assert values.get("Mocumba") == 1
+
+    def test_summary_nonexistent_key(self):
+        """Test summary with non-existent key"""
+        url = reverse(
+            "datasets:scenario-summary", args=[self.scenario_1.id, "nonexistent"]
+        )
+        res = self.client.get(url)
+        assert res.status_code == 404
+        assert "not found in metadata" in res.data.get("error")
+
+    def test_summary_nonexistent_scenario(self):
+        """Test summary with non-existent scenario"""
+        url = reverse("datasets:scenario-summary", args=[9999, "cost"])
+        res = self.client.get(url)
+        assert res.status_code == 404
