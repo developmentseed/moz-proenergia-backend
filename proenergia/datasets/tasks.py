@@ -275,9 +275,18 @@ class DataImporter:
         }
 
 
-@shared_task
-def import_scenario_data_csv(scenario_file_id: int):
-    importer = DataImporter(scenario_file_id)
+@shared_task(bind=True, max_retries=5, default_retry_delay=2)
+def import_scenario_data_csv(self, scenario_file_id: int):
+    ScenarioFile = apps.get_model("datasets", "ScenarioFile")
+    try:
+        importer = DataImporter(scenario_file_id)
+    except ScenarioFile.DoesNotExist as e:
+        # Retry with exponential backoff
+        logger.warning(
+            f"ScenarioFile {id} not found, retrying... (attempt {self.request.retries + 1})"
+        )
+        raise self.retry(exc=e, countdown=2**self.request.retries)
+
     stats = importer.import_csv()
     logger.info(
         f"ScenarioFile #{scenario_file_id} imported successfully. Rows count: {stats.get('total_rows')}, in {stats.get('total_time')}s"
