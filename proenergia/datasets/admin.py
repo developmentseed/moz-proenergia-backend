@@ -2,7 +2,13 @@ from django.contrib import admin, messages
 from django.forms import ModelForm
 from unfold.admin import ModelAdmin
 
-from .models import DataModel, Scenario, ScenarioFile, VectorDataset, VectorFile
+from .models import (
+    DataModel,
+    Scenario,
+    ScenarioFile,
+    VectorDataset,
+    VectorFile,
+)
 
 
 class PermissionBasedModelAdmin(ModelAdmin):

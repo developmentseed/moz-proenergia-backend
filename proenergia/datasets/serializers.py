@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import DataModel, Scenario, ScenarioFile, VectorDataset
+from .models import DataModel, Scenario, ScenarioData, ScenarioFile, VectorDataset
 
 
 class VectorDatasetSerializer(serializers.ModelSerializer):
@@ -54,3 +54,25 @@ class DataModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = DataModel
         fields = ["id", "name", "filter_fields", "popup_fields", "scenarios"]
+
+
+class ScenarioDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ScenarioData
+        fields = ["feature_id", "metadata"]
+
+    def to_representation(self, instance):
+        """Flatten metadata contents to the root level of the response"""
+        representation = super().to_representation(instance)
+
+        # Extract metadata and remove it from root
+        metadata = representation.pop("metadata", {})
+
+        # Add feature_id first, then all metadata fields
+        result = {"feature_id": representation["feature_id"]}
+
+        # Merge metadata fields into root
+        if metadata:
+            result.update(metadata)
+
+        return result

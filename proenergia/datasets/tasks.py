@@ -1,11 +1,16 @@
+import csv
+import json
 import logging
 import subprocess
+import time
 from os.path import basename, dirname, join, splitext
+from typing import Dict, Iterator, List
 
 import geopandas as gpd
 import pandas as pd
 from celery import shared_task
 from django.apps import apps
+from django.db import connection, transaction
 
 from proenergia.datasets.utils import detect_csv_delimiter, get_file_variant
 
@@ -145,3 +150,135 @@ def generate_scenario_pmtiles(self, id: int):
         print(f"Unexpected error: {e}")
         sf.status = "error"
         sf.save(update_fields=["status"])
+
+
+class DataImporter:
+    def __init__(self, scenario_file_id: int, chunk_size: int = 5000):
+        ScenarioFile = apps.get_model("datasets", "ScenarioFile")
+        self.scenario_file = ScenarioFile.objects.get(id=scenario_file_id)
+        self.delimiter = detect_csv_delimiter(self.scenario_file.file.path)
+        self.ScenarioData = apps.get_model("datasets", "ScenarioData")
+        self.chunk_size = chunk_size
+        self.total_rows = 0
+        self.batch_times = []
+        self.imported_ids = []
+
+    @staticmethod
+    def convert_value(value: str):
+        """Convert string values to appropriate types (int, float, or keep as string)"""
+        if not value:
+            return value
+
+        # Try to convert to number
+        try:
+            # Try integer first
+            if "." not in value:
+                return int(value)
+            # Otherwise try float
+            return float(value)
+        except (ValueError, AttributeError):
+            # Keep as string if conversion fails
+            return value
+
+    def stream_csv_chunks(self) -> Iterator[List[Dict]]:
+        """Stream CSV in chunks to minimize memory usage"""
+        with open(self.scenario_file.file.path, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f, delimiter=self.delimiter)
+            current_chunk = []
+
+            for i, row in enumerate(reader, 1):
+                # Process row: extract ID, rest goes to JSON
+                external_id = row.pop("id")  # Assuming 'id' column exists
+                self.imported_ids.append(external_id)
+
+                # Convert numeric strings to appropriate types
+                metadata = {
+                    key: self.convert_value(value) for key, value in row.items()
+                }
+
+                processed_row = {
+                    "feature_id": external_id,
+                    "scenario_id": self.scenario_file.scenario.id,
+                    "metadata": metadata,
+                }
+                current_chunk.append(processed_row)
+
+                if len(current_chunk) >= self.chunk_size:
+                    yield current_chunk
+                    current_chunk = []
+
+            if current_chunk:
+                yield current_chunk
+
+    def bulk_create_optimized(self, objects: List[Dict]):
+        """Most performant bulk insert using raw SQL"""
+        if not objects:
+            return
+
+        # Prepare values for bulk insert
+        values_list = []
+        params = []
+
+        for obj in objects:
+            values_list.append("(%s, %s, %s::jsonb)")
+            params.extend(
+                [obj["feature_id"], obj["scenario_id"], json.dumps(obj["metadata"])]
+            )
+
+        query = f"""
+            INSERT INTO {self.ScenarioData._meta.db_table}
+            (feature_id, scenario_id, metadata)
+            VALUES {",".join(values_list)}
+            ON CONFLICT (feature_id, scenario_id) DO UPDATE
+            SET metadata = EXCLUDED.metadata
+            RETURNING id;
+        """
+
+        with connection.cursor() as cursor:
+            cursor.execute(query, params)
+
+    def import_csv(self) -> Dict:
+        """Main import method with performance tracking"""
+        start_time = time.time()
+
+        with transaction.atomic():
+            for chunk_num, chunk in enumerate(self.stream_csv_chunks(), 1):
+                chunk_start = time.time()
+
+                # Use raw SQL for maximum performance
+                self.bulk_create_optimized(chunk)
+
+                chunk_time = time.time() - chunk_start
+                self.batch_times.append(chunk_time)
+                self.total_rows += len(chunk)
+
+                print(f"Chunk {chunk_num}: {len(chunk)} rows in {chunk_time:.2f}s")
+
+        total_time = time.time() - start_time
+        avg_batch_time = (
+            sum(self.batch_times) / len(self.batch_times) if self.batch_times else 0
+        )
+        deletion = (
+            self.ScenarioData.objects.filter(scenario=self.scenario_file.scenario)
+            .exclude(feature_id__in=self.imported_ids)
+            .delete()
+        )
+        logger.info(
+            f"Deleted {deletion[0]} ScenarioData items during #{self.scenario_file.id} ScenarioFile import process."
+        )
+
+        return {
+            "total_rows": self.total_rows,
+            "total_time": total_time,
+            "rows_per_second": self.total_rows / total_time if total_time > 0 else 0,
+            "avg_batch_time": avg_batch_time,
+        }
+
+
+@shared_task
+def import_scenario_data_csv(scenario_file_id: int):
+    importer = DataImporter(scenario_file_id)
+    stats = importer.import_csv()
+    logger.info(
+        f"ScenarioFile #{scenario_file_id} imported successfully. Rows count: {stats.get('total_rows')}, in {stats.get('total_time')}s"
+    )
