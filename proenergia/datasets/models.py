@@ -110,7 +110,27 @@ class DataModel(models.Model):
     )
     popup_fields = models.JSONField(
         default=list(),
-        help_text="A list containing JSON objects following this structure: {'label': 'Field label', 'description': 'Field description', 'column': 'File/Database column name'}",
+        help_text="A list containing JSON objects following this structure: {'label': 'Field label', 'description': 'Field description', 'column': 'File/Database column name', 'unit': 'Unit of measurement'}",
+    )
+    summary_fields = models.JSONField(
+        default=list(),
+        help_text="A list containing JSON objects following this structure: {'label': 'Field label', 'description': 'Field description', 'column': 'File/Database column name', 'unit': 'Unit of measurement'}",
+    )
+    visualization_column = models.CharField(
+        max_length=155,
+        help_text="Column on the model data file whose values will be used to define the data-driven visualization style.",
+        default="",
+    )
+    color_coding = models.JSONField(
+        default=list(),
+        help_text="A list containing JSON objects following this structure: {'value': 'visualization column value', 'color': '#000000'}",
+    )
+    contextual_layers = models.ManyToManyField(
+        VectorDataset,
+        null=True,
+        blank=True,
+        related_name="models",
+        help_text="Vector datasets that will be available to be visualized together with the model data.",
     )
 
     def __str__(self):

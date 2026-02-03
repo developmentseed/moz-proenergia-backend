@@ -38,6 +38,24 @@ class TestScenarioAdmin(TestCase):
                     }
                 ]
             ),
+            "summary_fields": json.dumps(
+                [
+                    {
+                        "label": "Population",
+                        "description": "Population in 2025",
+                        "column": "Pop",
+                    }
+                ]
+            ),
+            "visualization_column": "Pop",
+            "color_coding": json.dumps(
+                [
+                    {
+                        "value": 1000,
+                        "color": "#eee3dd",
+                    }
+                ]
+            ),
         }
         self.client.post(self.url, data)
         self.assertEqual(DataModel.objects.count(), 1)
@@ -63,6 +81,24 @@ class TestScenarioAdmin(TestCase):
                     }
                 ]
             ),
+            "summary_fields": json.dumps(
+                [
+                    {
+                        "label": "Population",
+                        "description": "Population in 2025",
+                        "column": "Pop",
+                    }
+                ]
+            ),
+            "visualization_column": "Pop",
+            "color_coding": json.dumps(
+                [
+                    {
+                        "value": 1000,
+                        "color": "#eee3dd",
+                    }
+                ]
+            ),
         }
         self.client.post(self.url, data)
         self.assertEqual(DataModel.objects.count(), 1)
@@ -83,6 +119,24 @@ class TestScenarioAdmin(TestCase):
                         "label": "Population",
                         "description": "Population in 2025",
                         "column": "Pop",
+                    }
+                ]
+            ),
+            "summary_fields": json.dumps(
+                [
+                    {
+                        "label": "Population",
+                        "description": "Population in 2025",
+                        "column": "Pop",
+                    }
+                ]
+            ),
+            "visualization_column": "Pop",
+            "color_coding": json.dumps(
+                [
+                    {
+                        "value": 1000,
+                        "color": "#eee3dd",
                     }
                 ]
             ),
@@ -135,6 +189,7 @@ class TestScenarioAdmin(TestCase):
         }
         self.client.post(self.url, data)
         self.assertEqual(DataModel.objects.count(), 1)
+
         # missing label in popup_fields
         self.assertEqual(DataModel.objects.count(), 1)
         data = {
@@ -157,5 +212,98 @@ class TestScenarioAdmin(TestCase):
                 ]
             ),
         }
+        self.client.post(self.url, data)
+        self.assertEqual(DataModel.objects.count(), 1)
+
+        # missing label in summary_fields
+        data = {
+            "name": "B",
+            "filter_fields": json.dumps(
+                [
+                    {
+                        "label": "Population",
+                        "description": "Population in 2025",
+                        "column": "Pop",
+                    }
+                ]
+            ),
+            "popup_fields": json.dumps(
+                [
+                    {
+                        "label": "Population",
+                        "description": "Population in 2025",
+                        "column": "Pop",
+                    }
+                ]
+            ),
+            "summary_fields": json.dumps(
+                [
+                    {
+                        "description": "Population in 2025",
+                        "column": "Pop",
+                    }
+                ]
+            ),
+            "visualization_column": "Pop",
+            "color_coding": json.dumps(
+                [
+                    {
+                        "value": 1000,
+                        "color": "#eee3dd",
+                    }
+                ]
+            ),
+        }
+        self.client.post(self.url, data)
+        self.assertEqual(DataModel.objects.count(), 1)
+
+        # missing value in color_coding
+        data = {
+            "name": "New",
+            "filter_fields": json.dumps(
+                [
+                    {
+                        "label": "Population",
+                        "description": "Population in 2025",
+                        "column": "Pop",
+                    }
+                ]
+            ),
+            "popup_fields": json.dumps(
+                [
+                    {
+                        "label": "Population",
+                        "description": "Population in 2025",
+                        "column": "Pop",
+                    }
+                ]
+            ),
+            "summary_fields": json.dumps(
+                [
+                    {
+                        "label": "Population",
+                        "description": "Population in 2025",
+                        "column": "Pop",
+                    }
+                ]
+            ),
+            "visualization_column": "Pop",
+            "color_coding": json.dumps(
+                [
+                    {
+                        "color": "#eee3dd",
+                    }
+                ]
+            ),
+        }
+        self.client.post(self.url, data)
+        self.assertEqual(DataModel.objects.count(), 1)
+
+        # missing color key in color_coding
+        data["color_coding"] = [
+            {
+                "value": 1000,
+            }
+        ]
         self.client.post(self.url, data)
         self.assertEqual(DataModel.objects.count(), 1)

@@ -53,7 +53,16 @@ class DataModelSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DataModel
-        fields = ["id", "name", "filter_fields", "popup_fields", "scenarios"]
+        fields = [
+            "id",
+            "name",
+            "filter_fields",
+            "popup_fields",
+            "summary_fields",
+            "visualization_column",
+            "color_coding",
+            "scenarios",
+        ]
 
 
 class ScenarioDataSerializer(serializers.ModelSerializer):

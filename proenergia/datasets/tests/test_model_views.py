@@ -67,6 +67,18 @@ class TestDataModelViews(APITestCase):
                     "column": "Pop",
                 }
             ],
+            summary_fields=[
+                {
+                    "label": "Population",
+                    "description": "Population in 2025",
+                    "column": "Pop",
+                }
+            ],
+            visualization_column="Pop",
+            color_coding=[
+                {"value": 1000, "color": "#ddd"},
+                {"value": 10000, "color": "#ff00dd"},
+            ],
         )
         self.model_2 = DataModel.objects.create(
             name="Clean Cooking",
@@ -166,6 +178,18 @@ class TestDataModelViews(APITestCase):
                 "description": "Population in 2025",
                 "column": "Pop",
             }
+        ]
+        assert req.data.get("results")[0]["summary_fields"] == [
+            {
+                "label": "Population",
+                "description": "Population in 2025",
+                "column": "Pop",
+            }
+        ]
+        assert req.data.get("results")[0]["visualization_column"] == "Pop"
+        assert req.data.get("results")[0]["color_coding"] == [
+            {"value": 1000, "color": "#ddd"},
+            {"value": 10000, "color": "#ff00dd"},
         ]
 
     @patch("proenergia.datasets.tasks.generate_scenario_pmtiles.delay")
