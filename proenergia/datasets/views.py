@@ -1,3 +1,8 @@
+from django.db import transaction
+from django.db.models import Count, FloatField, Max, Min, Sum, TextField
+from django.db.models.fields.json import KT
+from django.db.models.functions import Cast
+from django.db.utils import DataError, InternalError, ProgrammingError
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
 from rest_framework.permissions import (
@@ -106,46 +111,32 @@ class SummaryView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Extract all values for this key
-        values = []
-        for entry in entries_with_key:
-            value = entry.metadata.get(key)
-            if value is not None:
-                values.append(value)
+        try:
+            with transaction.atomic():
+                query = entries_with_key.annotate(
+                    key=Cast(KT(f"metadata__{key}"), FloatField())
+                ).aggregate(Max("key"), Min("key"), Sum("key"), Count("key"))
 
-        if not values:
-            return Response(
-                {"error": f"No non-null values found for key '{key}'"},
-                status=status.HTTP_404_NOT_FOUND,
+                summary = {
+                    "key": key,
+                    "type": "numeric",
+                    "count": query.get("key__count"),
+                    "min": query.get("key__min"),
+                    "max": query.get("key__max"),
+                    "sum": query.get("key__sum"),
+                }
+        except (ProgrammingError, DataError, InternalError):
+            query = (
+                entries_with_key.annotate(key=Cast(KT(f"metadata__{key}"), TextField()))
+                .values("key")
+                .annotate(count=Count("id"))
             )
-
-        # Determine data type from first value
-        first_value = values[0]
-
-        if isinstance(first_value, (int, float)):
-            # Numeric field - return statistical summary
-            numeric_values = [v for v in values if isinstance(v, (int, float))]
-
-            summary = {
-                "key": key,
-                "type": "numeric",
-                "count": len(numeric_values),
-                "min": min(numeric_values) if numeric_values else None,
-                "max": max(numeric_values) if numeric_values else None,
-                "sum": sum(numeric_values) if numeric_values else None,
-            }
-        else:
-            # String field - return count by value
-            value_counts = {}
-            for value in values:
-                str_value = str(value)
-                value_counts[str_value] = value_counts.get(str_value, 0) + 1
 
             summary = {
                 "key": key,
                 "type": "string",
-                "count": len(values),
-                "values": value_counts,
+                "count": sum([i.get("count") for i in query]),
+                "values": dict([(i.get("key"), i.get("count")) for i in query]),
             }
 
         return Response(summary)
