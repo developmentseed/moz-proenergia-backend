@@ -122,12 +122,22 @@ class VectorFileAdmin(PermissionBasedModelAdmin):
 class DataModelAdminForm(ModelForm):
     class Meta:
         model = DataModel
-        fields = ["name", "filter_fields", "popup_fields"]
+        fields = [
+            "name",
+            "filter_fields",
+            "popup_fields",
+            "summary_fields",
+            "visualization_column",
+            "color_coding",
+            "contextual_layers",
+        ]
 
     def clean(self):
         cleaned_data = super().clean()
         filter_fields = cleaned_data.get("filter_fields")
         popup_fields = cleaned_data.get("popup_fields")
+        summary_fields = cleaned_data.get("summary_fields")
+        color_coding = cleaned_data.get("color_coding")
 
         if filter_fields:
             if type(filter_fields) is not list:
@@ -154,6 +164,28 @@ class DataModelAdminForm(ModelForm):
                         or "column" not in keys
                     ):
                         self.add_error("popup_fields", "Missing a required key.")
+
+        if summary_fields:
+            if type(summary_fields) is not list:
+                self.add_error("summary_fields", "Content should be a list")
+            else:
+                for i in enumerate(summary_fields):
+                    keys = i[1].keys()
+                    if (
+                        "label" not in keys
+                        or "description" not in keys
+                        or "column" not in keys
+                    ):
+                        self.add_error("summary_fields", "Missing a required key.")
+
+        if color_coding:
+            if type(color_coding) is not list:
+                self.add_error("color_coding", "Content should be a list")
+            else:
+                for i in enumerate(color_coding):
+                    keys = i[1].keys()
+                    if "value" not in keys or "color" not in keys:
+                        self.add_error("color_coding", "Missing a required key.")
 
 
 @admin.register(DataModel)
