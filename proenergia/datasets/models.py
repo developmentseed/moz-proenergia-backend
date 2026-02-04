@@ -106,31 +106,32 @@ class DataModel(models.Model):
     name = models.CharField(max_length=155, unique=True)
     filter_fields = models.JSONField(
         default=list(),
-        help_text="A list containing JSON objects following this structure: {'label': 'Field label', 'description': 'Field description', 'column': 'File/Database column name'}",
+        help_text="""A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "column": "File/Database column name"}""",
     )
     popup_fields = models.JSONField(
         default=list(),
-        help_text="A list containing JSON objects following this structure: {'label': 'Field label', 'description': 'Field description', 'column': 'File/Database column name', 'unit': 'Unit of measurement'}",
+        help_text="""A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "column": "File/Database column name", "unit": "Unit of measurement"}""",
     )
     summary_fields = models.JSONField(
         default=list(),
-        help_text="A list containing JSON objects following this structure: {'label': 'Field label', 'description': 'Field description', 'column': 'File/Database column name', 'unit': 'Unit of measurement'}",
+        help_text="""A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "column": "File/Database column name", "unit": "Unit of measurement"}""",
     )
     visualization_column = models.CharField(
         max_length=155,
-        help_text="Column on the model data file whose values will be used to define the data-driven visualization style.",
-        default="",
+        help_text="""Column on the model data file whose values will be used to define the data-driven visualization style.""",
+        blank=True,
+        null=True,
     )
     color_coding = models.JSONField(
         default=list(),
-        help_text="A list containing JSON objects following this structure: {'value': 'visualization column value', 'color': '#000000'}",
+        help_text="""A list containing JSON objects following this structure: {"value": "visualization column value", "color": "#000000"}""",
     )
     contextual_layers = models.ManyToManyField(
         VectorDataset,
         null=True,
         blank=True,
         related_name="models",
-        help_text="Vector datasets that will be available to be visualized together with the model data.",
+        help_text="""Vector datasets that will be available to be visualized together with the model data.""",
     )
 
     def __str__(self):
@@ -148,7 +149,7 @@ class Scenario(models.Model):
     vector_dataset = models.ForeignKey(VectorDataset, on_delete=models.PROTECT)
 
     def __str__(self):
-        return f"{self.name}"
+        return f"{self.model.name} - {self.name}"
 
     def latest_file(self):
         try:
