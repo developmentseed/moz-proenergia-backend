@@ -32,6 +32,8 @@ class PublicApprovedDataset(BasePermission):
 
 
 class VectorDatasetListView(ListAPIView):
+    """Lists VectorDatasets that are public and approved. For logged-in superadmin users, it returns all datasets."""
+
     serializer_class = VectorDatasetSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = StandardResultsSetPagination
@@ -46,18 +48,24 @@ class VectorDatasetListView(ListAPIView):
 
 
 class VectorDatasetDetailView(RetrieveAPIView):
+    """Returns information about a specific VectorDataset."""
+
     queryset = VectorDataset.objects.all()
     serializer_class = VectorDatasetSerializer
     permission_classes = [PublicApprovedDataset]
 
 
 class DataModelListView(ListAPIView):
+    """Lists all available DataModel entries."""
+
     queryset = DataModel.objects.all()
     serializer_class = DataModelSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
 
 class DataModelDetailView(RetrieveAPIView):
+    """Returns information about a specific DataModel."""
+
     queryset = DataModel.objects.all()
     serializer_class = DataModelSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -83,8 +91,14 @@ class SummaryView(APIView):
     """
     Returns statistics for a metadata field across all data entries for a specific Scenario.
 
-    For string fields: returns the count of each unique value
-    For numeric fields (int/float): returns min, max, sum, and total count
+    For string fields: returns the count of each unique value.
+    For numeric fields (int/float): returns min, max, sum, and total count.
+
+    Filters can be applied with the `?q=` query param.
+    Numeric columns can be filtered by min and max values, example: `?q=Pop__min=1000` or `?q=Pop__max=1000`.
+    String columns can be filtered by a single or multiple values, example: `?q=Posto=Maputo` or `?q=Posto__in=Maputo;Tefe`. Separate values with a semi-colon (`;`).
+
+    It's possible to combine multiple filters: `?q=Pop__min=1000,Pop__max=2000,Posto=Maputo`.
     """
 
     permission_classes = [IsAuthenticatedOrReadOnly]
