@@ -13,7 +13,7 @@ from rest_framework.permissions import (
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .filters import VectorDatasetFilter
+from .filters import ScenarioDataFilter, VectorDatasetFilter
 from .models import DataModel, Scenario, ScenarioData, VectorDataset
 from .pagination import StandardResultsSetPagination
 from .serializers import (
@@ -102,12 +102,17 @@ class SummaryView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
+        # Apply filters from query parameters
+        filterset = ScenarioDataFilter(request.GET, queryset=queryset)
+        if filterset.is_valid():
+            queryset = filterset.qs
+
         # Get all values for the specified key from metadata
         entries_with_key = queryset.filter(metadata__has_key=key)
 
         if not entries_with_key.exists():
             return Response(
-                {"error": f"Key '{key}' not found in metadata"},
+                {"error": f"No data found for key '{key}'."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
