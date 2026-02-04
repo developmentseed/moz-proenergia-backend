@@ -125,10 +125,54 @@ class TestScenarioDataDetailViews(APITestCase):
         )
         res = self.client.get(url)
         assert res.status_code == 404
-        assert "not found in metadata" in res.data.get("error")
+        assert "No data found for key" in res.data.get("error")
 
     def test_summary_nonexistent_scenario(self):
         """Test summary with non-existent scenario"""
         url = reverse("datasets:scenario-summary", args=[9999, "cost"])
         res = self.client.get(url)
         assert res.status_code == 404
+
+    def test_summary_filters(self):
+        """Test summary statistics with filters"""
+        url = reverse(
+            "datasets:scenario-summary", args=[self.scenario_1.id, "location"]
+        )
+        res = self.client.get(url, {"q": "cost__min=100000"})
+        assert res.status_code == 200
+        assert res.data.get("key") == "location"
+        assert res.data.get("type") == "string"
+        assert res.data.get("count") == 2
+        values = res.data.get("values")
+        assert values.get("Maputo") == 1
+        assert values.get("Tete") == 1
+
+        res = self.client.get(url, {"q": "cost__max=15000"})
+        assert res.status_code == 200
+        assert res.data.get("key") == "location"
+        assert res.data.get("type") == "string"
+        assert res.data.get("count") == 4
+        values = res.data.get("values")
+        assert values.get("Maputo") == 1
+        assert values.get("Tete") == 1
+        assert values.get("Chifunde") == 1
+        assert values.get("Mocumba") == 1
+
+        url = reverse("datasets:scenario-summary", args=[self.scenario_1.id, "cost"])
+        res = self.client.get(url, {"q": "location=Maputo"})
+        assert res.status_code == 200
+        assert res.data.get("key") == "cost"
+        assert res.data.get("type") == "numeric"
+        assert res.data.get("count") == 6
+        assert res.data.get("min") == 2523
+        assert res.data.get("max") == 230923.7
+        assert res.data.get("sum") == 393115.7
+
+        res = self.client.get(url, {"q": "location__in=Maputo;Mocumba"})
+        assert res.status_code == 200
+        assert res.data.get("key") == "cost"
+        assert res.data.get("type") == "numeric"
+        assert res.data.get("count") == 7
+        assert res.data.get("min") == 2523
+        assert res.data.get("max") == 230923.7
+        assert res.data.get("sum") == 399538.7
