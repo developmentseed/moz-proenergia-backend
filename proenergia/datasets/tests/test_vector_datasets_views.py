@@ -175,8 +175,13 @@ class TestVectorDatasetListDetailViews(APITestCase):
         assert req.data.get("count") == 1
         assert req.data.get("results")[0]["name"] == "Cycleways"
 
-        self.scenario_1 = Scenario.objects.create(
+        Scenario.objects.create(
             name="Least Cost Electrification",
+            vector_dataset=self.dataset_1,
+            model=model_1,
+        )
+        Scenario.objects.create(
+            name="Baseline",
             vector_dataset=self.dataset_1,
             model=model_1,
         )

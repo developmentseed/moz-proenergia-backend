@@ -21,7 +21,9 @@ class VectorDatasetFilter(FilterSet):
     model = NumberFilter(field_name="models", method="filter_model", help_text="Filter")
 
     def filter_model(self, queryset, name, value):
-        return queryset.filter(Q(models__id=value) | Q(scenario__model__id=value))
+        return queryset.filter(
+            Q(models__id=value) | Q(scenario__model__id=value)
+        ).distinct()
 
     class Meta:
         model = VectorDataset
