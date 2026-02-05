@@ -6,7 +6,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from ..models import VectorDataset, VectorFile
+from ..models import DataModel, Scenario, VectorDataset, VectorFile
 
 
 class TestVectorDatasetListDetailViews(APITestCase):
@@ -150,6 +150,42 @@ class TestVectorDatasetListDetailViews(APITestCase):
         assert req.status_code == status.HTTP_200_OK
         assert req.data.get("name") == "Buildings"
         assert req.data.get("raw_file") is None
+
+    def test_filters(self):
+        # create another public & approved vector dataset
+        self.dataset_4 = VectorDataset.objects.create(
+            name="Cycleways",
+            is_public=True,
+            is_approved=True,
+            created_by=self.superadmin_user,
+            last_updated_by=self.superadmin_user,
+        )
+        self.model_1 = DataModel.objects.create(
+            name="PUE",
+            filter_fields=[],
+            popup_fields=[],
+            summary_fields=[],
+            visualization_column="Pop",
+            color_coding=[],
+        )
+        self.model_1.contextual_layers.add(self.dataset_4)
+
+        req = self.client.get(self.url, {"model": self.model_1.id})
+        assert req.status_code == status.HTTP_200_OK
+        assert req.data.get("count") == 1
+        assert req.data.get("results")[0]["name"] == "Cycleways"
+
+        self.scenario_1 = Scenario.objects.create(
+            name="Least Cost Electrification",
+            vector_dataset=self.dataset_1,
+            model=self.model_1,
+        )
+        # after assigning the
+        req = self.client.get(self.url, {"model": self.model_1.id})
+        assert req.status_code == status.HTTP_200_OK
+        assert req.data.get("count") == 2
+        assert req.data.get("results")[0]["name"] == "Administrative Boundaries"
+        assert req.data.get("results")[1]["name"] == "Cycleways"
 
     def tearDown(self):
         VectorFile.objects.all().delete()

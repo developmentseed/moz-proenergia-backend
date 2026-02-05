@@ -1,7 +1,9 @@
+from django.db.models import Q
 from django_filters import (
     CharFilter,
     DateFromToRangeFilter,
     FilterSet,
+    NumberFilter,
     OrderingFilter,
 )
 
@@ -16,10 +18,14 @@ class VectorDatasetFilter(FilterSet):
     order_by = OrderingFilter(
         fields=("name", "id", "updated", "created"),
     )
+    model = NumberFilter(field_name="models", method="filter_model", help_text="Filter")
+
+    def filter_model(self, queryset, name, value):
+        return queryset.filter(Q(models__id=value) | Q(scenario__model__id=value))
 
     class Meta:
         model = VectorDataset
-        fields = ["name", "source", "created", "updated"]
+        fields = ["name", "source", "created", "updated", "model"]
 
 
 class ScenarioDataFilter(FilterSet):
