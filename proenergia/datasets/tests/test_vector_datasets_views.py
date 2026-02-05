@@ -160,7 +160,7 @@ class TestVectorDatasetListDetailViews(APITestCase):
             created_by=self.superadmin_user,
             last_updated_by=self.superadmin_user,
         )
-        self.model_1 = DataModel.objects.create(
+        model_1 = DataModel.objects.create(
             name="PUE",
             filter_fields=[],
             popup_fields=[],
@@ -168,9 +168,9 @@ class TestVectorDatasetListDetailViews(APITestCase):
             visualization_column="Pop",
             color_coding=[],
         )
-        self.model_1.contextual_layers.add(self.dataset_4)
+        model_1.contextual_layers.add(self.dataset_4)
 
-        req = self.client.get(self.url, {"model": self.model_1.id})
+        req = self.client.get(self.url, {"model": model_1.id})
         assert req.status_code == status.HTTP_200_OK
         assert req.data.get("count") == 1
         assert req.data.get("results")[0]["name"] == "Cycleways"
@@ -178,14 +178,27 @@ class TestVectorDatasetListDetailViews(APITestCase):
         self.scenario_1 = Scenario.objects.create(
             name="Least Cost Electrification",
             vector_dataset=self.dataset_1,
-            model=self.model_1,
+            model=model_1,
         )
-        # after assigning the
-        req = self.client.get(self.url, {"model": self.model_1.id})
+        # after creating the scenario, it should return 2 items
+        req = self.client.get(self.url, {"model": model_1.id})
         assert req.status_code == status.HTTP_200_OK
         assert req.data.get("count") == 2
         assert req.data.get("results")[0]["name"] == "Administrative Boundaries"
         assert req.data.get("results")[1]["name"] == "Cycleways"
+
+        model_2 = DataModel.objects.create(
+            name="New model",
+            filter_fields=[],
+            popup_fields=[],
+            summary_fields=[],
+            visualization_column="Pop",
+            color_coding=[],
+        )
+        # no vector datasets assigned to model_2, so it should not return results
+        req = self.client.get(self.url, {"model": model_2.id})
+        assert req.status_code == status.HTTP_200_OK
+        assert req.data.get("count") == 0
 
     def tearDown(self):
         VectorFile.objects.all().delete()
