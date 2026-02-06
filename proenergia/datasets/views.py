@@ -40,7 +40,9 @@ class VectorDatasetListView(ListAPIView):
     filterset_class = VectorDatasetFilter
 
     def get_queryset(self):
-        queryset = VectorDataset.objects.select_related("created_by", "last_updated_by").prefetch_related("model")
+        queryset = VectorDataset.objects.select_related(
+            "created_by", "last_updated_by"
+        ).prefetch_related("model")
         if self.request.user and self.request.user.is_superuser:
             return queryset
         else:
