@@ -50,6 +50,7 @@ def to_pmtiles(file_path: str):
                 "ogr2ogr",
                 "-t_srs",
                 "EPSG:4326",
+                "-skipfailures",
                 fgb_path,
                 f"/vsizip/{file_path}" if file_path.endswith(".zip") else file_path,
             ],
