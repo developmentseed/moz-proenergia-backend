@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.db.models import Count, FloatField, Max, Min, Sum, TextField
+from django.db.models import Count, FloatField, Max, Min, Sum
 from django.db.models.fields.json import KT
 from django.db.models.functions import Cast
 from django.db.utils import DataError, InternalError, ProgrammingError
@@ -58,7 +58,7 @@ class VectorDatasetDetailView(RetrieveAPIView):
 class DataModelListView(ListAPIView):
     """Lists all available DataModel entries."""
 
-    queryset = DataModel.objects.all()
+    queryset = DataModel.objects.prefetch_related("scenarios")
     serializer_class = DataModelSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
@@ -146,7 +146,7 @@ class SummaryView(APIView):
                 }
         except (ProgrammingError, DataError, InternalError):
             query = (
-                entries_with_key.annotate(key=Cast(KT(f"metadata__{key}"), TextField()))
+                entries_with_key.annotate(key=KT(f"metadata__{key}"))
                 .values("key")
                 .annotate(count=Count("id"))
             )
