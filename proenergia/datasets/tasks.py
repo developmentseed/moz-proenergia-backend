@@ -43,7 +43,7 @@ def to_pmtiles(file_path: str):
     filename, extension = splitext(basename(file_path))
     pmtiles_path = join(dir, f"{filename}.pmtiles")
     fgb_path = None
-    if extension.lower() not in ["json", "geojson"]:
+    if extension.lower() not in [".json", ".geojson"]:
         fgb_path = join(dir, f"{filename}.fgb")
         subprocess.run(
             [
