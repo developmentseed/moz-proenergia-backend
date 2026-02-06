@@ -43,7 +43,7 @@ class PermissionBasedModelAdmin(ModelAdmin):
 
 @admin.register(VectorDataset)
 class VectorDatasetAdmin(PermissionBasedModelAdmin):
-    list_display = ["id", "name", "updated", "is_public", "is_approved"]
+    list_display = ["name", "updated", "is_public", "is_approved"]
     fields = ["name", "description", "source"]
     actions = ["make_public", "make_private", "approve", "disapprove"]
 
@@ -94,6 +94,7 @@ class VectorDatasetAdmin(PermissionBasedModelAdmin):
 class VectorFileAdmin(PermissionBasedModelAdmin):
     list_display = ["id", "dataset", "created", "status"]
     fields = ["dataset", "file"]
+    list_filter = ["dataset", "status"]
 
     def save_model(self, request, obj, form, change):
         if not change:
@@ -195,7 +196,7 @@ class DataModelAdmin(ModelAdmin):
 
 @admin.register(Scenario)
 class ScenarioAdmin(ModelAdmin):
-    list_display = ["id", "name", "model"]
+    list_display = ["name", "model"]
     fields = ["name", "model", "vector_dataset"]
 
 
@@ -203,6 +204,7 @@ class ScenarioAdmin(ModelAdmin):
 class ScenarioFileAdmin(ModelAdmin):
     list_display = ["id", "scenario", "created", "status"]
     fields = ["scenario", "file"]
+    list_filter = ["scenario", "status"]
 
     def save_model(self, request, obj, form, change):
         if not change:
