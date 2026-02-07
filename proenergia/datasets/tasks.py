@@ -85,12 +85,14 @@ def generate_pmtiles(self, id: int):
         logger.error(f"Command failed with exit code {e.returncode}")
         logger.error(f"STDOUT: {e.stdout}")
         logger.error(f"STDERR: {e.stderr}")
+        vf.error_message = e.stderr
         vf.status = "error"
-        vf.save(update_fields=["status"])
+        vf.save(update_fields=["status", "error_message"])
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
+        vf.error_message = e
         vf.status = "error"
-        vf.save(update_fields=["status"])
+        vf.save(update_fields=["status", "error_message"])
 
 
 def merge_vector_scenario_files(
@@ -125,11 +127,13 @@ def generate_scenario_pmtiles(self, id: int):
 
     vf = sf.scenario.vector_dataset.latest_file()
     if not vf:
-        logger.error(
+        msg = (
             f"There is not a VectorFile associated with the Scenario {sf.scenario.name}"
         )
+        logger.error(msg)
+        sf.error_message = msg
         sf.status = "error"
-        sf.save(update_fields=["status"])
+        sf.save(update_fields=["status", "error_message"])
 
     sf.status = "processing"
     sf.save(update_fields=["status"])
@@ -149,8 +153,9 @@ def generate_scenario_pmtiles(self, id: int):
         sf.save(update_fields=["status"])
     except Exception as e:
         print(f"Unexpected error: {e}")
+        sf.error_message = e
         sf.status = "error"
-        sf.save(update_fields=["status"])
+        sf.save(update_fields=["status", "error_message"])
 
 
 class DataImporter:

@@ -76,6 +76,7 @@ class VectorFile(models.Model):
             FileExtensionValidator(allowed_extensions=["geojson", "gpkg", "zip", "kml"])
         ],
     )
+    error_message = models.TextField(default="", blank=True, null=True)
 
     def __str__(self):
         return f"{self.dataset} ({self.created})"
@@ -182,6 +183,7 @@ class ScenarioFile(models.Model):
         unique=True,
         validators=[FileExtensionValidator(allowed_extensions=["csv"])],
     )
+    error_message = models.TextField(default="", blank=True, null=True)
 
     def __str__(self):
         return f"{self.scenario} ({self.created})"

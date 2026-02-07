@@ -93,8 +93,18 @@ class VectorDatasetAdmin(PermissionBasedModelAdmin):
 @admin.register(VectorFile)
 class VectorFileAdmin(PermissionBasedModelAdmin):
     list_display = ["id", "dataset", "created", "status"]
-    fields = ["dataset", "file"]
+    fields = ["dataset", "file", "status", "error_message"]
+    readonly_fields = ["error_message", "status"]
     list_filter = ["dataset", "status"]
+
+    def get_fields(self, request, obj=None):
+        fields = super().get_fields(request, obj)
+        # Hide error_message and status in add form (when obj is None) or status is not error
+        if obj is None:
+            return [f for f in fields if f not in ["error_message", "status"]]
+        if obj and obj.status != "error":
+            return [f for f in fields if f != "error_message"]
+        return fields
 
     def save_model(self, request, obj, form, change):
         if not change:
@@ -203,8 +213,18 @@ class ScenarioAdmin(ModelAdmin):
 @admin.register(ScenarioFile)
 class ScenarioFileAdmin(ModelAdmin):
     list_display = ["id", "scenario", "created", "status"]
-    fields = ["scenario", "file"]
+    fields = ["scenario", "file", "status", "error_message"]
+    readonly_fields = ["status", "error_message"]
     list_filter = ["scenario", "status"]
+
+    def get_fields(self, request, obj=None):
+        fields = super().get_fields(request, obj)
+        # Hide error_message and status in add form (when obj is None) or status is not error
+        if obj is None:
+            return [f for f in fields if f not in ["error_message", "status"]]
+        if obj and obj.status != "error":
+            return [f for f in fields if f != "error_message"]
+        return fields
 
     def save_model(self, request, obj, form, change):
         if not change:
@@ -212,3 +232,6 @@ class ScenarioFileAdmin(ModelAdmin):
 
         obj.last_updated_by = request.user
         super().save_model(request, obj, form, change)
+
+    def has_change_permission(self, request, obj=None):
+        return False
