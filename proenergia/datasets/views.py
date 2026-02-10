@@ -27,6 +27,12 @@ class PublicApprovedDataset(BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.user and request.user.is_superuser:
             return True
+        elif (
+            request.method in SAFE_METHODS
+            and request.user.is_authenticated
+            and obj.is_approved
+        ):
+            return True
         else:
             return request.method in SAFE_METHODS and obj.is_public and obj.is_approved
 
@@ -43,6 +49,8 @@ class VectorDatasetListView(ListAPIView):
         queryset = VectorDataset.objects.select_related("created_by", "last_updated_by")
         if self.request.user and self.request.user.is_superuser:
             return queryset
+        elif self.request.user.is_authenticated:
+            return queryset.filter(is_approved=True)
         else:
             return queryset.filter(is_public=True, is_approved=True)
 
