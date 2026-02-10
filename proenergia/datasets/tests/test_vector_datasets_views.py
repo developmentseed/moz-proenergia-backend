@@ -77,13 +77,14 @@ class TestVectorDatasetListDetailViews(APITestCase):
         self.client.force_authenticate(user=self.admin_user)
         req = self.client.get(self.url)
         assert req.status_code == status.HTTP_200_OK
-        assert req.data.get("count") == 1
+        assert req.data.get("count") == 2
         assert req.data.get("results")[0]["name"] == "Administrative Boundaries"
         assert req.data.get("results")[0]["description"] == "Administrative Boundaries"
         assert (
             req.data.get("results")[0]["raw_file"]
             == "vector/administrative-boundaries_v2.geojson"
         )
+        assert req.data.get("results")[1]["name"] == "Roads"
 
     def test_vector_datasets_list_superadmin_user(self):
         self.client.force_authenticate(user=self.superadmin_user)
@@ -117,12 +118,18 @@ class TestVectorDatasetListDetailViews(APITestCase):
 
     def test_vector_datasets_detail_admin(self):
         self.client.force_authenticate(user=self.admin_user)
+        # can access public dataset
         url = reverse("datasets:vector-detail", args=[self.dataset_1.id])
         req = self.client.get(url)
         assert req.status_code == status.HTTP_200_OK
         assert req.data.get("name") == "Administrative Boundaries"
-        # only superadmin can access private/non-approved dataset
+        # admin users can access private and approved dataset
         url = reverse("datasets:vector-detail", args=[self.dataset_2.id])
+        req = self.client.get(url)
+        assert req.status_code == status.HTTP_200_OK
+        assert req.data.get("name") == "Roads"
+        # only superadmin can access private non-approved datasets
+        url = reverse("datasets:vector-detail", args=[self.dataset_3.id])
         req = self.client.get(url)
         assert req.status_code == status.HTTP_403_FORBIDDEN
 
