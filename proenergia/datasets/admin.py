@@ -1,5 +1,5 @@
 from django.contrib import admin, messages
-from django.forms import ModelForm
+from django.forms import CheckboxSelectMultiple, ModelForm
 from unfold.admin import ModelAdmin
 
 from .models import (
@@ -148,6 +148,9 @@ class DataModelAdminForm(ModelForm):
             "color_coding",
             "contextual_layers",
         ]
+        widgets = {
+            "contextual_layers": CheckboxSelectMultiple(),
+        }
 
     def clean(self):
         cleaned_data = super().clean()
