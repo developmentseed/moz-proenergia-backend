@@ -47,6 +47,12 @@ class VectorDatasetAdmin(PermissionBasedModelAdmin):
     fields = ["name", "description", "source"]
     actions = ["make_public", "make_private", "approve", "disapprove"]
 
+    def get_fields(self, request, obj=None):
+        fields = super().get_fields(request, obj)
+        if request.user.is_superuser:
+            return fields + ["is_public", "is_approved"]
+        return fields
+
     def save_model(self, request, obj, form, change):
         if not change:
             obj.created_by = request.user

@@ -29,6 +29,9 @@ class VectorDatasetAdmin(TestCase):
         url = reverse("admin:datasets_vectordataset_add")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
+        # Superadmins can toggle public/approved fields
+        self.assertContains(response, "Is public")
+        self.assertContains(response, "Is approved")
 
         data = {
             "name": "Test Dataset",
@@ -49,6 +52,9 @@ class VectorDatasetAdmin(TestCase):
         url = reverse("admin:datasets_vectordataset_add")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
+        # should not include public/approved toggles
+        self.assertNotContains(response, "Is public")
+        self.assertNotContains(response, "Is approved")
 
         data = {
             "name": "Test Dataset",
