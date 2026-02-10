@@ -25,12 +25,12 @@ api_urls = [
         f"{API_BASE_URL}/tasks/",
         include(("proenergia.tasks.urls", "proenergia.tasks"), namespace="tasks"),
     ),
+    path(f"{API_BASE_URL}/token-auth/", views.obtain_auth_token),
 ]
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include(api_urls)),
-    path("api-token-auth/", views.obtain_auth_token),
     path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
     path(f"{API_BASE_URL}/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
