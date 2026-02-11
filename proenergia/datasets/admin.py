@@ -204,6 +204,18 @@ class DataModelAdminForm(ModelForm):
                                 "The value for the columns key should be a list.",
                             )
 
+                    if "method" in keys and i[1].get("method") not in [
+                        "sum",
+                        "average",
+                        "count",
+                        "min",
+                        "max",
+                    ]:
+                        self.add_error(
+                            "summary_fields",
+                            "The value for the methods key should be sum, count, average, min or max.",
+                        )
+
         if color_coding:
             if type(color_coding) is not list:
                 self.add_error("color_coding", "Content should be a list")

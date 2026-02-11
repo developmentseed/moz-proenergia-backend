@@ -71,7 +71,10 @@ class TestDataModelViews(APITestCase):
                 {
                     "label": "Population",
                     "description": "Population in 2025",
-                    "column": "Pop",
+                    "columns": ["Pop"],
+                    "method": "count",
+                    "unit": "individuals",
+                    "group_by": "sex",
                 }
             ],
             visualization_column="Pop",
@@ -183,7 +186,10 @@ class TestDataModelViews(APITestCase):
             {
                 "label": "Population",
                 "description": "Population in 2025",
-                "column": "Pop",
+                "columns": ["Pop"],
+                "method": "count",
+                "unit": "individuals",
+                "group_by": "sex",
             }
         ]
         assert req.data.get("results")[0]["visualization_column"] == "Pop"

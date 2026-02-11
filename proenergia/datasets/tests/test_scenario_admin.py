@@ -44,6 +44,9 @@ class TestScenarioAdmin(TestCase):
                         "label": "Population",
                         "description": "Population in 2025",
                         "columns": ["Pop"],
+                        "method": "sum",
+                        "unit": "individuals",
+                        "group_by": "age",
                     }
                 ]
             ),
@@ -241,6 +244,7 @@ class TestScenarioAdmin(TestCase):
                     {
                         "description": "Population in 2025",
                         "columns": ["Pop"],
+                        "method": "sum",
                     }
                 ]
             ),
