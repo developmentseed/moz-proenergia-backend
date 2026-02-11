@@ -133,10 +133,7 @@ class SummaryView(APIView):
         entries_with_key = queryset.filter(metadata__has_key=key)
 
         if not entries_with_key.exists():
-            return Response(
-                {"error": f"No data found for key '{key}'."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+            return Response({"key": key, "count": 0})
 
         try:
             with transaction.atomic():

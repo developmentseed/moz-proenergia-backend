@@ -124,8 +124,9 @@ class TestScenarioDataDetailViews(APITestCase):
             "datasets:scenario-summary", args=[self.scenario_1.id, "nonexistent"]
         )
         res = self.client.get(url)
-        assert res.status_code == 404
-        assert "No data found for key" in res.data.get("error")
+        assert res.status_code == 200
+        assert res.data.get("key") == "nonexistent"
+        assert res.data.get("count") == 0
 
     def test_summary_nonexistent_scenario(self):
         """Test summary with non-existent scenario"""
