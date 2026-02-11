@@ -1,5 +1,6 @@
 from django.contrib import admin, messages
 from django.forms import ModelForm
+from django_json_widget.widgets import JSONEditorWidget
 from unfold.admin import ModelAdmin
 
 from .models import (
@@ -148,6 +149,17 @@ class DataModelAdminForm(ModelForm):
             "color_coding",
             "contextual_layers",
         ]
+        widgets = {
+            "filter_fields": JSONEditorWidget(
+                height="400px",
+                width="90%",
+                options={
+                    "mode": "tree",
+                    "modes": ["tree", "form", "view", "code", "text"],
+                    "search": True,
+                }
+            ),
+        }
 
     def clean(self):
         cleaned_data = super().clean()

@@ -32,6 +32,8 @@ class Common(Configuration):
         "django_filters",  # for filtering rest endpoints
         "drf_spectacular",  # api-docs
         "corsheaders",
+        # JSON widget for admin
+        "django_json_widget",
         # Celery apps
         "django_celery_results",
         "django_celery_beat",

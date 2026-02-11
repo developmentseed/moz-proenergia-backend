@@ -20,6 +20,7 @@ django-cors-headers==4.9.0
 
 # Admin tools
 django-unfold==0.72.0
+django-json-widget==2.0.1
 
 # Developer Tools
 ipdb==0.13.13
