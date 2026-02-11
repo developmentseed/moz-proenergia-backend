@@ -233,6 +233,7 @@ class ScenarioDataMetrics(models.Model):
     Denormalized metrics table for fast aggregations.
     Stores extracted key-value pairs from ScenarioData.metadata for commonly queried fields.
     """
+
     scenario = models.ForeignKey(Scenario, models.CASCADE, related_name="metrics")
     feature_id = models.IntegerField()
     key = models.CharField(max_length=255, db_index=True)
