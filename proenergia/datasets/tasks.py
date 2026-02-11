@@ -287,7 +287,8 @@ def sync_scenario_metrics(scenario):
     Extract configured fields from ScenarioData to ScenarioDataMetrics table
     for fast aggregation queries.
     """
-    from proenergia.datasets.models import ScenarioData, ScenarioDataMetrics
+    ScenarioData = apps.get_model("datasets", "ScenarioData")
+    ScenarioDataMetrics = apps.get_model("datasets", "ScenarioDataMetrics")
 
     model = scenario.model
 
