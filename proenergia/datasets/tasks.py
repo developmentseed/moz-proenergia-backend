@@ -3,6 +3,7 @@ import json
 import logging
 import subprocess
 import time
+from decimal import Decimal, InvalidOperation
 from os.path import basename, dirname, join, splitext
 from typing import Dict, Iterator, List
 
@@ -281,6 +282,75 @@ class DataImporter:
         }
 
 
+def sync_scenario_metrics(scenario):
+    """
+    Extract configured fields from ScenarioData to ScenarioDataMetrics table
+    for fast aggregation queries.
+    """
+    from proenergia.datasets.models import ScenarioData, ScenarioDataMetrics
+    
+    model = scenario.model
+    
+    # Get configured fields
+    numeric_fields = model.summary_numeric_fields or []
+    string_fields = model.summary_string_fields or []
+    
+    if not numeric_fields and not string_fields:
+        logger.info(f"No summary fields configured for model {model.name}")
+        return
+    
+    logger.info(f"Syncing metrics for scenario {scenario.id} - numeric: {numeric_fields}, string: {string_fields}")
+    
+    # Clear existing metrics for this scenario
+    ScenarioDataMetrics.objects.filter(scenario=scenario).delete()
+    
+    # Prepare metrics for bulk creation
+    metrics_to_create = []
+    batch_size = 5000
+    
+    # Process all ScenarioData for this scenario
+    for data in ScenarioData.objects.filter(scenario=scenario).iterator(chunk_size=1000):
+        # Extract numeric fields
+        for field in numeric_fields:
+            if field in data.metadata and data.metadata[field] is not None:
+                try:
+                    value = str(data.metadata[field])
+                    numeric_value = Decimal(value)
+                    metrics_to_create.append(
+                        ScenarioDataMetrics(
+                            scenario=scenario,
+                            feature_id=data.feature_id,
+                            key=field,
+                            numeric_value=numeric_value
+                        )
+                    )
+                except (ValueError, InvalidOperation) as e:
+                    logger.debug(f"Could not convert {field}={data.metadata[field]} to numeric: {e}")
+        
+        # Extract string fields
+        for field in string_fields:
+            if field in data.metadata and data.metadata[field] is not None:
+                metrics_to_create.append(
+                    ScenarioDataMetrics(
+                        scenario=scenario,
+                        feature_id=data.feature_id,
+                        key=field,
+                        string_value=str(data.metadata[field])
+                    )
+                )
+        
+        # Bulk insert when batch size is reached
+        if len(metrics_to_create) >= batch_size:
+            ScenarioDataMetrics.objects.bulk_create(metrics_to_create, ignore_conflicts=True)
+            metrics_to_create = []
+    
+    # Insert any remaining metrics
+    if metrics_to_create:
+        ScenarioDataMetrics.objects.bulk_create(metrics_to_create, ignore_conflicts=True)
+    
+    logger.info(f"Metrics sync completed for scenario {scenario.id}")
+
+
 @shared_task(bind=True, max_retries=5, default_retry_delay=2)
 def import_scenario_data_csv(self, scenario_file_id: int):
     ScenarioFile = apps.get_model("datasets", "ScenarioFile")
@@ -297,3 +367,11 @@ def import_scenario_data_csv(self, scenario_file_id: int):
     logger.info(
         f"ScenarioFile #{scenario_file_id} imported successfully. Rows count: {stats.get('total_rows')}, in {stats.get('total_time')}s"
     )
+    
+    # Sync metrics after successful import
+    try:
+        scenario = ScenarioFile.objects.get(id=scenario_file_id).scenario
+        sync_scenario_metrics(scenario)
+        logger.info(f"Metrics synced successfully for scenario {scenario.id}")
+    except Exception as e:
+        logger.error(f"Failed to sync metrics for scenario: {e}")
