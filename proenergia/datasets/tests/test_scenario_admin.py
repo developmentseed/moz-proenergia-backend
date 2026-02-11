@@ -43,7 +43,7 @@ class TestScenarioAdmin(TestCase):
                     {
                         "label": "Population",
                         "description": "Population in 2025",
-                        "column": "Pop",
+                        "columns": ["Pop"],
                     }
                 ]
             ),
@@ -86,7 +86,7 @@ class TestScenarioAdmin(TestCase):
                     {
                         "label": "Population",
                         "description": "Population in 2025",
-                        "column": "Pop",
+                        "columns": ["Pop"],
                     }
                 ]
             ),
@@ -127,7 +127,7 @@ class TestScenarioAdmin(TestCase):
                     {
                         "label": "Population",
                         "description": "Population in 2025",
-                        "column": "Pop",
+                        "columns": ["Pop"],
                     }
                 ]
             ),
@@ -240,7 +240,7 @@ class TestScenarioAdmin(TestCase):
                 [
                     {
                         "description": "Population in 2025",
-                        "column": "Pop",
+                        "columns": ["Pop"],
                     }
                 ]
             ),
@@ -283,7 +283,7 @@ class TestScenarioAdmin(TestCase):
                     {
                         "label": "Population",
                         "description": "Population in 2025",
-                        "column": "Pop",
+                        "columns": ["Pop"],
                     }
                 ]
             ),

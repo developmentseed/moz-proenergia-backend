@@ -194,9 +194,15 @@ class DataModelAdminForm(ModelForm):
                     if (
                         "label" not in keys
                         or "description" not in keys
-                        or "column" not in keys
+                        or "columns" not in keys
                     ):
                         self.add_error("summary_fields", "Missing a required key.")
+                    else:
+                        if type(i[1].get("columns")) is not list:
+                            self.add_error(
+                                "summary_fields",
+                                "The value for the columns key should be a list.",
+                            )
 
         if color_coding:
             if type(color_coding) is not list:
