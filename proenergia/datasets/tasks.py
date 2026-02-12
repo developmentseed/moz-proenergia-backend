@@ -294,8 +294,8 @@ def sync_scenario_metrics(scenario):
 
     # Get configured fields from summary_fields with type property
     summary_fields = model.summary_fields or []
-    numeric_fields = [f['column'] for f in summary_fields if f.get('type') == 'numeric']
-    string_fields = [f['column'] for f in summary_fields if f.get('type') == 'string']
+    numeric_fields = [f["column"] for f in summary_fields if f.get("type") == "numeric"]
+    string_fields = [f["column"] for f in summary_fields if f.get("type") == "string"]
 
     if not numeric_fields and not string_fields:
         logger.info(f"No summary fields configured for model {model.name}")
