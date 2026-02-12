@@ -42,23 +42,21 @@ def to_pmtiles(file_path: str):
     dir = dirname(file_path)
     filename, extension = splitext(basename(file_path))
     pmtiles_path = join(dir, f"{filename}.pmtiles")
-    fgb_path = None
-    if extension.lower() not in [".json", ".geojson"]:
-        fgb_path = join(dir, f"{filename}.fgb")
-        subprocess.run(
-            [
-                "ogr2ogr",
-                "-t_srs",
-                "EPSG:4326",
-                "-skipfailures",
-                fgb_path,
-                f"/vsizip/{file_path}" if file_path.endswith(".zip") else file_path,
-            ],
-            check=True,  # Raises CalledProcessError on non-zero exit
-            capture_output=True,  # Capture stdout and stderr
-            text=True,  # Return strings instead of bytes
-        )
-    call_tippecanoe(fgb_path or file_path, pmtiles_path)
+    fgb_path = join(dir, f"{filename}.fgb")
+    subprocess.run(
+        [
+            "ogr2ogr",
+            "-t_srs",
+            "EPSG:4326",
+            "-skipfailures",
+            fgb_path,
+            f"/vsizip/{file_path}" if file_path.endswith(".zip") else file_path,
+        ],
+        check=True,  # Raises CalledProcessError on non-zero exit
+        capture_output=True,  # Capture stdout and stderr
+        text=True,  # Return strings instead of bytes
+    )
+    call_tippecanoe(fgb_path, pmtiles_path)
 
 
 @shared_task(bind=True, max_retries=5, default_retry_delay=2)
