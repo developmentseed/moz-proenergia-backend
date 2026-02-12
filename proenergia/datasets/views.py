@@ -112,72 +112,153 @@ class ScenarioDataDetailView(RetrieveAPIView):
         return get_object_or_404(queryset, **filter)
 
 
-class SummaryView(APIView):
+
+class MultiFieldSummaryView(APIView):
     """
-    High-performance endpoint for computing statistics on scenario metadata fields.
-
-    Uses optimized metrics table for sub-second response times on large datasets.
-    Only fields configured in DataModel.summary_fields with type property are available.
-
+    High-performance endpoint for computing statistics on multiple scenario metadata fields.
+    
+    Returns summaries for multiple fields in a single request.
+    All requested fields must be valid and configured in DataModel.summary_fields.
+    
+    Query Parameters:
+        - fields: Comma-separated list of field names (required)
+        - q: Filter string (optional)
+    
     Returns:
         - Numeric fields: count, min, max, sum
         - String fields: count, value distribution
-
-    Supports filtering via ?q= parameter:
-        - Numeric: Pop__min=1000, Pop__max=2000
-        - String: Admin_1=Gaza, District__in=Central;Norte
-        - Combined: Pop__min=1000,Admin_1=Gaza
     """
-
+    
     # Supported operators for each field type
     NUMERIC_OPERATORS = {"gte", "lte", "eq"}
     STRING_OPERATORS = {"eq", "in"}
-
+    
     permission_classes = [IsAuthenticatedOrReadOnly]
-
-    def get(self, request: Request, pk: int, key: str) -> Response:
-        # Verify scenario exists
+    
+    def get(self, request: Request, pk: int) -> Response:
+        # 1. Validate scenario exists
         scenario = get_object_or_404(Scenario, id=pk)
-
-        # Check if key is available in metrics
-        metrics_query = ScenarioDataMetrics.objects.filter(scenario=scenario, key=key)
-
-        if not metrics_query.exists():
-            # Check if this key is configured for extraction
-            model = scenario.model
-            configured_keys = [f['column'] for f in (model.summary_fields or [])]
-
-            if key not in configured_keys:
-                return Response(
-                    {
-                        "error": f"Summary not available for key '{key}'. This field has not been configured for fast summaries."
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            else:
-                return Response(
-                    {
-                        "error": f"No data found for key '{key}'. The metrics may need to be regenerated."
-                    },
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-
-        # Apply filters if provided
-        filter_params = request.GET.get("q", "")
+        
+        # 2. Parse and validate fields parameter
+        fields_param = request.GET.get('fields', '')
+        if not fields_param:
+            return Response(
+                {"error": "The 'fields' parameter is required."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        requested_fields = [f.strip() for f in fields_param.split(',') if f.strip()]
+        if not requested_fields:
+            return Response(
+                {"error": "No fields specified."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 3. Get configured fields and validate ALL requested fields
+        field_type_map = self._get_field_type_map(scenario.model)
+        
+        # Validate all fields are configured
+        invalid_fields = [f for f in requested_fields if f not in field_type_map]
+        if invalid_fields:
+            return Response(
+                {"error": f"Field(s) not configured for summaries: {', '.join(invalid_fields)}"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check all fields have metrics data
+        missing_data_fields = []
+        for field in requested_fields:
+            if not ScenarioDataMetrics.objects.filter(scenario=scenario, key=field).exists():
+                missing_data_fields.append(field)
+        
+        if missing_data_fields:
+            return Response(
+                {"error": f"No data found for field(s): {', '.join(missing_data_fields)}. Metrics may need to be regenerated."}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # 4. Apply filters once if provided
+        filter_params = request.GET.get('q', '')
+        base_feature_ids = None
+        
         if filter_params:
             try:
-                metrics_query = self.apply_metrics_filters(
-                    metrics_query, scenario.id, filter_params
+                base_feature_ids = self._get_filtered_feature_ids(
+                    scenario, filter_params, field_type_map
                 )
-                if isinstance(metrics_query, Response):
-                    # Handle validation errors returned by filter method
-                    return metrics_query
             except ValueError as e:
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Check if numeric or string field
-        sample = metrics_query.first()
-        if sample and sample.numeric_value is not None:
+                return Response(
+                    {"error": str(e)}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        # 5. Compute summaries for each field
+        summaries = {}
+        
+        for field in requested_fields:
+            # Build query for this field
+            metrics_query = ScenarioDataMetrics.objects.filter(
+                scenario=scenario, 
+                key=field
+            )
+            
+            # Apply feature_id filter if filters were provided
+            if base_feature_ids is not None:
+                metrics_query = metrics_query.filter(feature_id__in=base_feature_ids)
+            
+            # Compute summary based on field type
+            field_type = field_type_map[field]
+            summaries[field] = self._compute_field_summary(metrics_query, field_type)
+        
+        # 6. Return successful response
+        return Response({
+            "scenario_id": pk,
+            "filters_applied": filter_params,
+            "summaries": summaries
+        })
+    
+    def _get_field_type_map(self, model):
+        """Build a mapping of field names to their types"""
+        return {
+            field['column']: field.get('type', 'string')
+            for field in (model.summary_fields or [])
+        }
+    
+    def _get_filtered_feature_ids(self, scenario, filter_string, field_type_map):
+        """Apply filters and return matching feature_ids"""
+        # Parse filter string
+        filters = self.parse_filter_string(filter_string)
+        
+        # Separate numeric and string fields for validation
+        numeric_fields = set(k for k, v in field_type_map.items() if v == 'numeric')
+        string_fields = set(k for k, v in field_type_map.items() if v == 'string')
+        
+        # Build a base query to get all feature_ids for this scenario
+        base_query = ScenarioDataMetrics.objects.filter(scenario=scenario).values_list('feature_id', flat=True).distinct()
+        
+        # Apply each filter
+        for field_name, operator, value in filters:
+            # Validate field is configured
+            if field_name not in field_type_map:
+                raise ValueError(f"Field '{field_name}' is not configured for summaries.")
+            
+            # Validate operator is appropriate for field type
+            self._validate_field_operator(field_name, operator, numeric_fields, string_fields)
+            
+            # Build EXISTS subquery
+            exists_subquery = self._build_exists_subquery(
+                scenario.id, field_name, operator, value, numeric_fields
+            )
+            
+            # Apply filter to narrow down feature_ids
+            base_query = base_query.filter(Exists(exists_subquery))
+        
+        # Execute query and return feature_ids
+        return list(base_query)
+    
+    def _compute_field_summary(self, metrics_query, field_type):
+        """Compute summary statistics for a field based on its type"""
+        if field_type == 'numeric':
             # Numeric aggregation
             aggregates = metrics_query.aggregate(
                 max_val=Max("numeric_value"),
@@ -185,8 +266,7 @@ class SummaryView(APIView):
                 sum_val=Sum("numeric_value"),
                 count=Count("numeric_value"),
             )
-            summary = {
-                "key": key,
+            return {
                 "type": "numeric",
                 "count": aggregates["count"] or 0,
                 "min": (
@@ -212,9 +292,8 @@ class SummaryView(APIView):
                 .annotate(count=Count("id"))
                 .order_by("string_value")
             )
-
-            summary = {
-                "key": key,
+            
+            return {
                 "type": "string",
                 "count": sum(v["count"] for v in values),
                 "values": {
@@ -223,49 +302,8 @@ class SummaryView(APIView):
                     if v["string_value"] is not None
                 },
             }
-
-        return Response(summary)
-
-    def apply_metrics_filters(
-        self, queryset: QuerySet, scenario_id: int, filter_string: str
-    ) -> QuerySet:
-        """Apply filters to metrics queryset using SQL EXISTS subqueries for efficiency."""
-        if not queryset.exists():
-            return queryset
-
-        # Get field type information from DataModel's summary_fields
-        scenario = queryset.first().scenario
-        model = scenario.model
-        numeric_fields = set(f['column'] for f in (model.summary_fields or []) if f.get('type') == 'numeric')
-        string_fields = set(f['column'] for f in (model.summary_fields or []) if f.get('type') == 'string')
-
-        # Parse and validate filters
-        filters = self.parse_filter_string(filter_string)
-
-        # Apply each filter as an EXISTS subquery
-        for field_name, operator, value in filters:
-            # Validate field is configured
-            if field_name not in numeric_fields and field_name not in string_fields:
-                raise ValueError(
-                    f"Field '{field_name}' is not configured for summaries."
-                )
-
-            # Validate operator is appropriate for field type
-            self._validate_field_operator(
-                field_name, operator, numeric_fields, string_fields
-            )
-
-            # Create and apply EXISTS subquery filter
-            exists_subquery = self._build_exists_subquery(
-                scenario_id, field_name, operator, value, numeric_fields
-            )
-            queryset = queryset.filter(Exists(exists_subquery))
-
-        return queryset
-
-    def parse_filter_string(
-        self, filter_string: str
-    ) -> List[Tuple[str, str, Union[str, List[str]]]]:
+    
+    def parse_filter_string(self, filter_string: str) -> List[Tuple[str, str, Union[str, List[str]]]]:
         """Parse filter string into (field_name, operator, value) tuples."""
         filters = []
         for part in filter_string.split(","):
@@ -273,7 +311,7 @@ class SummaryView(APIView):
                 key_op, value = part.split("=", 1)
                 key_op = key_op.strip()
                 value = value.strip()
-
+                
                 # Parse operator
                 if "__min" in key_op:
                     filters.append((key_op.replace("__min", ""), "gte", value))
@@ -284,58 +322,38 @@ class SummaryView(APIView):
                 else:
                     filters.append((key_op, "eq", value))
         return filters
-
-    def _validate_field_operator(
-        self, field_name: str, operator: str, numeric_fields: set, string_fields: set
-    ) -> None:
+    
+    def _validate_field_operator(self, field_name: str, operator: str, numeric_fields: set, string_fields: set) -> None:
         """Validate that the operator is appropriate for the field type."""
         if field_name in numeric_fields and operator not in self.NUMERIC_OPERATORS:
-            raise ValueError(
-                f"Operator '{operator}' is not supported for numeric field '{field_name}'."
-            )
-
+            raise ValueError(f"Operator '{operator}' is not supported for numeric field '{field_name}'.")
+        
         if field_name in string_fields and operator not in self.STRING_OPERATORS:
-            raise ValueError(
-                f"Operator '{operator}' is not supported for string field '{field_name}'."
-            )
-
+            raise ValueError(f"Operator '{operator}' is not supported for string field '{field_name}'.")
+        
         # Specific validation for string fields with numeric operators
         if field_name in string_fields and operator in {"gte", "lte"}:
-            raise ValueError(
-                f"Min/max operations are not supported for string field '{field_name}'."
-            )
-
-    def _build_exists_subquery(
-        self,
-        scenario_id: int,
-        field_name: str,
-        operator: str,
-        value: Union[str, List[str]],
-        numeric_fields: set,
-    ) -> QuerySet:
+            raise ValueError(f"Min/max operations are not supported for string field '{field_name}'.")
+    
+    def _build_exists_subquery(self, scenario_id: int, field_name: str, operator: str, 
+                                value: Union[str, List[str]], numeric_fields: set) -> QuerySet:
         """Build EXISTS subquery for the given filter condition."""
         exists_subquery = ScenarioDataMetrics.objects.filter(
             scenario_id=scenario_id, feature_id=OuterRef("feature_id"), key=field_name
         )
-
+        
         if field_name in numeric_fields:
             # Handle numeric field operations
             try:
                 numeric_val = float(value)
                 if operator == "gte":
-                    exists_subquery = exists_subquery.filter(
-                        numeric_value__gte=numeric_val
-                    )
+                    exists_subquery = exists_subquery.filter(numeric_value__gte=numeric_val)
                 elif operator == "lte":
-                    exists_subquery = exists_subquery.filter(
-                        numeric_value__lte=numeric_val
-                    )
+                    exists_subquery = exists_subquery.filter(numeric_value__lte=numeric_val)
                 elif operator == "eq":
                     exists_subquery = exists_subquery.filter(numeric_value=numeric_val)
             except (ValueError, TypeError):
-                raise ValueError(
-                    f"Invalid numeric value '{value}' for field '{field_name}'."
-                )
+                raise ValueError(f"Invalid numeric value '{value}' for field '{field_name}'.")
         else:
             # Handle string field operations
             if operator == "eq":
@@ -344,5 +362,5 @@ class SummaryView(APIView):
                 # Ensure value is a list for 'in' operations
                 value_list = value if isinstance(value, list) else [value]
                 exists_subquery = exists_subquery.filter(string_value__in=value_list)
-
+        
         return exists_subquery
