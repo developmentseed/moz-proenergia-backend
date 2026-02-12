@@ -117,7 +117,7 @@ class SummaryView(APIView):
     High-performance endpoint for computing statistics on scenario metadata fields.
 
     Uses optimized metrics table for sub-second response times on large datasets.
-    Only fields configured in DataModel.summary_numeric_fields or summary_string_fields are available.
+    Only fields configured in DataModel.summary_fields with type property are available.
 
     Returns:
         - Numeric fields: count, min, max, sum
@@ -145,9 +145,7 @@ class SummaryView(APIView):
         if not metrics_query.exists():
             # Check if this key is configured for extraction
             model = scenario.model
-            configured_keys = (model.summary_numeric_fields or []) + (
-                model.summary_string_fields or []
-            )
+            configured_keys = [f['column'] for f in (model.summary_fields or [])]
 
             if key not in configured_keys:
                 return Response(
@@ -235,11 +233,11 @@ class SummaryView(APIView):
         if not queryset.exists():
             return queryset
 
-        # Get field type information from DataModel
+        # Get field type information from DataModel's summary_fields
         scenario = queryset.first().scenario
         model = scenario.model
-        numeric_fields = set(model.summary_numeric_fields or [])
-        string_fields = set(model.summary_string_fields or [])
+        numeric_fields = set(f['column'] for f in (model.summary_fields or []) if f.get('type') == 'numeric')
+        string_fields = set(f['column'] for f in (model.summary_fields or []) if f.get('type') == 'string')
 
         # Parse and validate filters
         filters = self.parse_filter_string(filter_string)

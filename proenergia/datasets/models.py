@@ -115,18 +115,7 @@ class DataModel(models.Model):
     )
     summary_fields = models.JSONField(
         default=list,
-        help_text="""A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "column": "File/Database column name", "unit": "Unit of measurement"}""",
-    )
-    # New fields for metrics extraction
-    summary_numeric_fields = models.JSONField(
-        default=list,
-        help_text='List of numeric fields to extract for fast summaries. Example: ["Pop", "GHI", "GridCellArea"]',
-        blank=True,
-    )
-    summary_string_fields = models.JSONField(
-        default=list,
-        help_text='List of string fields to extract for fast summaries. Example: ["Admin_1", "District", "Posto"]',
-        blank=True,
+        help_text="""A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "column": "File/Database column name", "unit": "Unit of measurement", "type": "numeric|string"}. The type field determines if the field contains numeric or string values for metrics extraction.""",
     )
     visualization_column = models.CharField(
         max_length=155,
