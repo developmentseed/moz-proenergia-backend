@@ -123,10 +123,12 @@ class MultiFieldSummaryView(APIView):
     Query Parameters:
         - fields: Comma-separated list of field names (required)
         - q: Filter string (optional)
+        - group_by: Single string field to group summaries by (optional)
     
     Returns:
         - Numeric fields: count, min, max, sum
         - String fields: count, value distribution
+        - When group_by is provided: includes 'grouped' property with summaries per group
     """
     
     # Supported operators for each field type
@@ -177,13 +179,41 @@ class MultiFieldSummaryView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         
-        # 4. Apply filters once if provided
+        # 4. Parse and validate group_by parameter
+        group_by = request.GET.get('group_by', '').strip()
+        group_by_values = None
+        
+        if group_by:
+            # Validate group_by field exists and is a string field
+            if group_by not in field_type_map:
+                return Response(
+                    {"error": f"Group by field '{group_by}' is not configured for summaries."}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if field_type_map[group_by] != 'string':
+                return Response(
+                    {"error": f"Group by field '{group_by}' must be a string field."}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Check group_by field has data
+            if not ScenarioDataMetrics.objects.filter(scenario=scenario, key=group_by).exists():
+                return Response(
+                    {"error": f"No data found for group by field '{group_by}'."}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Get all possible values for the group_by field (including those that might be filtered out)
+            group_by_values = self._get_all_group_values(scenario, group_by)
+        
+        # 5. Apply filters once if provided
         filter_params = request.GET.get('q', '')
-        base_feature_ids = None
+        base_feature_subquery = None
         
         if filter_params:
             try:
-                base_feature_ids = self._get_filtered_feature_ids(
+                base_feature_subquery = self._get_filtered_feature_subquery(
                     scenario, filter_params, field_type_map
                 )
             except ValueError as e:
@@ -192,7 +222,7 @@ class MultiFieldSummaryView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
         
-        # 5. Compute summaries for each field
+        # 6. Compute summaries for each field
         summaries = {}
         
         for field in requested_fields:
@@ -203,19 +233,33 @@ class MultiFieldSummaryView(APIView):
             )
             
             # Apply feature_id filter if filters were provided
-            if base_feature_ids is not None:
-                metrics_query = metrics_query.filter(feature_id__in=base_feature_ids)
+            if base_feature_subquery is not None:
+                metrics_query = metrics_query.filter(feature_id__in=base_feature_subquery)
             
-            # Compute summary based on field type
+            # Compute overall summary
             field_type = field_type_map[field]
-            summaries[field] = self._compute_field_summary(metrics_query, field_type)
+            summary = self._compute_field_summary(metrics_query, field_type)
+            
+            # Add grouped summaries if group_by is provided
+            if group_by and group_by_values:
+                summary['grouped'] = self._compute_grouped_summaries(
+                    scenario, field, field_type, group_by,
+                    group_by_values, base_feature_subquery
+                )
+            
+            summaries[field] = summary
         
-        # 6. Return successful response
-        return Response({
+        # 7. Return successful response
+        response = {
             "scenario_id": pk,
             "filters_applied": filter_params,
             "summaries": summaries
-        })
+        }
+        
+        if group_by:
+            response["group_by"] = group_by
+        
+        return Response(response)
     
     def _get_field_type_map(self, model):
         """Build a mapping of field names to their types"""
@@ -224,8 +268,17 @@ class MultiFieldSummaryView(APIView):
             for field in (model.summary_fields or [])
         }
     
-    def _get_filtered_feature_ids(self, scenario, filter_string, field_type_map):
-        """Apply filters and return matching feature_ids"""
+    def _get_all_group_values(self, scenario, group_by_field):
+        """Get all unique values for the group_by field in the scenario"""
+        return list(
+            ScenarioDataMetrics.objects.filter(
+                scenario=scenario, 
+                key=group_by_field
+            ).values_list('string_value', flat=True).distinct().order_by('string_value')
+        )
+    
+    def _get_filtered_feature_subquery(self, scenario, filter_string, field_type_map):
+        """Apply filters and return a subquery for matching feature_ids"""
         # Parse filter string
         filters = self.parse_filter_string(filter_string)
         
@@ -253,8 +306,8 @@ class MultiFieldSummaryView(APIView):
             # Apply filter to narrow down feature_ids
             base_query = base_query.filter(Exists(exists_subquery))
         
-        # Execute query and return feature_ids
-        return list(base_query)
+        # Return the subquery (not executed yet)
+        return base_query
     
     def _compute_field_summary(self, metrics_query, field_type):
         """Compute summary statistics for a field based on its type"""
@@ -302,6 +355,80 @@ class MultiFieldSummaryView(APIView):
                     if v["string_value"] is not None
                 },
             }
+    
+    def _compute_grouped_summaries(self, scenario, field, field_type, 
+                                   group_by_field, all_group_values, 
+                                   base_feature_subquery):
+        """Compute summaries grouped by another field using efficient subqueries"""
+        grouped = {}
+        
+        for group_value in all_group_values:
+            # Build a subquery to get feature_ids for this group value
+            # This avoids creating large IN clauses with thousands of IDs
+            group_feature_subquery = ScenarioDataMetrics.objects.filter(
+                scenario=scenario,
+                key=group_by_field,
+                string_value=group_value
+            ).values_list('feature_id', flat=True)
+            
+            # If we have base filters applied, intersect with those
+            if base_feature_subquery is not None:
+                group_feature_subquery = group_feature_subquery.filter(
+                    feature_id__in=base_feature_subquery
+                )
+            
+            # Build query for this field and group using subquery
+            group_query = ScenarioDataMetrics.objects.filter(
+                scenario=scenario,
+                key=field,
+                feature_id__in=group_feature_subquery
+            )
+            
+            # Check if this group has any data
+            if not group_query.exists():
+                # Empty group - return zeros/empty
+                if field_type == 'numeric':
+                    grouped[group_value] = {
+                        "count": 0,
+                        "min": None,
+                        "max": None,
+                        "sum": None
+                    }
+                else:
+                    grouped[group_value] = {
+                        "count": 0,
+                        "values": {}
+                    }
+            else:
+                # Compute summary for this group
+                if field_type == 'numeric':
+                    aggregates = group_query.aggregate(
+                        max_val=Max("numeric_value"),
+                        min_val=Min("numeric_value"),
+                        sum_val=Sum("numeric_value"),
+                        count=Count("numeric_value"),
+                    )
+                    grouped[group_value] = {
+                        "count": aggregates["count"] or 0,
+                        "min": float(aggregates["min_val"]) if aggregates["min_val"] is not None else None,
+                        "max": float(aggregates["max_val"]) if aggregates["max_val"] is not None else None,
+                        "sum": float(aggregates["sum_val"]) if aggregates["sum_val"] is not None else None,
+                    }
+                else:
+                    values = group_query.values("string_value").annotate(
+                        count=Count("id")
+                    ).order_by("string_value")
+                    
+                    grouped[group_value] = {
+                        "count": sum(v["count"] for v in values),
+                        "values": {
+                            v["string_value"]: v["count"]
+                            for v in values
+                            if v["string_value"] is not None
+                        }
+                    }
+        
+        return grouped
     
     def parse_filter_string(self, filter_string: str) -> List[Tuple[str, str, Union[str, List[str]]]]:
         """Parse filter string into (field_name, operator, value) tuples."""
