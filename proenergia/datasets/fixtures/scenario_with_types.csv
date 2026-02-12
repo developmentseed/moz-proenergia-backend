@@ -1,0 +1,12 @@
+id,cost,location,country,technology,district,population
+1,23423,Maputo,Mozambique,SHS,Central,1500
+2,12334.5,Chifunde,Mozambique,GridExtension,Norte,2300
+3,230923.7,Maputo,Mozambique,ExistingGrid,Central,45000
+4,23093,Maputo,Mozambique,SHS,Central,1200
+5,2523,Maputo,Mozambique,SHS,Sul,800
+6,63423,Maputo,Mozambique,GridExtension,Central,3400
+7,93423,Tete,Mozambique,MiniGrid_PV,Norte,5600
+8,6423,Mocumba,Mozambique,SHS,Sul,450
+9,13223,Tete,Mozambique,SHS,Norte,890
+10,898623,Tete,Mozambique,ExistingGrid,Norte,78000
+11,49730,Maputo,Mozambique,MiniGrid_PV,Central,2100
