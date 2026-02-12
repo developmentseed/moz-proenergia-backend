@@ -115,20 +115,282 @@ class ScenarioDataDetailView(RetrieveAPIView):
 
 class MultiFieldSummaryView(APIView):
     """
-    High-performance endpoint for computing statistics on multiple scenario metadata fields.
+    Compute statistical summaries on multiple scenario metadata fields in a single request.
     
-    Returns summaries for multiple fields in a single request.
-    All requested fields must be valid and configured in DataModel.summary_fields.
+    This endpoint provides efficient aggregation of scenario data fields, supporting filtering
+    and grouping operations. All requested fields must be configured in the DataModel's 
+    summary_fields array with appropriate type indicators.
     
-    Query Parameters:
-        - fields: Comma-separated list of field names (required)
-        - q: Filter string (optional)
-        - group_by: Single string field to group summaries by (optional)
+    **URL Pattern:** `/api/v1/scenario/{pk}/summaries/`
     
-    Returns:
-        - Numeric fields: count, min, max, sum
-        - String fields: count, value distribution
-        - When group_by is provided: includes 'grouped' property with summaries per group
+    **Authentication:** Public read access (IsAuthenticatedOrReadOnly)
+    
+    ## Query Parameters
+    
+    ### Required Parameters
+    - **fields** (string): Comma-separated list of field names to summarize
+      - Must be configured in DataModel.summary_fields
+      - Example: `fields=Pop2030` or `fields=Pop2030,Technology2030`
+    
+    ### Optional Parameters
+    - **q** (string): Filter expression using field operators
+      - Multiple filters separated by commas
+      - Example: `q=Admin_1=Maputo,Pop2030__min=10000`
+      
+    - **group_by** (string): Single string field name for grouping results
+      - Must be a string-type field configured in summary_fields
+      - Example: `group_by=Technology2030`
+    
+    ## Filter Syntax
+    
+    ### Numeric Field Operators
+    - `field__min=value` - Greater than or equal to (>=)
+    - `field__max=value` - Less than or equal to (<=)
+    - `field=value` - Exact equality (=)
+    
+    ### String Field Operators
+    - `field=value` - Exact match
+    - `field__in=value1;value2;value3` - Match any value in semicolon-separated list
+    
+    ### Multiple Filters
+    Combine filters with commas: `q=field1=value1,field2__min=value2,field3__in=val1;val2`
+    
+    ## Response Format
+    
+    ### Base Response Structure
+    ```json
+    {
+        "scenario_id": 1,
+        "filters_applied": "Admin_1=Maputo",
+        "summaries": {
+            "field_name": {
+                "type": "numeric|string",
+                // ... field summary
+            }
+        },
+        "group_by": "field_name"  // Only when grouping is used
+    }
+    ```
+    
+    ### Numeric Field Summary
+    ```json
+    {
+        "type": "numeric",
+        "count": 726530,
+        "min": 3.6935,
+        "max": 3620782.55,
+        "sum": 38689101.975,
+        "grouped": {  // Only when group_by is used
+            "group_value": {
+                "count": 7354,
+                "min": 3.6935,
+                "max": 3620782.55,
+                "sum": 4466719.8774
+            }
+        }
+    }
+    ```
+    
+    ### String Field Summary
+    ```json
+    {
+        "type": "string",
+        "count": 726530,
+        "values": {
+            "ExistingGrid": 3996,
+            "GridExtension": 4420,
+            "MiniGrid_PV": 489,
+            "SHS": 717625
+        },
+        "grouped": {  // Only when group_by is used
+            "group_value": {
+                "count": 1000,
+                "values": {
+                    "ExistingGrid": 500,
+                    "SHS": 500
+                }
+            }
+        }
+    }
+    ```
+    
+    ## Usage Examples
+    
+    ### Example 1: Single Numeric Field
+    ```
+    GET /api/v1/scenario/1/summaries/?fields=Pop2030
+    
+    Response:
+    {
+        "scenario_id": 1,
+        "filters_applied": "",
+        "summaries": {
+            "Pop2030": {
+                "type": "numeric",
+                "count": 726530,
+                "min": 3.6935,
+                "max": 3620782.55,
+                "sum": 38689101.975
+            }
+        }
+    }
+    ```
+    
+    ### Example 2: Multiple Fields
+    ```
+    GET /api/v1/scenario/1/summaries/?fields=Pop2030,Technology2030
+    
+    Response:
+    {
+        "scenario_id": 1,
+        "filters_applied": "",
+        "summaries": {
+            "Pop2030": {
+                "type": "numeric",
+                "count": 726530,
+                "min": 3.6935,
+                "max": 3620782.55,
+                "sum": 38689101.975
+            },
+            "Technology2030": {
+                "type": "string",
+                "count": 726530,
+                "values": {
+                    "ExistingGrid": 3996,
+                    "GridExtension": 4420,
+                    "MiniGrid_PV": 489,
+                    "SHS": 717625
+                }
+            }
+        }
+    }
+    ```
+    
+    ### Example 3: With Filters
+    ```
+    GET /api/v1/scenario/1/summaries/?fields=Pop2030&q=Admin_1=Maputo
+    
+    Response:
+    {
+        "scenario_id": 1,
+        "filters_applied": "Admin_1=Maputo",
+        "summaries": {
+            "Pop2030": {
+                "type": "numeric",
+                "count": 7354,
+                "min": 3.6935,
+                "max": 3620782.55,
+                "sum": 4466719.8774
+            }
+        }
+    }
+    ```
+    
+    ### Example 4: With Grouping
+    ```
+    GET /api/v1/scenario/1/summaries/?fields=Pop2030&group_by=Technology2030
+    
+    Response:
+    {
+        "scenario_id": 1,
+        "filters_applied": "",
+        "summaries": {
+            "Pop2030": {
+                "type": "numeric",
+                "count": 726530,
+                "min": 3.6935,
+                "max": 3620782.55,
+                "sum": 38689101.975,
+                "grouped": {
+                    "ExistingGrid": {
+                        "count": 3996,
+                        "min": 10024.154,
+                        "max": 3620782.55,
+                        "sum": 21523998.0701
+                    },
+                    "SHS": {
+                        "count": 717625,
+                        "min": 3.6935,
+                        "max": 9999.8,
+                        "sum": 15234567.89
+                    }
+                }
+            }
+        },
+        "group_by": "Technology2030"
+    }
+    ```
+    
+    ### Example 5: Complex Query
+    ```
+    GET /api/v1/scenario/1/summaries/?fields=Pop2030&q=Pop2030__min=10000&group_by=Technology2030
+    
+    Response:
+    {
+        "scenario_id": 1,
+        "filters_applied": "Pop2030__min=10000",
+        "summaries": {
+            "Pop2030": {
+                "type": "numeric",
+                "count": 250,
+                "min": 10024.154,
+                "max": 3620782.55,
+                "sum": 21534893.919,
+                "grouped": {
+                    "ExistingGrid": {
+                        "count": 249,
+                        "min": 10024.154,
+                        "max": 3620782.55,
+                        "sum": 21523998.0701
+                    },
+                    "GridExtension": {
+                        "count": 1,
+                        "min": 10895.8489,
+                        "max": 10895.8489,
+                        "sum": 10895.8489
+                    },
+                    "MiniGrid_PV": {
+                        "count": 0,
+                        "min": null,
+                        "max": null,
+                        "sum": null
+                    },
+                    "SHS": {
+                        "count": 0,
+                        "min": null,
+                        "max": null,
+                        "sum": null
+                    }
+                }
+            }
+        },
+        "group_by": "Technology2030"
+    }
+    ```
+    
+    ## Error Responses
+    
+    ### 400 Bad Request
+    ```json
+    {"error": "The 'fields' parameter is required."}
+    {"error": "Field(s) not configured for summaries: InvalidField"}
+    {"error": "Operator 'gte' is not supported for string field 'Technology2030'."}
+    ```
+    
+    ### 404 Not Found
+    ```json
+    {"error": "No data found for field(s): Pop2030. Metrics may need to be regenerated."}
+    {"error": "No data found for group by field 'Technology2030'."}
+    ```
+    
+    ## Common Field Examples
+    
+    **Numeric Fields:** Pop2030, NewHHConnectionsTotal, GHI, GridCellArea, MGInvestmentCostTotal
+    
+    **String Fields:** Technology2030, Admin_1, District, Posto, Status
+    
+    **Note:** Available fields depend on the specific DataModel configuration for each scenario.
+    Use the DataModel API endpoints to discover available fields for a scenario.
     """
     
     # Supported operators for each field type
