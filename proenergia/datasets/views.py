@@ -534,11 +534,8 @@ class MultiFieldSummaryView(APIView):
         return Response(response)
 
     def _get_field_type_map(self, model):
-        """Build a mapping of field names to their types"""
-        return {
-            field["column"]: field.get("type", "string")
-            for field in (model.summary_fields or [])
-        }
+        """Build a mapping of field names to their types from metric_field_types"""
+        return model.metric_field_types or {}
 
     def _get_all_group_values(self, scenario, group_by_field):
         """Get all unique values for the group_by field in the scenario"""

@@ -287,80 +287,15 @@ def sync_scenario_metrics(scenario):
     Extract configured fields from ScenarioData to ScenarioDataMetrics table
     for fast aggregation queries.
     """
-    ScenarioData = apps.get_model("datasets", "ScenarioData")
-    ScenarioDataMetrics = apps.get_model("datasets", "ScenarioDataMetrics")
+    from proenergia.datasets.utils import sync_scenario_metrics_with_types
 
-    model = scenario.model
-
-    # Get configured fields from summary_fields with type property
-    summary_fields = model.summary_fields or []
-    numeric_fields = [f["column"] for f in summary_fields if f.get("type") == "numeric"]
-    string_fields = [f["column"] for f in summary_fields if f.get("type") == "string"]
-
-    if not numeric_fields and not string_fields:
-        logger.info(f"No summary fields configured for model {model.name}")
-        return
+    # Use the new utility function that infers types and syncs metrics
+    stats = sync_scenario_metrics_with_types(scenario)
 
     logger.info(
-        f"Syncing metrics for scenario {scenario.id} - numeric: {numeric_fields}, string: {string_fields}"
+        f"Metrics sync completed for scenario {scenario.id}: "
+        f"{stats['fields_synced']} fields, {stats['metrics_created']} metrics created"
     )
-
-    # Clear existing metrics for this scenario
-    ScenarioDataMetrics.objects.filter(scenario=scenario).delete()
-
-    # Prepare metrics for bulk creation
-    metrics_to_create = []
-    batch_size = 5000
-
-    # Process all ScenarioData for this scenario
-    for data in ScenarioData.objects.filter(scenario=scenario).iterator(
-        chunk_size=1000
-    ):
-        # Extract numeric fields
-        for field in numeric_fields:
-            if field in data.metadata and data.metadata[field] is not None:
-                try:
-                    value = str(data.metadata[field])
-                    numeric_value = Decimal(value)
-                    metrics_to_create.append(
-                        ScenarioDataMetrics(
-                            scenario=scenario,
-                            feature_id=data.feature_id,
-                            key=field,
-                            numeric_value=numeric_value,
-                        )
-                    )
-                except (ValueError, InvalidOperation) as e:
-                    logger.debug(
-                        f"Could not convert {field}={data.metadata[field]} to numeric: {e}"
-                    )
-
-        # Extract string fields
-        for field in string_fields:
-            if field in data.metadata and data.metadata[field] is not None:
-                metrics_to_create.append(
-                    ScenarioDataMetrics(
-                        scenario=scenario,
-                        feature_id=data.feature_id,
-                        key=field,
-                        string_value=str(data.metadata[field]),
-                    )
-                )
-
-        # Bulk insert when batch size is reached
-        if len(metrics_to_create) >= batch_size:
-            ScenarioDataMetrics.objects.bulk_create(
-                metrics_to_create, ignore_conflicts=True
-            )
-            metrics_to_create = []
-
-    # Insert any remaining metrics
-    if metrics_to_create:
-        ScenarioDataMetrics.objects.bulk_create(
-            metrics_to_create, ignore_conflicts=True
-        )
-
-    logger.info(f"Metrics sync completed for scenario {scenario.id}")
 
 
 @shared_task(bind=True, max_retries=5, default_retry_delay=2)

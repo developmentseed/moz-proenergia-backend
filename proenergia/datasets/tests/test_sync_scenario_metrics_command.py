@@ -30,7 +30,7 @@ class TestSyncScenarioMetricsCommand(TestCase):
             is_approved=True,
         )
 
-        # Create DataModel with summary fields
+        # Create DataModel with summary fields (without type, as it's now inferred)
         self.data_model = DataModel.objects.create(
             name="Test Model",
             summary_fields=[
@@ -39,28 +39,24 @@ class TestSyncScenarioMetricsCommand(TestCase):
                     "description": "Total cost",
                     "column": "cost",
                     "unit": "USD",
-                    "type": "numeric",
                 },
                 {
                     "label": "Population",
                     "description": "Population count",
                     "column": "population",
                     "unit": "people",
-                    "type": "numeric",
                 },
                 {
                     "label": "Location",
                     "description": "Location name",
                     "column": "location",
                     "unit": "",
-                    "type": "string",
                 },
                 {
                     "label": "Technology",
                     "description": "Technology type",
                     "column": "technology",
                     "unit": "",
-                    "type": "string",
                 },
             ],
         )
@@ -221,8 +217,8 @@ class TestSyncScenarioMetricsCommand(TestCase):
         output = out.getvalue()
         self.assertIn("Scenario with ID 999 not found", output)
 
-    def test_clear_option(self):
-        """Test --clear flag removes existing metrics"""
+    def test_clears_existing_metrics(self):
+        """Test that sync clears existing metrics before creating new ones"""
         # Create some existing metrics
         ScenarioDataMetrics.objects.create(
             scenario=self.scenario,
@@ -236,22 +232,17 @@ class TestSyncScenarioMetricsCommand(TestCase):
         ).count()
         self.assertEqual(initial_count, 1)
 
-        # Run command with clear
-        out = StringIO()
+        # Run command
         call_command(
             "sync_scenario_metrics",
             scenario_id=self.scenario.id,
-            clear=True,
-            stdout=out,
+            verbosity=0,
         )
 
         # Check old metrics were cleared and new ones created
         metrics = ScenarioDataMetrics.objects.filter(scenario=self.scenario)
         self.assertFalse(metrics.filter(key="old_metric").exists())
         self.assertTrue(metrics.filter(key="cost").exists())
-
-        output = out.getvalue()
-        self.assertIn("Cleared 1 existing metrics", output)
 
     def test_no_summary_fields(self):
         """Test behavior when DataModel has no summary_fields"""
@@ -265,7 +256,7 @@ class TestSyncScenarioMetricsCommand(TestCase):
         call_command("sync_scenario_metrics", scenario_id=empty_scenario.id, stdout=out)
 
         output = out.getvalue()
-        self.assertIn("No summary fields configured", output)
+        self.assertIn("Fields synced: 0", output)
 
         # No metrics should be created
         self.assertFalse(
@@ -299,8 +290,28 @@ class TestSyncScenarioMetricsCommand(TestCase):
 
         # Check for expected output components
         self.assertIn(f"Processing scenario {self.scenario.id}", output)
-        self.assertIn("Numeric fields: cost, population", output)
-        self.assertIn("String fields: location, technology", output)
-        self.assertIn("Processing 5 records", output)
+        self.assertIn("Fields synced:", output)
+        self.assertIn("Numeric fields:", output)
+        self.assertIn("String fields:", output)
         self.assertIn("✓ Created", output)
         self.assertIn("✓ Metrics sync completed", output)
+
+    def test_metric_field_types_populated(self):
+        """Test that metric_field_types is populated after sync"""
+        # Initially should be empty
+        self.assertEqual(self.data_model.metric_field_types, {})
+
+        # Run sync
+        call_command("sync_scenario_metrics", scenario_id=self.scenario.id, verbosity=0)
+
+        # Refresh from DB
+        self.data_model.refresh_from_db()
+
+        # Check metric_field_types has been populated correctly
+        expected_types = {
+            "cost": "numeric",
+            "population": "numeric",
+            "location": "string",
+            "technology": "string",
+        }
+        self.assertEqual(self.data_model.metric_field_types, expected_types)

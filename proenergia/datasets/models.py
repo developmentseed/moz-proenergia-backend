@@ -115,7 +115,11 @@ class DataModel(models.Model):
     )
     summary_fields = models.JSONField(
         default=list,
-        help_text="""A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "column": "File/Database column name", "unit": "Unit of measurement", "type": "numeric|string"}. The type field determines if the field contains numeric or string values for metrics extraction.""",
+        help_text="""A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "column": "File/Database column name", "unit": "Unit of measurement"}""",
+    )
+    metric_field_types = models.JSONField(
+        default=dict,
+        help_text="""Mapping of field names to their data types for metrics extraction. Structure: {'field_name': 'numeric', 'field_name_2': 'string'}. This is automatically populated from data introspection.""",
     )
     visualization_column = models.CharField(
         max_length=155,
