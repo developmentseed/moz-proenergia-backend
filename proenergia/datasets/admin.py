@@ -152,6 +152,13 @@ class DataModelAdminForm(ModelForm):
             "contextual_layers": CheckboxSelectMultiple(),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filter contextual_layers to only show approved datasets with ready files
+        self.fields["contextual_layers"].queryset = VectorDataset.objects.filter(
+            is_approved=True, files__status="ready"
+        ).distinct()
+
     def clean(self):
         cleaned_data = super().clean()
         filter_fields = cleaned_data.get("filter_fields")
@@ -229,6 +236,13 @@ class DataModelAdminForm(ModelForm):
 @admin.register(DataModel)
 class DataModelAdmin(ModelAdmin):
     form = DataModelAdminForm
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "contextual_layers":
+            kwargs["queryset"] = VectorDataset.objects.filter(
+                is_approved=True, files__status="ready"
+            ).distinct()
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
 
 
 @admin.register(Scenario)
