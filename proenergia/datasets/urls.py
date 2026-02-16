@@ -23,8 +23,8 @@ urlpatterns = [
         name="feature-detail",
     ),
     path(
-        "scenario/<int:pk>/summary/<str:key>/",
-        views.SummaryView.as_view(),
-        name="scenario-summary",
+        "scenario/<int:pk>/summaries/",
+        views.MultiFieldSummaryView.as_view(),
+        name="scenario-summaries",
     ),
 ]

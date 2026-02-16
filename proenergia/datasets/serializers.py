@@ -59,6 +59,7 @@ class DataModelSerializer(serializers.ModelSerializer):
             "filter_fields",
             "popup_fields",
             "summary_fields",
+            "metric_field_types",
             "visualization_column",
             "color_coding",
             "scenarios",

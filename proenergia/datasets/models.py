@@ -106,16 +106,20 @@ def delete_vector_file(sender, instance, **kwargs):
 class DataModel(models.Model):
     name = models.CharField(max_length=155, unique=True)
     filter_fields = models.JSONField(
-        default=list(),
+        default=list,
         help_text="""A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "column": "File/Database column name"}""",
     )
     popup_fields = models.JSONField(
-        default=list(),
+        default=list,
         help_text="""A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "column": "File/Database column name", "unit": "Unit of measurement"}""",
     )
     summary_fields = models.JSONField(
         default=list(),
         help_text="""A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "columns": ["column_1", "column_2"], "unit": "Unit of measurement", "method": "sum", "group_by": "column to aggregate data (optional)"}""",
+    )
+    metric_field_types = models.JSONField(
+        default=dict,
+        help_text="""Mapping of field names to their data types for metrics extraction. Structure: {'field_name': 'numeric', 'field_name_2': 'string'}. This is automatically populated from data introspection.""",
     )
     visualization_column = models.CharField(
         max_length=155,
@@ -124,7 +128,7 @@ class DataModel(models.Model):
         null=True,
     )
     color_coding = models.JSONField(
-        default=list(),
+        default=list,
         help_text="""A list containing JSON objects following this structure: {"value": "visualization column value", "color": "#000000"}""",
     )
     contextual_layers = models.ManyToManyField(
@@ -214,4 +218,31 @@ class ScenarioData(models.Model):
         indexes = [
             models.Index(fields=["feature_id", "scenario"]),
             GinIndex(fields=["metadata"]),
+        ]
+
+
+class ScenarioDataMetrics(models.Model):
+    """
+    Denormalized metrics table for fast aggregations.
+    Stores extracted key-value pairs from ScenarioData.metadata for commonly queried fields.
+    """
+
+    scenario = models.ForeignKey(Scenario, models.CASCADE, related_name="metrics")
+    feature_id = models.IntegerField()
+    key = models.CharField(max_length=255, db_index=True)
+    numeric_value = models.DecimalField(
+        max_digits=20, decimal_places=6, null=True, blank=True, db_index=True
+    )
+    string_value = models.TextField(null=True, blank=True, db_index=True)
+
+    def __str__(self):
+        return f"{self.scenario_id} - {self.feature_id} - {self.key}"
+
+    class Meta:
+        ordering = ["id"]
+        unique_together = [["scenario", "feature_id", "key"]]
+        indexes = [
+            models.Index(fields=["scenario", "key", "numeric_value"]),
+            models.Index(fields=["scenario", "key", "string_value"]),
+            models.Index(fields=["scenario", "feature_id"]),
         ]

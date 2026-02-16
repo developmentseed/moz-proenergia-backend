@@ -299,6 +299,22 @@ class DataImporter:
         }
 
 
+def sync_scenario_metrics(scenario):
+    """
+    Extract configured fields from ScenarioData to ScenarioDataMetrics table
+    for fast aggregation queries.
+    """
+    from proenergia.datasets.utils import sync_scenario_metrics_with_types
+
+    # Use the new utility function that infers types and syncs metrics
+    stats = sync_scenario_metrics_with_types(scenario)
+
+    logger.info(
+        f"Metrics sync completed for scenario {scenario.id}: "
+        f"{stats['fields_synced']} fields, {stats['metrics_created']} metrics created"
+    )
+
+
 @shared_task(bind=True, max_retries=5, default_retry_delay=2)
 def import_scenario_data_csv(self, scenario_file_id: int):
     ScenarioFile = apps.get_model("datasets", "ScenarioFile")
@@ -315,3 +331,11 @@ def import_scenario_data_csv(self, scenario_file_id: int):
     logger.info(
         f"ScenarioFile #{scenario_file_id} imported successfully. Rows count: {stats.get('total_rows')}, in {stats.get('total_time')}s"
     )
+
+    # Sync metrics after successful import
+    try:
+        scenario = ScenarioFile.objects.get(id=scenario_file_id).scenario
+        sync_scenario_metrics(scenario)
+        logger.info(f"Metrics synced successfully for scenario {scenario.id}")
+    except Exception as e:
+        logger.error(f"Failed to sync metrics for scenario: {e}")
