@@ -1,8 +1,8 @@
 import csv
-from os.path import splitext
-from decimal import Decimal, InvalidOperation
-from typing import Dict, Set, Optional, List
 import logging
+from decimal import Decimal, InvalidOperation
+from os.path import splitext
+from typing import Dict, List, Set
 
 logger = logging.getLogger(__name__)
 
@@ -159,7 +159,9 @@ def sync_scenario_metrics_with_types(scenario):
         Dictionary with sync statistics
     """
     from decimal import Decimal, InvalidOperation
+
     from django.db import transaction
+
     from proenergia.datasets.models import ScenarioData, ScenarioDataMetrics
 
     model = scenario.model

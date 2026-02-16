@@ -3,16 +3,12 @@ from typing import List, Tuple, Union
 from django.db.models import (
     Count,
     Exists,
-    FloatField,
     Max,
     Min,
     OuterRef,
     QuerySet,
     Sum,
 )
-from django.db.models.fields.json import KT
-from django.db.models.functions import Cast
-from django.db.utils import DataError, InternalError, ProgrammingError
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
 from rest_framework.permissions import (
@@ -24,7 +20,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .filters import ScenarioDataFilter, VectorDatasetFilter
+from .filters import VectorDatasetFilter
 from .models import (
     DataModel,
     Scenario,

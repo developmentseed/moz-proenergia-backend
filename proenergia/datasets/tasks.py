@@ -3,7 +3,6 @@ import json
 import logging
 import subprocess
 import time
-from decimal import Decimal, InvalidOperation
 from os.path import basename, dirname, join, splitext
 from typing import Dict, Iterator, List
 
