@@ -115,14 +115,14 @@ class ScenarioDataDetailView(RetrieveAPIView):
 class MultiFieldSummaryView(APIView):
     """
     Compute statistical summaries on multiple scenario fields with filtering and grouping support.
-    
+
     **URL:** `/api/v1/scenario/{pk}/summaries/`
-    
+
     ## Parameters
     - **fields** (required): Comma-separated field names (e.g., `Pop2030,Technology2030`)
     - **q** (optional): Filters using `field=value`, `field__min=value`, `field__max=value`, `field__in=val1;val2`
     - **group_by** (optional): Group results by a string field
-    
+
     ## Response Structure
     ```json
     {
@@ -140,7 +140,7 @@ class MultiFieldSummaryView(APIView):
                 }
             },
             "Technology2030": {
-                "type": "string", 
+                "type": "string",
                 "count": 7354,
                 "values": {"ExistingGrid": 100, "SHS": 200},
                 "grouped": {  // Only when group_by used
@@ -151,29 +151,29 @@ class MultiFieldSummaryView(APIView):
         "group_by": "Admin_1"  // Only when grouping used
     }
     ```
-    
+
     ## Examples
-    
+
     **Basic usage:**
     ```
     GET /api/v1/scenario/1/summaries/?fields=Pop2030,Technology2030
     ```
-    
+
     **With filtering and grouping:**
     ```
     GET /api/v1/scenario/1/summaries/?fields=Pop2030&q=Admin_1=Maputo,Pop2030__min=1000&group_by=Technology2030
     ```
-    
+
     ## Errors
     - `400`: Missing/invalid fields, unsupported operators
     - `404`: No data found for specified fields
-    
+
     Fields must be configured in DataModel.summary_fields. Use DataModel API to discover available fields.
     """
 
     # Supported operators for each field type
-    NUMERIC_OPERATORS = {"gte", "lte", "eq"}
-    STRING_OPERATORS = {"eq", "in"}
+    NUMERIC_OPERATORS = {"gte", "lte"}
+    STRING_OPERATORS = {"in"}
 
     permission_classes = [IsAuthenticatedOrReadOnly]
 
@@ -518,13 +518,18 @@ class MultiFieldSummaryView(APIView):
                 elif "__in" in key_op:
                     filters.append((key_op.replace("__in", ""), "in", value.split(";")))
                 else:
-                    filters.append((key_op, "eq", value))
+                    # Use default equality filtering (no explicit operator)
+                    filters.append((key_op, None, value))
         return filters
 
     def _validate_field_operator(
         self, field_name: str, operator: str, numeric_fields: set, string_fields: set
     ) -> None:
         """Validate that the operator is appropriate for the field type."""
+        # None operator represents default equality filtering, always valid
+        if operator is None:
+            return
+
         if field_name in numeric_fields and operator not in self.NUMERIC_OPERATORS:
             raise ValueError(
                 f"Operator '{operator}' is not supported for numeric field '{field_name}'."
@@ -566,7 +571,7 @@ class MultiFieldSummaryView(APIView):
                     exists_subquery = exists_subquery.filter(
                         numeric_value__lte=numeric_val
                     )
-                elif operator == "eq":
+                else:  # operator is None (default equality)
                     exists_subquery = exists_subquery.filter(numeric_value=numeric_val)
             except (ValueError, TypeError):
                 raise ValueError(
@@ -574,11 +579,11 @@ class MultiFieldSummaryView(APIView):
                 )
         else:
             # Handle string field operations
-            if operator == "eq":
-                exists_subquery = exists_subquery.filter(string_value=value)
-            elif operator == "in":
+            if operator == "in":
                 # Ensure value is a list for 'in' operations
                 value_list = value if isinstance(value, list) else [value]
                 exists_subquery = exists_subquery.filter(string_value__in=value_list)
+            else:  # operator is None (default equality)
+                exists_subquery = exists_subquery.filter(string_value=value)
 
         return exists_subquery
