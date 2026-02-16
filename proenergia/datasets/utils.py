@@ -30,7 +30,7 @@ def detect_csv_delimiter(file_path, sample_size=1024):
             return dialect.delimiter
     except csv.Error:
         pass
-      
+
     # Fallback to custom detection based on first line
     first_line = sample.split("\n")[0] if "\n" in sample else sample
     delimiter_counts = {d: first_line.count(d) for d in delimiters}
@@ -63,8 +63,13 @@ def infer_field_types_from_data(scenario, sample_size: int = 1000) -> Dict[str, 
 
     # Add fields from summary_fields
     for field_config in model.summary_fields or []:
-        if column := field_config.get("column"):
+        columns = field_config.get("columns", [])
+        for column in columns:
             all_fields.add(column)
+
+        # Also include group_by field if present
+        if group_by_field := field_config.get("group_by"):
+            all_fields.add(group_by_field)
 
     if not all_fields:
         logger.warning(f"No fields configured for model {model.name}")
@@ -245,5 +250,3 @@ def sync_scenario_metrics_with_types(scenario):
         "numeric_fields": numeric_fields,
         "string_fields": string_fields,
     }
-
-

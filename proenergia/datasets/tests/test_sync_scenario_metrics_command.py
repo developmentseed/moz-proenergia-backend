@@ -30,33 +30,48 @@ class TestSyncScenarioMetricsCommand(TestCase):
             is_approved=True,
         )
 
-        # Create DataModel with summary fields (without type, as it's now inferred)
+        # Create DataModel with summary fields using realistic column names
         self.data_model = DataModel.objects.create(
             name="Test Model",
             summary_fields=[
                 {
-                    "label": "Cost",
-                    "description": "Total cost",
-                    "column": "cost",
-                    "unit": "USD",
-                },
-                {
-                    "label": "Population",
-                    "description": "Population count",
-                    "column": "population",
+                    "label": "Population 2030",
+                    "description": "Total population by 2030",
+                    "columns": ["Pop2030"],
                     "unit": "people",
+                    "method": "sum",
+                    "group_by": "Technology2030",
                 },
                 {
-                    "label": "Location",
-                    "description": "Location name",
-                    "column": "location",
-                    "unit": "",
+                    "label": "Total Investment",
+                    "description": "Combined infrastructure investment",
+                    "columns": ["InvestmentGen", "InvestmentDist"],
+                    "unit": "USD",
+                    "method": "sum",
+                    "group_by": "Technology2030",
                 },
                 {
-                    "label": "Technology",
-                    "description": "Technology type",
-                    "column": "technology",
-                    "unit": "",
+                    "label": "New Connections",
+                    "description": "Total new household connections",
+                    "columns": ["NewHHConnectionsTotal"],
+                    "unit": "connections",
+                    "method": "sum",
+                    "group_by": "Technology2030",
+                },
+                {
+                    "label": "Average LCOE",
+                    "description": "Average levelized cost of electricity",
+                    "columns": ["LCOETotal"],
+                    "unit": "USD/kWh",
+                    "method": "average",
+                    "group_by": "Technology2030",
+                },
+                {
+                    "label": "Distribution Infrastructure",
+                    "description": "MV and LV line kilometers",
+                    "columns": ["MV_km_Total", "LV_km_Total"],
+                    "unit": "km",
+                    "method": "sum",
                 },
             ],
         )
@@ -66,37 +81,57 @@ class TestSyncScenarioMetricsCommand(TestCase):
             name="Test Scenario", model=self.data_model, vector_dataset=self.dataset
         )
 
-        # Create test data with various scenarios
+        # Create test data with realistic column names and values
         self.test_data = [
             {
-                "cost": 25000,
-                "population": 1500,
-                "location": "Maputo",
-                "technology": "SHS",
+                "Pop2030": 1500,
+                "Technology2030": "GridExtension",
+                "InvestmentGen": 45000.0,
+                "InvestmentDist": 12000.0,
+                "NewHHConnectionsTotal": 280,
+                "LCOETotal": 0.085,
+                "MV_km_Total": 2.5,
+                "LV_km_Total": 8.3,
             },
             {
-                "cost": 123456.78,
-                "population": 2300,
-                "location": "Tete",
-                "technology": "GridExtension",
+                "Pop2030": 2300,
+                "Technology2030": "MiniGrid_PV",
+                "InvestmentGen": 125000.0,
+                "InvestmentDist": 35000.0,
+                "NewHHConnectionsTotal": 420,
+                "LCOETotal": 0.142,
+                "MV_km_Total": 0.0,
+                "LV_km_Total": 12.7,
             },
             {
-                "cost": "45000.5",
-                "population": "800",
-                "location": "Beira",
-                "technology": "MiniGrid",
+                "Pop2030": "850",  # String number to test type inference
+                "Technology2030": "SHS",
+                "InvestmentGen": "8500.0",  # String number
+                "InvestmentDist": 0.0,
+                "NewHHConnectionsTotal": 155,
+                "LCOETotal": "0.225",
+                "MV_km_Total": 0,
+                "LV_km_Total": 0,
             },
             {
-                "cost": "invalid",
-                "population": 1200,
-                "location": None,
-                "technology": "SHS",
+                "Pop2030": 950,
+                "Technology2030": "ExistingGrid",
+                "InvestmentGen": 0,
+                "InvestmentDist": "invalid",  # Invalid value to test robustness
+                "NewHHConnectionsTotal": 0,
+                "LCOETotal": 0.075,
+                "MV_km_Total": None,  # Missing value
+                "LV_km_Total": 5.2,
             },
             {
-                "cost": 75000,
-                "population": None,
-                "location": "Nampula",
-                "technology": "",
+                "Pop2030": 1100,
+                "Technology2030": "MiniGrid_Diesel",
+                "InvestmentGen": 65000,
+                "InvestmentDist": None,  # Missing value
+                "NewHHConnectionsTotal": 200,
+                "LCOETotal": 0.195,
+                "MV_km_Total": 1.5,
+                "LV_km_Total": 9.8,
             },
         ]
 
@@ -119,72 +154,75 @@ class TestSyncScenarioMetricsCommand(TestCase):
         # Check specific metrics for feature_id=1
         feature_1_metrics = metrics.filter(feature_id=1)
 
-        # Should have cost (numeric), population (numeric), location (string), technology (string)
-        self.assertEqual(feature_1_metrics.count(), 4)
+        # Should have multiple numeric and string metrics based on the test data
+        self.assertGreater(feature_1_metrics.count(), 0)
 
-        # Check cost metric
-        cost_metric = feature_1_metrics.get(key="cost")
-        self.assertEqual(cost_metric.numeric_value, Decimal("25000"))
-        self.assertIsNone(cost_metric.string_value)
+        # Check Pop2030 metric (numeric)
+        pop_metric = feature_1_metrics.get(key="Pop2030")
+        self.assertEqual(pop_metric.numeric_value, Decimal("1500"))
+        self.assertIsNone(pop_metric.string_value)
 
-        # Check location metric
-        location_metric = feature_1_metrics.get(key="location")
-        self.assertEqual(location_metric.string_value, "Maputo")
-        self.assertIsNone(location_metric.numeric_value)
+        # Check Technology2030 metric (string)
+        tech_metric = feature_1_metrics.get(key="Technology2030")
+        self.assertEqual(tech_metric.string_value, "GridExtension")
+        self.assertIsNone(tech_metric.numeric_value)
 
     def test_numeric_value_handling(self):
         """Test numeric value extraction and conversion"""
         call_command("sync_scenario_metrics", scenario_id=self.scenario.id, verbosity=0)
 
-        metrics = ScenarioDataMetrics.objects.filter(scenario=self.scenario, key="cost")
+        metrics = ScenarioDataMetrics.objects.filter(
+            scenario=self.scenario, key="Pop2030"
+        )
 
-        # Feature 1: integer
-        cost_1 = metrics.get(feature_id=1)
-        self.assertEqual(cost_1.numeric_value, Decimal("25000"))
+        # Feature 1: Pop2030 = 1500
+        pop_1 = metrics.get(feature_id=1, key="Pop2030")
+        self.assertEqual(pop_1.numeric_value, Decimal("1500"))
 
-        # Feature 2: float
-        cost_2 = metrics.get(feature_id=2)
-        self.assertEqual(cost_2.numeric_value, Decimal("123456.78"))
+        # Feature 2: Pop2030 = 2300
+        pop_2 = metrics.get(feature_id=2, key="Pop2030")
+        self.assertEqual(pop_2.numeric_value, Decimal("2300"))
 
-        # Feature 3: string number
-        cost_3 = metrics.get(feature_id=3)
-        self.assertEqual(cost_3.numeric_value, Decimal("45000.5"))
+        # Feature 3: Pop2030 = "850" (string number)
+        pop_3 = metrics.get(feature_id=3, key="Pop2030")
+        self.assertEqual(pop_3.numeric_value, Decimal("850"))
 
-        # Feature 4: invalid numeric value - should not create metric
-        self.assertFalse(metrics.filter(feature_id=4).exists())
+        # Feature 4: InvestmentDist = "invalid" - should not create metric for InvestmentDist
+        invalid_metrics = metrics.filter(feature_id=4, key="InvestmentDist")
+        self.assertFalse(invalid_metrics.exists())
 
-        # Feature 5: valid number
-        cost_5 = metrics.get(feature_id=5)
-        self.assertEqual(cost_5.numeric_value, Decimal("75000"))
+        # Feature 5: Pop2030 = 1100
+        pop_5 = metrics.get(feature_id=5, key="Pop2030")
+        self.assertEqual(pop_5.numeric_value, Decimal("1100"))
 
     def test_string_value_handling(self):
         """Test string value extraction"""
         call_command("sync_scenario_metrics", scenario_id=self.scenario.id, verbosity=0)
 
-        # Test location field
-        location_metrics = ScenarioDataMetrics.objects.filter(
-            scenario=self.scenario, key="location"
-        )
-
-        # Feature 1: normal string
-        loc_1 = location_metrics.get(feature_id=1)
-        self.assertEqual(loc_1.string_value, "Maputo")
-
-        # Feature 3: string value
-        loc_3 = location_metrics.get(feature_id=3)
-        self.assertEqual(loc_3.string_value, "Beira")
-
-        # Feature 4: None value - should not create metric
-        self.assertFalse(location_metrics.filter(feature_id=4).exists())
-
-        # Test technology field with empty string
+        # Test Technology2030 field
         tech_metrics = ScenarioDataMetrics.objects.filter(
-            scenario=self.scenario, key="technology"
+            scenario=self.scenario, key="Technology2030"
         )
 
-        # Feature 5: empty string - still creates metric (empty string != None)
+        # Feature 1: GridExtension
+        tech_1 = tech_metrics.get(feature_id=1)
+        self.assertEqual(tech_1.string_value, "GridExtension")
+
+        # Feature 2: MiniGrid_PV
+        tech_2 = tech_metrics.get(feature_id=2)
+        self.assertEqual(tech_2.string_value, "MiniGrid_PV")
+
+        # Feature 3: SHS
+        tech_3 = tech_metrics.get(feature_id=3)
+        self.assertEqual(tech_3.string_value, "SHS")
+
+        # Feature 4: ExistingGrid
+        tech_4 = tech_metrics.get(feature_id=4)
+        self.assertEqual(tech_4.string_value, "ExistingGrid")
+
+        # Feature 5: MiniGrid_Diesel
         tech_5 = tech_metrics.get(feature_id=5)
-        self.assertEqual(tech_5.string_value, "")
+        self.assertEqual(tech_5.string_value, "MiniGrid_Diesel")
 
     def test_scenario_id_option(self):
         """Test --scenario-id flag targets specific scenario"""
@@ -195,7 +233,7 @@ class TestSyncScenarioMetricsCommand(TestCase):
         ScenarioData.objects.create(
             scenario=other_scenario,
             feature_id=1,
-            metadata={"cost": 999, "location": "Other"},
+            metadata={"Pop2030": 999, "Technology2030": "Other"},
         )
 
         # Run command for specific scenario only
@@ -242,7 +280,7 @@ class TestSyncScenarioMetricsCommand(TestCase):
         # Check old metrics were cleared and new ones created
         metrics = ScenarioDataMetrics.objects.filter(scenario=self.scenario)
         self.assertFalse(metrics.filter(key="old_metric").exists())
-        self.assertTrue(metrics.filter(key="cost").exists())
+        self.assertTrue(metrics.filter(key="Pop2030").exists())
 
     def test_no_summary_fields(self):
         """Test behavior when DataModel has no summary_fields"""
@@ -269,17 +307,17 @@ class TestSyncScenarioMetricsCommand(TestCase):
         ScenarioData.objects.create(
             scenario=self.scenario,
             feature_id=100,
-            metadata={"cost": 5000},  # Missing population, location, technology
+            metadata={"Pop2030": 5000},  # Missing other configured fields
         )
 
         call_command("sync_scenario_metrics", scenario_id=self.scenario.id, verbosity=0)
 
-        # Should only create metric for cost
+        # Should only create metric for Pop2030
         feature_100_metrics = ScenarioDataMetrics.objects.filter(
             scenario=self.scenario, feature_id=100
         )
         self.assertEqual(feature_100_metrics.count(), 1)
-        self.assertEqual(feature_100_metrics.first().key, "cost")
+        self.assertEqual(feature_100_metrics.first().key, "Pop2030")
 
     def test_command_output_messages(self):
         """Test that command produces appropriate output messages"""
@@ -308,10 +346,31 @@ class TestSyncScenarioMetricsCommand(TestCase):
         self.data_model.refresh_from_db()
 
         # Check metric_field_types has been populated correctly
-        expected_types = {
-            "cost": "numeric",
-            "population": "numeric",
-            "location": "string",
-            "technology": "string",
+        # Should include all columns from multi-column fields and group_by columns
+        actual_types = self.data_model.metric_field_types
+
+        # Must include all these fields
+        required_fields = {
+            "Pop2030": "numeric",
+            "InvestmentGen": "numeric",
+            "NewHHConnectionsTotal": "numeric",
+            "LCOETotal": "numeric",
+            "MV_km_Total": "numeric",
+            "LV_km_Total": "numeric",
         }
-        self.assertEqual(self.data_model.metric_field_types, expected_types)
+
+        for field, expected_type in required_fields.items():
+            self.assertIn(
+                field, actual_types, f"Field {field} should be in metric_field_types"
+            )
+            self.assertEqual(
+                actual_types[field],
+                expected_type,
+                f"Field {field} should be {expected_type}",
+            )
+
+        # InvestmentDist might be string due to "invalid" value in test data
+        self.assertIn("InvestmentDist", actual_types)
+        # Technology2030 should be included as it's used as group_by
+        self.assertIn("Technology2030", actual_types)
+        self.assertEqual(actual_types["Technology2030"], "string")

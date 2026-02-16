@@ -7,7 +7,15 @@ from rest_framework.test import APITestCase
 
 from proenergia.datasets.tasks import import_scenario_data_csv
 
-from ..models import DataModel, Scenario, ScenarioFile, VectorDataset, VectorFile
+from ..models import (
+    DataModel,
+    Scenario,
+    ScenarioData,
+    ScenarioDataMetrics,
+    ScenarioFile,
+    VectorDataset,
+    VectorFile,
+)
 
 
 class TestScenarioDataDetailViews(APITestCase):
@@ -106,15 +114,36 @@ class TestMultiFieldSummaryView(APITestCase):
             is_approved=True,
         )
 
-        # Create model with proper summary_fields
+        # Create model with proper summary_fields using realistic structure
         self.model = DataModel.objects.create(
             name="Test Model",
             summary_fields=[
-                {"column": "cost", "type": "numeric", "label": "Cost"},
-                {"column": "population", "type": "numeric", "label": "Population"},
-                {"column": "location", "type": "string", "label": "Location"},
-                {"column": "technology", "type": "string", "label": "Technology"},
-                {"column": "district", "type": "string", "label": "District"},
+                {
+                    "label": "Population",
+                    "description": "Population metrics",
+                    "columns": ["Pop2030"],
+                    "method": "sum",
+                    "group_by": "district",
+                },
+                {
+                    "label": "Total Cost",
+                    "description": "Combined cost metrics",
+                    "columns": ["InvestmentGen", "additional_cost"],
+                    "method": "sum",
+                    "unit": "USD",
+                },
+                {
+                    "label": "Technology Distribution",
+                    "description": "Technology type distribution",
+                    "columns": ["Technology2030"],
+                    "method": "count",
+                },
+                {
+                    "label": "Location",
+                    "description": "Location information",
+                    "columns": ["location"],
+                    "method": "count",
+                },
             ],
         )
 
@@ -123,103 +152,120 @@ class TestMultiFieldSummaryView(APITestCase):
             name="Test Scenario", model=self.model, vector_dataset=self.dataset
         )
 
-        # Create test data
+        # Create test data using realistic column names
         self.test_data = {
             1: {
-                "cost": 23423,
-                "population": 1500,
+                "InvestmentGen": 23423,
+                "Pop2030": 1500,
                 "location": "Maputo",
-                "technology": "SHS",
+                "Technology2030": "SHS",
                 "district": "Central",
+                "additional_cost": 1000,
             },
             2: {
-                "cost": 12334.5,
-                "population": 2300,
+                "InvestmentGen": 12334.5,
+                "Pop2030": 2300,
                 "location": "Chifunde",
-                "technology": "GridExtension",
+                "Technology2030": "GridExtension",
                 "district": "Norte",
+                "additional_cost": 500,
             },
             3: {
-                "cost": 230923.7,
-                "population": 45000,
+                "InvestmentGen": 230923.7,
+                "Pop2030": 45000,
                 "location": "Maputo",
-                "technology": "ExistingGrid",
+                "Technology2030": "ExistingGrid",
                 "district": "Central",
+                "additional_cost": 2000,
             },
             4: {
-                "cost": 23093,
-                "population": 1200,
+                "InvestmentGen": 23093,
+                "Pop2030": 1200,
                 "location": "Maputo",
-                "technology": "SHS",
+                "Technology2030": "SHS",
                 "district": "Central",
+                "additional_cost": 800,
             },
             5: {
-                "cost": 2523,
-                "population": 800,
+                "InvestmentGen": 2523,
+                "Pop2030": 800,
                 "location": "Maputo",
-                "technology": "SHS",
+                "Technology2030": "SHS",
                 "district": "Sul",
+                "additional_cost": 300,
             },
             6: {
-                "cost": 63423,
-                "population": 3400,
+                "InvestmentGen": 63423,
+                "Pop2030": 3400,
                 "location": "Maputo",
-                "technology": "GridExtension",
+                "Technology2030": "GridExtension",
                 "district": "Central",
+                "additional_cost": 1200,
             },
             7: {
-                "cost": 93423,
-                "population": 5600,
+                "InvestmentGen": 93423,
+                "Pop2030": 5600,
                 "location": "Tete",
-                "technology": "MiniGrid_PV",
+                "Technology2030": "MiniGrid_PV",
                 "district": "Norte",
+                "additional_cost": 1800,
             },
             8: {
-                "cost": 6423,
-                "population": 450,
+                "InvestmentGen": 6423,
+                "Pop2030": 450,
                 "location": "Mocumba",
-                "technology": "SHS",
+                "Technology2030": "SHS",
                 "district": "Sul",
+                "additional_cost": 200,
             },
             9: {
-                "cost": 13223,
-                "population": 890,
+                "InvestmentGen": 13223,
+                "Pop2030": 890,
                 "location": "Tete",
-                "technology": "SHS",
+                "Technology2030": "SHS",
                 "district": "Norte",
+                "additional_cost": 400,
             },
             10: {
-                "cost": 898623,
-                "population": 78000,
+                "InvestmentGen": 898623,
+                "Pop2030": 78000,
                 "location": "Tete",
-                "technology": "ExistingGrid",
+                "Technology2030": "ExistingGrid",
                 "district": "Norte",
+                "additional_cost": 5000,
             },
             11: {
-                "cost": 49730,
-                "population": 2100,
+                "InvestmentGen": 49730,
+                "Pop2030": 2100,
                 "location": "Maputo",
-                "technology": "MiniGrid_PV",
+                "Technology2030": "MiniGrid_PV",
                 "district": "Central",
+                "additional_cost": 900,
             },
         }
 
-        # Create metrics
-        from proenergia.datasets.tests.test_helpers import create_scenario_metrics
+        # Create ScenarioData records from test data
+        for feature_id, data in self.test_data.items():
+            ScenarioData.objects.create(
+                scenario=self.scenario, feature_id=feature_id, metadata=data
+            )
 
-        create_scenario_metrics(self.scenario, self.test_data)
+        # Sync metrics to populate metric_field_types and create ScenarioDataMetrics
+        from proenergia.datasets.utils import sync_scenario_metrics_with_types
+
+        sync_scenario_metrics_with_types(self.scenario)
 
     def test_single_numeric_field(self):
         """Test summary for a single numeric field"""
         url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
-        res = self.client.get(url, {"fields": "cost"})
+        res = self.client.get(url, {"fields": "InvestmentGen"})
 
         self.assertEqual(res.status_code, 200)
         data = res.json()
         self.assertEqual(data["scenario_id"], self.scenario.id)
-        self.assertIn("cost", data["summaries"])
+        self.assertIn("InvestmentGen", data["summaries"])
 
-        cost_summary = data["summaries"]["cost"]
+        cost_summary = data["summaries"]["InvestmentGen"]
         self.assertEqual(cost_summary["type"], "numeric")
         self.assertEqual(cost_summary["count"], 11)
         self.assertEqual(cost_summary["min"], 2523)
@@ -245,17 +291,17 @@ class TestMultiFieldSummaryView(APITestCase):
     def test_multiple_fields(self):
         """Test summary for multiple fields"""
         url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
-        res = self.client.get(url, {"fields": "cost,location,technology"})
+        res = self.client.get(url, {"fields": "InvestmentGen,location,Technology2030"})
 
         self.assertEqual(res.status_code, 200)
         data = res.json()
 
-        self.assertIn("cost", data["summaries"])
+        self.assertIn("InvestmentGen", data["summaries"])
         self.assertIn("location", data["summaries"])
-        self.assertIn("technology", data["summaries"])
+        self.assertIn("Technology2030", data["summaries"])
 
         # Check technology distribution
-        tech_summary = data["summaries"]["technology"]
+        tech_summary = data["summaries"]["Technology2030"]
         self.assertEqual(tech_summary["values"]["SHS"], 5)
         self.assertEqual(tech_summary["values"]["GridExtension"], 2)
         self.assertEqual(tech_summary["values"]["ExistingGrid"], 2)
@@ -264,12 +310,12 @@ class TestMultiFieldSummaryView(APITestCase):
     def test_filters(self):
         """Test summaries with filters"""
         url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
-        res = self.client.get(url, {"fields": "cost", "q": "location=Maputo"})
+        res = self.client.get(url, {"fields": "InvestmentGen", "q": "location=Maputo"})
 
         self.assertEqual(res.status_code, 200)
         data = res.json()
 
-        cost_summary = data["summaries"]["cost"]
+        cost_summary = data["summaries"]["InvestmentGen"]
         self.assertEqual(cost_summary["count"], 6)
         self.assertEqual(cost_summary["min"], 2523)
         self.assertEqual(cost_summary["max"], 230923.7)
@@ -278,25 +324,27 @@ class TestMultiFieldSummaryView(APITestCase):
         """Test summaries with multiple filters"""
         url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
         res = self.client.get(
-            url, {"fields": "population", "q": "location=Maputo,cost__min=20000"}
+            url, {"fields": "Pop2030", "q": "location=Maputo,InvestmentGen__min=20000"}
         )
 
         self.assertEqual(res.status_code, 200)
         data = res.json()
 
-        pop_summary = data["summaries"]["population"]
+        pop_summary = data["summaries"]["Pop2030"]
         self.assertEqual(pop_summary["count"], 5)  # Should match rows 1,3,4,6,11
 
     def test_group_by_single_field(self):
         """Test group_by with a single field"""
         url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
-        res = self.client.get(url, {"fields": "cost", "group_by": "technology"})
+        res = self.client.get(
+            url, {"fields": "InvestmentGen", "group_by": "Technology2030"}
+        )
 
         self.assertEqual(res.status_code, 200)
         data = res.json()
 
-        self.assertEqual(data["group_by"], "technology")
-        cost_summary = data["summaries"]["cost"]
+        self.assertEqual(data["group_by"], "Technology2030")
+        cost_summary = data["summaries"]["InvestmentGen"]
         self.assertIn("grouped", cost_summary)
 
         # Check SHS group
@@ -314,13 +362,17 @@ class TestMultiFieldSummaryView(APITestCase):
         url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
         res = self.client.get(
             url,
-            {"fields": "population", "group_by": "technology", "q": "district=Central"},
+            {
+                "fields": "Pop2030",
+                "group_by": "Technology2030",
+                "q": "district=Central",
+            },
         )
 
         self.assertEqual(res.status_code, 200)
         data = res.json()
 
-        pop_summary = data["summaries"]["population"]
+        pop_summary = data["summaries"]["Pop2030"]
         # Should only include rows with district=Central
         self.assertEqual(pop_summary["count"], 5)  # rows 1,3,4,6,11
 
@@ -331,7 +383,7 @@ class TestMultiFieldSummaryView(APITestCase):
     def test_group_by_string_field(self):
         """Test string field summary with group_by"""
         url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
-        res = self.client.get(url, {"fields": "district", "group_by": "technology"})
+        res = self.client.get(url, {"fields": "district", "group_by": "Technology2030"})
 
         self.assertEqual(res.status_code, 200)
         data = res.json()
@@ -356,7 +408,7 @@ class TestMultiFieldSummaryView(APITestCase):
     def test_invalid_field(self):
         """Test error when requesting invalid field"""
         url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
-        res = self.client.get(url, {"fields": "cost,invalid_field"})
+        res = self.client.get(url, {"fields": "InvestmentGen,invalid_field"})
 
         self.assertEqual(res.status_code, 400)
         self.assertIn("invalid_field", res.json()["error"])
@@ -364,7 +416,9 @@ class TestMultiFieldSummaryView(APITestCase):
     def test_invalid_group_by(self):
         """Test error when group_by field is invalid"""
         url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
-        res = self.client.get(url, {"fields": "cost", "group_by": "invalid_field"})
+        res = self.client.get(
+            url, {"fields": "InvestmentGen", "group_by": "invalid_field"}
+        )
 
         self.assertEqual(res.status_code, 400)
         self.assertIn("invalid_field", res.json()["error"])
@@ -372,7 +426,7 @@ class TestMultiFieldSummaryView(APITestCase):
     def test_numeric_group_by(self):
         """Test error when trying to group by numeric field"""
         url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
-        res = self.client.get(url, {"fields": "cost", "group_by": "population"})
+        res = self.client.get(url, {"fields": "InvestmentGen", "group_by": "Pop2030"})
 
         self.assertEqual(res.status_code, 400)
         self.assertIn("must be a string field", res.json()["error"])
