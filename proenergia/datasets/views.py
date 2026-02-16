@@ -195,34 +195,8 @@ class MultiFieldSummaryView(APIView):
                 {"error": "No fields specified."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 3. Get configured fields and validate ALL requested fields
+        # 3. Get configured fields (but don't validate requested fields)
         field_type_map = self._get_field_type_map(scenario.model)
-
-        # Validate all fields are configured
-        invalid_fields = [f for f in requested_fields if f not in field_type_map]
-        if invalid_fields:
-            return Response(
-                {
-                    "error": f"Field(s) not configured for summaries: {', '.join(invalid_fields)}"
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Check all fields have metrics data
-        missing_data_fields = []
-        for field in requested_fields:
-            if not ScenarioDataMetrics.objects.filter(
-                scenario=scenario, key=field
-            ).exists():
-                missing_data_fields.append(field)
-
-        if missing_data_fields:
-            return Response(
-                {
-                    "error": f"No data found for field(s): {', '.join(missing_data_fields)}. Metrics may need to be regenerated."
-                },
-                status=status.HTTP_404_NOT_FOUND,
-            )
 
         # 4. Parse and validate group_by parameter
         group_by = request.GET.get("group_by", "").strip()
@@ -272,6 +246,12 @@ class MultiFieldSummaryView(APIView):
         summaries = {}
 
         for field in requested_fields:
+            # Check if field is configured
+            if field not in field_type_map:
+                # Invalid/unconfigured field - return count=0
+                summaries[field] = {"count": 0}
+                continue
+
             # Build query for this field
             metrics_query = ScenarioDataMetrics.objects.filter(
                 scenario=scenario, key=field
@@ -282,6 +262,12 @@ class MultiFieldSummaryView(APIView):
                 metrics_query = metrics_query.filter(
                     feature_id__in=base_feature_subquery
                 )
+
+            # Check if any data exists
+            if not metrics_query.exists():
+                # No data for this field - return count=0
+                summaries[field] = {"count": 0}
+                continue
 
             # Compute overall summary
             field_type = field_type_map[field]

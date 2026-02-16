@@ -406,12 +406,17 @@ class TestMultiFieldSummaryView(APITestCase):
         self.assertIn("fields", res.json()["error"])
 
     def test_invalid_field(self):
-        """Test error when requesting invalid field"""
+        """Test that invalid fields return 200 with count=0"""
         url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
         res = self.client.get(url, {"fields": "InvestmentGen,invalid_field"})
 
-        self.assertEqual(res.status_code, 400)
-        self.assertIn("invalid_field", res.json()["error"])
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("invalid_field", data["summaries"])
+        self.assertEqual(data["summaries"]["invalid_field"]["count"], 0)
+        # Valid field should still work
+        self.assertIn("InvestmentGen", data["summaries"])
+        self.assertEqual(data["summaries"]["InvestmentGen"]["count"], 11)
 
     def test_invalid_group_by(self):
         """Test error when group_by field is invalid"""
@@ -430,3 +435,65 @@ class TestMultiFieldSummaryView(APITestCase):
 
         self.assertEqual(res.status_code, 400)
         self.assertIn("must be a string field", res.json()["error"])
+
+    def test_field_without_data(self):
+        """Test that valid fields without data return 200 with count=0"""
+        # Add a new field to the model configuration that has no data
+        self.model.metric_field_types["EmptyField"] = "numeric"
+        self.model.save()
+        
+        url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
+        res = self.client.get(url, {"fields": "EmptyField,InvestmentGen"})
+        
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        
+        # EmptyField should have count=0
+        self.assertIn("EmptyField", data["summaries"])
+        self.assertEqual(data["summaries"]["EmptyField"]["count"], 0)
+        
+        # InvestmentGen should still work normally
+        self.assertIn("InvestmentGen", data["summaries"])
+        self.assertEqual(data["summaries"]["InvestmentGen"]["count"], 11)
+
+    def test_multiple_invalid_and_missing_fields(self):
+        """Test mixed valid, invalid, and no-data fields all return 200"""
+        # Add a configured field with no data
+        self.model.metric_field_types["NoDataField"] = "string"
+        self.model.save()
+        
+        url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
+        res = self.client.get(url, {"fields": "InvestmentGen,invalid_field1,NoDataField,invalid_field2,location"})
+        
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        
+        # Check all fields are present in response
+        self.assertIn("InvestmentGen", data["summaries"])
+        self.assertIn("invalid_field1", data["summaries"])
+        self.assertIn("NoDataField", data["summaries"])
+        self.assertIn("invalid_field2", data["summaries"])
+        self.assertIn("location", data["summaries"])
+        
+        # Invalid fields should have count=0
+        self.assertEqual(data["summaries"]["invalid_field1"]["count"], 0)
+        self.assertEqual(data["summaries"]["invalid_field2"]["count"], 0)
+        
+        # No data field should have count=0
+        self.assertEqual(data["summaries"]["NoDataField"]["count"], 0)
+        
+        # Valid fields with data should work normally
+        self.assertEqual(data["summaries"]["InvestmentGen"]["count"], 11)
+        self.assertEqual(data["summaries"]["location"]["count"], 11)
+
+    def test_filters_resulting_in_no_data(self):
+        """Test that filters resulting in no data return count=0, not 404"""
+        url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
+        res = self.client.get(url, {"fields": "InvestmentGen", "q": "location=NonExistentLocation"})
+        
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        
+        # Should have count=0 when filter results in no data
+        self.assertIn("InvestmentGen", data["summaries"])
+        self.assertEqual(data["summaries"]["InvestmentGen"]["count"], 0)
