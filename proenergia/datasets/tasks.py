@@ -43,23 +43,21 @@ def to_pmtiles(file_path: str):
     dir = dirname(file_path)
     filename, extension = splitext(basename(file_path))
     pmtiles_path = join(dir, f"{filename}.pmtiles")
-    fgb_path = None
-    if extension.lower() not in [".json", ".geojson"]:
-        fgb_path = join(dir, f"{filename}.fgb")
-        subprocess.run(
-            [
-                "ogr2ogr",
-                "-t_srs",
-                "EPSG:4326",
-                "-skipfailures",
-                fgb_path,
-                f"/vsizip/{file_path}" if file_path.endswith(".zip") else file_path,
-            ],
-            check=True,  # Raises CalledProcessError on non-zero exit
-            capture_output=True,  # Capture stdout and stderr
-            text=True,  # Return strings instead of bytes
-        )
-    call_tippecanoe(fgb_path or file_path, pmtiles_path)
+    fgb_path = join(dir, f"{filename}.fgb")
+    subprocess.run(
+        [
+            "ogr2ogr",
+            "-t_srs",
+            "EPSG:4326",
+            "-skipfailures",
+            fgb_path,
+            f"/vsizip/{file_path}" if file_path.endswith(".zip") else file_path,
+        ],
+        check=True,  # Raises CalledProcessError on non-zero exit
+        capture_output=True,  # Capture stdout and stderr
+        text=True,  # Return strings instead of bytes
+    )
+    call_tippecanoe(fgb_path, pmtiles_path)
 
 
 @shared_task(bind=True, max_retries=5, default_retry_delay=2)
@@ -97,7 +95,10 @@ def generate_pmtiles(self, id: int):
 
 
 def merge_vector_scenario_files(
-    vector_file_path: str, scenario_file_path: str, filter_fields, merged_file_path: str
+    vector_file_path: str,
+    scenario_file_path: str,
+    selected_columns: List[str],
+    merged_file_path: str,
 ):
     """Merge a vector geospatial file and a scenario CSV file using geopandas.
     Add the columns from the CSV based on the filter_fields definition.
@@ -105,9 +106,23 @@ def merge_vector_scenario_files(
     """
     vector = gpd.read_file(vector_file_path)
     delimiter = detect_csv_delimiter(scenario_file_path)
-    model_data = pd.read_csv(scenario_file_path, sep=delimiter)
-    columns = [f.get("column") for f in filter_fields] + ["id"]
-    vector.merge(model_data[columns], on="id").to_file(
+
+    # Read CSV with robust error handling
+    try:
+        model_data = pd.read_csv(
+            scenario_file_path,
+            sep=delimiter,
+            encoding="utf-8",
+            on_bad_lines="skip",  # Skip malformed lines instead of failing
+            engine="python",  # More flexible parser
+        )
+    except Exception as e:
+        logger.error(f"Failed to read CSV file {scenario_file_path}: {e}")
+        raise
+
+    # append id and remove duplicated columns
+    selected_columns = list(set(selected_columns + ["id"]))
+    vector.merge(model_data[selected_columns], on="id").to_file(
         merged_file_path, driver="FlatGeobuf"
     )
     logger.info(f"Merged file created on {merged_file_path}.")
@@ -142,10 +157,13 @@ def generate_scenario_pmtiles(self, id: int):
     try:
         model = sf.scenario.model
         fgb_path = get_file_variant(sf.file.path, "fgb")
+        columns = [i.get("column") for i in model.filter_fields]
+        if model.visualization_column and model.visualization_column not in columns:
+            columns.append(model.visualization_column)
         merge_vector_scenario_files(
             get_file_variant(vf.file.path, "fgb"),
             sf.file.path,
-            model.filter_fields,
+            columns,
             fgb_path,
         )
         call_tippecanoe(fgb_path, get_file_variant(sf.file.path, "pmtiles"))

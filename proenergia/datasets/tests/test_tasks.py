@@ -86,20 +86,11 @@ class TestScenarioFilePostSaveTasks(TestCase):
     def test_merge_vector_scenario_files(self):
         vector = "./proenergia/datasets/fixtures/sample.fgb"
         scenario_fgb = join(mkdtemp(), "scenario.fgb")
-        filter_fields = [
-            {
-                "label": "Cost",
-                "description": "Cost to eletrify",
-                "column": "cost",
-            },
-            {
-                "label": "Location",
-                "description": "Location of the entity",
-                "column": "location",
-            },
-        ]
         merge_vector_scenario_files(
-            vector, self.scenario_csv, filter_fields, scenario_fgb
+            vector,
+            self.scenario_csv,
+            ["cost", "location"],
+            scenario_fgb,
         )
         merged_gdf = gpd.read_file(scenario_fgb)
 

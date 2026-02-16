@@ -114,8 +114,8 @@ class DataModel(models.Model):
         help_text="""A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "column": "File/Database column name", "unit": "Unit of measurement"}""",
     )
     summary_fields = models.JSONField(
-        default=list,
-        help_text="""A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "column": "File/Database column name", "unit": "Unit of measurement"}""",
+        default=list(),
+        help_text="""A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "columns": ["column_1", "column_2"], "unit": "Unit of measurement", "method": "sum", "group_by": "column to aggregate data (optional)"}""",
     )
     metric_field_types = models.JSONField(
         default=dict,
@@ -123,7 +123,7 @@ class DataModel(models.Model):
     )
     visualization_column = models.CharField(
         max_length=155,
-        help_text="""Column on the model data file whose values will be used to define the data-driven visualization style.""",
+        help_text="Column on the model results data file whose values will be used to define the data-driven visualization style.",
         blank=True,
         null=True,
     )
@@ -136,7 +136,7 @@ class DataModel(models.Model):
         null=True,
         blank=True,
         related_name="models",
-        help_text="""Vector datasets that will be available to be visualized together with the model data.""",
+        help_text="Vector datasets that can be visualized together with the model data.",
     )
 
     def __str__(self):
