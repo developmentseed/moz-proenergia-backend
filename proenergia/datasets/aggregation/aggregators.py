@@ -110,8 +110,8 @@ class FilteredAggregator:
         # Parse filters
         filters = filter_parser.parse_filter_string(filter_string)
 
-        # Build filter SQL
-        filter_sql, filter_params = filter_parser.build_filter_sql(filters)
+        # Build filter SQL (always returns 3 values now)
+        filter_sql, filter_params, _ = filter_parser.build_filter_sql(filters)
 
         # Fill in scenario IDs
         filter_params = filter_parser.fill_scenario_ids(filter_params, scenario_id)
