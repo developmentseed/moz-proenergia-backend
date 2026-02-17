@@ -10,6 +10,7 @@ from .aggregators import (
     FilteredAggregator,
     SingleGroupAggregator,
     MultiGroupAggregator,
+    CombinedFieldAggregator,
     get_aggregator,
 )
 from .filters import FilterParser
@@ -20,6 +21,7 @@ __all__ = [
     "FilteredAggregator",
     "SingleGroupAggregator",
     "MultiGroupAggregator",
+    "CombinedFieldAggregator",
     "get_aggregator",
     "FilterParser",
     "SummaryQueryBuilder",

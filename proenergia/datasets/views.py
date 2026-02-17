@@ -8,7 +8,7 @@ from rest_framework.permissions import (
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .aggregation import FilterParser, get_aggregator
+from .aggregation import FilterParser, get_aggregator, CombinedFieldAggregator
 from .filters import ScenarioDataFilter, VectorDatasetFilter
 from .models import (
     DataModel,
@@ -246,65 +246,41 @@ class MultiFieldSummaryView(APIView):
             except ValueError as e:
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 6. Choose aggregation strategy based on query pattern
-        # This optimizes performance by using the most efficient approach for each case
-        aggregator = get_aggregator(
-            has_filters=bool(filter_params),
-            group_fields=group_by_fields if group_by_fields else None,
-        )
-
-        # 7. Compute summaries for each field
-        summaries = {}
-
+        # 6. Filter out fields that don't exist in the data
+        # Pre-check which fields have data to avoid unnecessary processing
+        fields_with_data = {}
         for field in requested_fields:
             # Check if field is configured
             if field not in field_type_map:
-                # Invalid/unconfigured field - return count=0
-                summaries[field] = {"count": 0}
                 continue
-
+            
             # Check if field has any data
-            if not ScenarioDataMetrics.objects.filter(
+            if ScenarioDataMetrics.objects.filter(
                 scenario=scenario, key=field
             ).exists():
+                fields_with_data[field] = field_type_map[field]
+        
+        # 7. Use CombinedFieldAggregator for batch processing
+        # This dramatically reduces the number of queries
+        if fields_with_data:
+            aggregator = CombinedFieldAggregator()
+            
+            # Use batch processing for all cases (0, 1, or 2 group_by fields)
+            summaries = aggregator.compute_summaries_batch(
+                scenario_id=scenario.id,
+                fields=fields_with_data,
+                group_fields=group_by_fields if group_by_fields else None,
+                all_group_values=group_by_values if group_by_values else None,
+                filter_parser=filter_parser,
+                filter_string=filter_params if filter_params else None,
+            )
+        else:
+            summaries = {}
+        
+        # Add empty results for fields without data or invalid fields
+        for field in requested_fields:
+            if field not in summaries:
                 summaries[field] = {"count": 0}
-                continue
-
-            field_type = field_type_map[field]
-
-            # Compute summary using selected aggregator
-            if group_by_fields:
-                # Grouped aggregation
-                summary = aggregator.compute_summary(
-                    scenario_id=scenario.id,
-                    field=field,
-                    field_type=field_type,
-                    group_fields=group_by_fields if len(group_by_fields) > 1 else None,
-                    group_field=(
-                        group_by_fields[0] if len(group_by_fields) == 1 else None
-                    ),
-                    all_group_values=group_by_values,
-                    filter_parser=filter_parser,
-                    filter_string=filter_params if filter_params else None,
-                )
-            elif filter_params:
-                # Filtered aggregation without grouping
-                summary = aggregator.compute_summary(
-                    scenario_id=scenario.id,
-                    field=field,
-                    field_type=field_type,
-                    filter_parser=filter_parser,
-                    filter_string=filter_params,
-                )
-            else:
-                # Simple aggregation
-                summary = aggregator.compute_summary(
-                    scenario_id=scenario.id,
-                    field=field,
-                    field_type=field_type,
-                )
-
-            summaries[field] = summary
 
         # 8. Return successful response
         response = {

@@ -144,6 +144,12 @@ class TestMultiFieldSummaryView(APITestCase):
                     "columns": ["location"],
                     "method": "count",
                 },
+                {
+                    "label": "District",
+                    "description": "District information",
+                    "columns": ["district"],
+                    "method": "count",
+                },
             ],
         )
 
