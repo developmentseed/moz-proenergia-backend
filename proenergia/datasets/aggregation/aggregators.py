@@ -703,9 +703,7 @@ class CombinedFieldAggregator:
         return results.get(field, {"count": 0})
 
 
-def get_aggregator(
-    has_filters: bool, group_fields: Optional[List[str]] = None
-):
+def get_aggregator(has_filters: bool, group_fields: Optional[List[str]] = None):
     """
     Factory function to get the appropriate aggregator strategy.
 
