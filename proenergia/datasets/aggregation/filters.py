@@ -157,9 +157,14 @@ class FilterParser:
         for field_name, operator, value in filters:
             # Check if this field is already being grouped by
             if field_name in group_fields:
-                # This field will be JOINed as g1 or g2, so add filter condition there
-                group_idx = group_fields.index(field_name) + 1  # g1 or g2
-                alias = f"g{group_idx}"
+                # This field will be JOINed with appropriate alias based on number of groups
+                if len(group_fields) == 1:
+                    # Single group field uses 'g' alias
+                    alias = "g"
+                else:
+                    # Multiple group fields use 'g1', 'g2', etc.
+                    group_idx = group_fields.index(field_name) + 1
+                    alias = f"g{group_idx}"
 
                 # Build the filter condition to be added to the group JOIN
                 condition_sql = ""
