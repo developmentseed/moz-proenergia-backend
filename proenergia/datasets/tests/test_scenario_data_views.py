@@ -643,69 +643,71 @@ class TestMultiFieldSummaryView(APITestCase):
 
     def test_in_filter_with_same_field_in_group_by(self):
         """Test that __in filter works when applied to the same field used in group_by.
-        
-        This test reproduces the bug where filtering with Technology2030__in 
+
+        This test reproduces the bug where filtering with Technology2030__in
         while also grouping by Technology2030 causes a SQL error due to incorrect
         table alias (g1 instead of g for single group field).
         """
         url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
-        
+
         # Use __in filter on Technology2030 while also grouping by it
         res = self.client.get(
-            url, {
+            url,
+            {
                 "fields": "Pop2030",
                 "q": "Technology2030__in=ExistingGrid;GridExtension;SHS",
-                "group_by": "Technology2030"
-            }
+                "group_by": "Technology2030",
+            },
         )
-        
+
         # Should succeed and return grouped data
         self.assertEqual(res.status_code, 200)
         data = res.json()
-        
+
         # Verify the response structure
         self.assertIn("summaries", data)
         self.assertIn("Pop2030", data["summaries"])
         self.assertIn("grouped", data["summaries"]["Pop2030"])
-        
+
         grouped = data["summaries"]["Pop2030"]["grouped"]
-        
+
         # Verify filtered technology types have data
         self.assertEqual(grouped["ExistingGrid"]["count"], 2)
         self.assertEqual(grouped["ExistingGrid"]["sum"], 123000.0)
         self.assertEqual(grouped["SHS"]["count"], 5)
-        
+
         # MiniGrid_PV is NOT in filter, should have count=0
         self.assertEqual(grouped["MiniGrid_PV"]["count"], 0)
 
     def test_in_filter_with_two_group_fields(self):
         """Test that __in filter works correctly with two group_by fields.
-        
+
         This ensures that when using two group_by fields, the aliases g1 and g2
         are correctly used when one of the group fields has an __in filter.
         """
         url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
-        
+
         # Use __in filter on Technology2030 while grouping by both district and Technology2030
         res = self.client.get(
-            url, {
+            url,
+            {
                 "fields": "Pop2030",
                 "q": "Technology2030__in=ExistingGrid;SHS",
-                "group_by": "district,Technology2030"
-            }
+                "group_by": "district,Technology2030",
+            },
         )
-        
+
         # Should succeed and return nested grouped data
         self.assertEqual(res.status_code, 200)
         data = res.json()
-        
+
         # Verify the response structure
         self.assertIn("summaries", data)
         self.assertIn("Pop2030", data["summaries"])
         self.assertIn("grouped", data["summaries"]["Pop2030"])
-        
+
         grouped = data["summaries"]["Pop2030"]["grouped"]
-        
+
         # Check Central district - verify filtered types have data
         self.assertIn("Central", grouped)
         central = grouped["Central"]
