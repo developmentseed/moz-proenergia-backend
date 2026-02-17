@@ -680,11 +680,7 @@ class TestMultiFieldSummaryView(APITestCase):
         self.assertEqual(grouped["MiniGrid_PV"]["count"], 0)
 
     def test_filter_without_group_by(self):
-        """Test that filters work correctly without group_by.
-
-        This reproduces the bug where build_filter_sql returns 3 values
-        but the caller only expects 2 when not using group_by.
-        """
+        """Test that filters work correctly without group_by."""
         url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
 
         # Use a filter without group_by
