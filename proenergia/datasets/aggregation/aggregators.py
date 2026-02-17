@@ -5,7 +5,6 @@ This module provides different aggregation strategies optimized for
 various query patterns (simple, filtered, grouped).
 """
 
-from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Any
 from django.db.models import Count, Min, Max, Sum
 
@@ -14,29 +13,7 @@ from .filters import FilterParser
 from .query_builder import SummaryQueryBuilder
 
 
-class BaseAggregator(ABC):
-    """Base class for field aggregation strategies."""
-
-    @abstractmethod
-    def compute_summary(
-        self, scenario_id: int, field: str, field_type: str, **kwargs
-    ) -> Dict[str, Any]:
-        """
-        Compute summary statistics for a field.
-
-        Args:
-            scenario_id: The scenario to aggregate
-            field: The field to aggregate
-            field_type: 'numeric' or 'string'
-            **kwargs: Additional strategy-specific parameters
-
-        Returns:
-            Dictionary with aggregated results
-        """
-        pass
-
-
-class SimpleAggregator(BaseAggregator):
+class SimpleAggregator:
     """
     Aggregator for simple queries without filters or grouping.
 
@@ -105,7 +82,7 @@ class SimpleAggregator(BaseAggregator):
             }
 
 
-class FilteredAggregator(BaseAggregator):
+class FilteredAggregator:
     """
     Aggregator for queries with filters but no grouping.
 
@@ -173,7 +150,7 @@ class FilteredAggregator(BaseAggregator):
             }
 
 
-class SingleGroupAggregator(BaseAggregator):
+class SingleGroupAggregator:
     """
     Aggregator for queries with single field grouping.
 
@@ -294,7 +271,7 @@ class SingleGroupAggregator(BaseAggregator):
             return aggregator.compute_summary(scenario_id, field, field_type)
 
 
-class MultiGroupAggregator(BaseAggregator):
+class MultiGroupAggregator:
     """
     Aggregator for queries with multiple field grouping (nested groups).
 
@@ -449,7 +426,7 @@ class MultiGroupAggregator(BaseAggregator):
             return aggregator.compute_summary(scenario_id, field, field_type)
 
 
-class CombinedFieldAggregator(BaseAggregator):
+class CombinedFieldAggregator:
     """
     Aggregator that processes multiple fields in a single query for optimal performance.
 
@@ -728,7 +705,7 @@ class CombinedFieldAggregator(BaseAggregator):
 
 def get_aggregator(
     has_filters: bool, group_fields: Optional[List[str]] = None
-) -> BaseAggregator:
+):
     """
     Factory function to get the appropriate aggregator strategy.
 
