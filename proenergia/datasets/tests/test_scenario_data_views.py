@@ -679,6 +679,35 @@ class TestMultiFieldSummaryView(APITestCase):
         # MiniGrid_PV is NOT in filter, should have count=0
         self.assertEqual(grouped["MiniGrid_PV"]["count"], 0)
 
+    def test_filter_without_group_by(self):
+        """Test that filters work correctly without group_by.
+        
+        This reproduces the bug where build_filter_sql returns 3 values
+        but the caller only expects 2 when not using group_by.
+        """
+        url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
+        
+        # Use a filter without group_by
+        res = self.client.get(
+            url, {
+                "fields": "Technology2030,Pop2030",
+                "q": "Pop2030__min=5000"
+            }
+        )
+        
+        # Should succeed
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        
+        # Verify the response has filtered data
+        self.assertIn("summaries", data)
+        self.assertIn("Pop2030", data["summaries"])
+        
+        # Check that only high population entries are included (>= 5000)
+        pop_summary = data["summaries"]["Pop2030"]
+        self.assertGreater(pop_summary["count"], 0)  # Should have results
+        self.assertGreaterEqual(pop_summary["min"], 5000)  # Min should be >= 5000
+
     def test_in_filter_with_two_group_fields(self):
         """Test that __in filter works correctly with two group_by fields.
 
