@@ -203,14 +203,19 @@ class SingleGroupAggregator(BaseAggregator):
         # Build filter SQL if filters provided
         filter_sql = ""
         filter_params = []
+        group_filter_conditions = {}
         if filter_parser and filter_string:
             filters = filter_parser.parse_filter_string(filter_string)
-            filter_sql, filter_params = filter_parser.build_filter_sql(filters)
+            # Pass group_field as a list to check for redundant JOINs
+            filter_sql, filter_params, group_filter_conditions = filter_parser.build_filter_sql(
+                filters, [group_field]
+            )
             filter_params = filter_parser.fill_scenario_ids(filter_params, scenario_id)
 
-        # Build and execute query
+        # Build and execute query with merged filter conditions
         sql, params = self.query_builder.build_single_group_query(
-            scenario_id, field, field_type, group_field, filter_sql, filter_params
+            scenario_id, field, field_type, group_field, filter_sql, filter_params,
+            group_filter_conditions
         )
         results = self.query_builder.execute_query(sql, params)
 
@@ -313,14 +318,19 @@ class MultiGroupAggregator(BaseAggregator):
         # Build filter SQL if filters provided
         filter_sql = ""
         filter_params = []
+        group_filter_conditions = {}
         if filter_parser and filter_string:
             filters = filter_parser.parse_filter_string(filter_string)
-            filter_sql, filter_params = filter_parser.build_filter_sql(filters)
+            # Pass group_fields to check for redundant JOINs
+            filter_sql, filter_params, group_filter_conditions = filter_parser.build_filter_sql(
+                filters, group_fields
+            )
             filter_params = filter_parser.fill_scenario_ids(filter_params, scenario_id)
 
-        # Build and execute query
+        # Build and execute query with merged filter conditions
         sql, params = self.query_builder.build_multi_group_query(
-            scenario_id, field, field_type, group_fields, filter_sql, filter_params
+            scenario_id, field, field_type, group_fields, filter_sql, filter_params,
+            group_filter_conditions
         )
         results = self.query_builder.execute_query(sql, params)
 
@@ -466,9 +476,13 @@ class CombinedFieldAggregator(BaseAggregator):
         # Build filter SQL if filters provided
         filter_sql = ""
         filter_params = []
+        group_filter_conditions = {}
         if filter_parser and filter_string:
             filters = filter_parser.parse_filter_string(filter_string)
-            filter_sql, filter_params = filter_parser.build_filter_sql(filters)
+            # Pass group_fields to avoid redundant JOINs
+            filter_sql, filter_params, group_filter_conditions = filter_parser.build_filter_sql(
+                filters, group_fields
+            )
             filter_params = filter_parser.fill_scenario_ids(filter_params, scenario_id)
 
         # Separate numeric fields (we'll handle string fields separately for now)
@@ -477,9 +491,10 @@ class CombinedFieldAggregator(BaseAggregator):
         summaries = {}
 
         if numeric_fields and group_fields:
-            # Execute grouped query
+            # Execute grouped query with merged filter conditions
             sql, params = self.query_builder.build_multi_field_grouped_query(
-                scenario_id, numeric_fields, group_fields, filter_sql, filter_params
+                scenario_id, numeric_fields, group_fields, filter_sql, filter_params, 
+                group_filter_conditions
             )
             results = self.query_builder.execute_query(sql, params)
 

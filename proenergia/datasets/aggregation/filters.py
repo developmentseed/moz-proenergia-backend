@@ -117,79 +117,128 @@ class FilterParser:
                 )
 
     def build_filter_sql(
-        self, filters: List[Tuple[str, str, Union[str, List[str]]]]
-    ) -> Tuple[str, List]:
+        self, 
+        filters: List[Tuple[str, str, Union[str, List[str]]]],
+        group_fields: List[str] = None
+    ) -> Tuple[str, List, Dict[str, str]]:
         """
         Build SQL JOIN clauses and parameters for filters.
 
         This generates INNER JOINs that efficiently filter results by joining
         on the same metrics table with different conditions. Each filter adds
         a JOIN that ensures only features matching ALL conditions are included.
+        
+        When a filter field matches a group_by field, we can reuse the group JOIN
+        and add the filter condition there, avoiding redundant JOINs.
 
         Args:
             filters: List of parsed filter tuples
+            group_fields: Optional list of fields that are being grouped by (will have g1, g2 aliases)
 
         Returns:
-            Tuple of (SQL string with JOIN clauses, list of parameters)
+            Tuple of:
+            - SQL string with JOIN clauses for filters not in group_fields
+            - List of parameters for those JOINs
+            - Dict mapping group field names to their filter conditions (to be added to group JOINs)
         """
         if not filters:
-            return "", []
+            return "", [], {}
 
         sql_parts = []
         params = []
+        group_filter_conditions = {}  # Maps group field name to SQL condition and params
+        
+        if group_fields is None:
+            group_fields = []
 
-        for idx, (field_name, operator, value) in enumerate(filters):
-            # Create unique alias for this filter's JOIN
-            # Using f{idx} pattern - safe because idx is from enumerate, not user input
-            alias = f"f{idx}"
+        filter_idx = 0  # Track filter index for non-group filters only
+        for field_name, operator, value in filters:
+            # Check if this field is already being grouped by
+            if field_name in group_fields:
+                # This field will be JOINed as g1 or g2, so add filter condition there
+                group_idx = group_fields.index(field_name) + 1  # g1 or g2
+                alias = f"g{group_idx}"
+                
+                # Build the filter condition to be added to the group JOIN
+                condition_sql = ""
+                condition_params = []
+                
+                if field_name in self.numeric_fields:
+                    try:
+                        numeric_val = float(value)
+                        if operator == "gte":
+                            condition_sql = f"                AND {alias}.numeric_value >= %s"
+                        elif operator == "lte":
+                            condition_sql = f"                AND {alias}.numeric_value <= %s"
+                        else:  # equality
+                            condition_sql = f"                AND {alias}.numeric_value = %s"
+                        condition_params = [numeric_val]
+                    except (ValueError, TypeError):
+                        raise ValueError(
+                            f"Invalid numeric value '{value}' for field '{field_name}'"
+                        )
+                else:
+                    # String field conditions
+                    if operator == "in":
+                        value_list = value if isinstance(value, list) else [value]
+                        placeholders = ",".join(["%s"] * len(value_list))
+                        condition_sql = f"                AND {alias}.string_value IN ({placeholders})"
+                        condition_params = value_list
+                    else:  # equality
+                        condition_sql = f"                AND {alias}.string_value = %s"
+                        condition_params = [value]
+                
+                group_filter_conditions[field_name] = (condition_sql, condition_params)
+            else:
+                # Not a group field, create a separate filter JOIN as before
+                alias = f"f{filter_idx}"
+                filter_idx += 1
 
-            # Build JOIN clause
-            # Each filter needs to match on feature_id to ensure intersection
-            sql_parts.append(f"""
+                # Build JOIN clause
+                sql_parts.append(f"""
             INNER JOIN datasets_scenariodatametrics {alias}
                 ON m.feature_id = {alias}.feature_id
                 AND {alias}.scenario_id = %s
                 AND {alias}.key = %s""")
 
-            # Add scenario_id and field name as parameters
-            params.extend([None, field_name])  # scenario_id will be filled by caller
+                # Add scenario_id and field name as parameters
+                params.extend([None, field_name])  # scenario_id will be filled by caller
 
-            # Add value condition based on field type and operator
-            if field_name in self.numeric_fields:
-                # Numeric field conditions
-                try:
-                    numeric_val = float(value)
-                    if operator == "gte":
-                        sql_parts.append(
-                            f"                AND {alias}.numeric_value >= %s"
+                # Add value condition based on field type and operator
+                if field_name in self.numeric_fields:
+                    try:
+                        numeric_val = float(value)
+                        if operator == "gte":
+                            sql_parts.append(
+                                f"                AND {alias}.numeric_value >= %s"
+                            )
+                        elif operator == "lte":
+                            sql_parts.append(
+                                f"                AND {alias}.numeric_value <= %s"
+                            )
+                        else:  # equality
+                            sql_parts.append(
+                                f"                AND {alias}.numeric_value = %s"
+                            )
+                        params.append(numeric_val)
+                    except (ValueError, TypeError):
+                        raise ValueError(
+                            f"Invalid numeric value '{value}' for field '{field_name}'"
                         )
-                    elif operator == "lte":
+                else:
+                    # String field conditions
+                    if operator == "in":
+                        value_list = value if isinstance(value, list) else [value]
+                        placeholders = ",".join(["%s"] * len(value_list))
                         sql_parts.append(
-                            f"                AND {alias}.numeric_value <= %s"
+                            f"                AND {alias}.string_value IN ({placeholders})"
                         )
+                        params.extend(value_list)
                     else:  # equality
-                        sql_parts.append(
-                            f"                AND {alias}.numeric_value = %s"
-                        )
-                    params.append(numeric_val)
-                except (ValueError, TypeError):
-                    raise ValueError(
-                        f"Invalid numeric value '{value}' for field '{field_name}'"
-                    )
-            else:
-                # String field conditions
-                if operator == "in":
-                    value_list = value if isinstance(value, list) else [value]
-                    placeholders = ",".join(["%s"] * len(value_list))
-                    sql_parts.append(
-                        f"                AND {alias}.string_value IN ({placeholders})"
-                    )
-                    params.extend(value_list)
-                else:  # equality
-                    sql_parts.append(f"                AND {alias}.string_value = %s")
-                    params.append(value)
+                        sql_parts.append(f"                AND {alias}.string_value = %s")
+                        params.append(value)
 
-        return "".join(sql_parts), params
+        return "".join(sql_parts), params, group_filter_conditions
 
     def fill_scenario_ids(self, params: List, scenario_id: int) -> List:
         """

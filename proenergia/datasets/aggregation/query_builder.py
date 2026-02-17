@@ -85,6 +85,7 @@ class SummaryQueryBuilder:
         group_field: str,
         filter_sql: str = "",
         filter_params: List = None,
+        group_filter_conditions: Dict[str, Tuple[str, List]] = None,
     ) -> Tuple[str, List]:
         """
         Build SQL for single field grouping.
@@ -105,8 +106,25 @@ class SummaryQueryBuilder:
         """
         if filter_params is None:
             filter_params = []
+        if group_filter_conditions is None:
+            group_filter_conditions = {}
 
         if field_type == "numeric":
+            # Build group JOIN with optional filter condition
+            group_join_sql = f"""
+            INNER JOIN datasets_scenariodatametrics g 
+                ON m.feature_id = g.feature_id 
+                AND g.scenario_id = %s 
+                AND g.key = %s"""
+            
+            params_list = [scenario_id, group_field]
+            
+            # Add filter condition if this group field has one
+            if group_field in group_filter_conditions:
+                condition_sql, condition_params = group_filter_conditions[group_field]
+                group_join_sql += condition_sql
+                params_list.extend(condition_params)
+
             # Aggregate numeric values grouped by another field
             sql = f"""
             SELECT 
@@ -116,18 +134,30 @@ class SummaryQueryBuilder:
                 MAX(m.numeric_value) as max_val,
                 SUM(m.numeric_value) as sum_val
             FROM datasets_scenariodatametrics m
-            INNER JOIN datasets_scenariodatametrics g 
-                ON m.feature_id = g.feature_id 
-                AND g.scenario_id = %s 
-                AND g.key = %s
+            {group_join_sql}
             {filter_sql}
             WHERE m.scenario_id = %s 
                 AND m.key = %s
             GROUP BY g.string_value
             ORDER BY g.string_value
             """
-            params = [scenario_id, group_field] + filter_params + [scenario_id, field]
+            params = params_list + filter_params + [scenario_id, field]
         else:
+            # Build group JOIN with optional filter condition
+            group_join_sql = f"""
+            INNER JOIN datasets_scenariodatametrics g 
+                ON m.feature_id = g.feature_id 
+                AND g.scenario_id = %s 
+                AND g.key = %s"""
+            
+            params_list = [scenario_id, group_field]
+            
+            # Add filter condition if this group field has one
+            if group_field in group_filter_conditions:
+                condition_sql, condition_params = group_filter_conditions[group_field]
+                group_join_sql += condition_sql
+                params_list.extend(condition_params)
+
             # For string fields, we need value distribution per group
             sql = f"""
             SELECT 
@@ -135,10 +165,7 @@ class SummaryQueryBuilder:
                 m.string_value as value,
                 COUNT(*) as count
             FROM datasets_scenariodatametrics m
-            INNER JOIN datasets_scenariodatametrics g 
-                ON m.feature_id = g.feature_id 
-                AND g.scenario_id = %s 
-                AND g.key = %s
+            {group_join_sql}
             {filter_sql}
             WHERE m.scenario_id = %s 
                 AND m.key = %s
@@ -146,7 +173,7 @@ class SummaryQueryBuilder:
             GROUP BY g.string_value, m.string_value
             ORDER BY g.string_value, m.string_value
             """
-            params = [scenario_id, group_field] + filter_params + [scenario_id, field]
+            params = params_list + filter_params + [scenario_id, field]
 
         return sql, params
 
@@ -158,6 +185,7 @@ class SummaryQueryBuilder:
         group_fields: List[str],
         filter_sql: str = "",
         filter_params: List = None,
+        group_filter_conditions: Dict[str, Tuple[str, List]] = None,
     ) -> Tuple[str, List]:
         """
         Build SQL for multiple field grouping (nested groups).
@@ -186,6 +214,8 @@ class SummaryQueryBuilder:
         """
         if filter_params is None:
             filter_params = []
+        if group_filter_conditions is None:
+            group_filter_conditions = {}
 
         if len(group_fields) > 2:
             raise ValueError("Maximum of 2 group_by fields supported")
@@ -198,11 +228,42 @@ class SummaryQueryBuilder:
                 group_fields[0],
                 filter_sql,
                 filter_params,
+                group_filter_conditions,
             )
 
         field1, field2 = group_fields
 
         if field_type == "numeric":
+            # Build first group JOIN with optional filter condition
+            group1_join_sql = f"""
+            INNER JOIN datasets_scenariodatametrics g1 
+                ON m.feature_id = g1.feature_id 
+                AND g1.scenario_id = %s 
+                AND g1.key = %s"""
+            
+            params_list = [scenario_id, field1]
+            
+            # Add filter condition if field1 has one
+            if field1 in group_filter_conditions:
+                condition_sql, condition_params = group_filter_conditions[field1]
+                group1_join_sql += condition_sql
+                params_list.extend(condition_params)
+
+            # Build second group JOIN with optional filter condition
+            group2_join_sql = f"""
+            INNER JOIN datasets_scenariodatametrics g2 
+                ON m.feature_id = g2.feature_id 
+                AND g2.scenario_id = %s 
+                AND g2.key = %s"""
+            
+            params_list.extend([scenario_id, field2])
+            
+            # Add filter condition if field2 has one
+            if field2 in group_filter_conditions:
+                condition_sql, condition_params = group_filter_conditions[field2]
+                group2_join_sql += condition_sql
+                params_list.extend(condition_params)
+
             # Aggregate numeric values with nested grouping
             sql = f"""
             SELECT 
@@ -213,26 +274,46 @@ class SummaryQueryBuilder:
                 MAX(m.numeric_value) as max_val,
                 SUM(m.numeric_value) as sum_val
             FROM datasets_scenariodatametrics m
-            INNER JOIN datasets_scenariodatametrics g1 
-                ON m.feature_id = g1.feature_id 
-                AND g1.scenario_id = %s 
-                AND g1.key = %s
-            INNER JOIN datasets_scenariodatametrics g2 
-                ON m.feature_id = g2.feature_id 
-                AND g2.scenario_id = %s 
-                AND g2.key = %s
+            {group1_join_sql}
+            {group2_join_sql}
             {filter_sql}
             WHERE m.scenario_id = %s 
                 AND m.key = %s
             GROUP BY g1.string_value, g2.string_value
             ORDER BY g1.string_value, g2.string_value
             """
-            params = (
-                [scenario_id, field1, scenario_id, field2]
-                + filter_params
-                + [scenario_id, field]
-            )
+            params = params_list + filter_params + [scenario_id, field]
         else:
+            # Build first group JOIN with optional filter condition
+            group1_join_sql = f"""
+            INNER JOIN datasets_scenariodatametrics g1 
+                ON m.feature_id = g1.feature_id 
+                AND g1.scenario_id = %s 
+                AND g1.key = %s"""
+            
+            params_list = [scenario_id, field1]
+            
+            # Add filter condition if field1 has one
+            if field1 in group_filter_conditions:
+                condition_sql, condition_params = group_filter_conditions[field1]
+                group1_join_sql += condition_sql
+                params_list.extend(condition_params)
+
+            # Build second group JOIN with optional filter condition
+            group2_join_sql = f"""
+            INNER JOIN datasets_scenariodatametrics g2 
+                ON m.feature_id = g2.feature_id 
+                AND g2.scenario_id = %s 
+                AND g2.key = %s"""
+            
+            params_list.extend([scenario_id, field2])
+            
+            # Add filter condition if field2 has one
+            if field2 in group_filter_conditions:
+                condition_sql, condition_params = group_filter_conditions[field2]
+                group2_join_sql += condition_sql
+                params_list.extend(condition_params)
+
             # String field value distribution with nested grouping
             sql = f"""
             SELECT 
@@ -241,14 +322,8 @@ class SummaryQueryBuilder:
                 m.string_value as value,
                 COUNT(*) as count
             FROM datasets_scenariodatametrics m
-            INNER JOIN datasets_scenariodatametrics g1 
-                ON m.feature_id = g1.feature_id 
-                AND g1.scenario_id = %s 
-                AND g1.key = %s
-            INNER JOIN datasets_scenariodatametrics g2 
-                ON m.feature_id = g2.feature_id 
-                AND g2.scenario_id = %s 
-                AND g2.key = %s
+            {group1_join_sql}
+            {group2_join_sql}
             {filter_sql}
             WHERE m.scenario_id = %s 
                 AND m.key = %s
@@ -256,11 +331,7 @@ class SummaryQueryBuilder:
             GROUP BY g1.string_value, g2.string_value, m.string_value
             ORDER BY g1.string_value, g2.string_value, m.string_value
             """
-            params = (
-                [scenario_id, field1, scenario_id, field2]
-                + filter_params
-                + [scenario_id, field]
-            )
+            params = params_list + filter_params + [scenario_id, field]
 
         return sql, params
 
@@ -340,6 +411,7 @@ class SummaryQueryBuilder:
         group_fields: List[str],
         filter_sql: str = "",
         filter_params: List = None,
+        group_filter_conditions: Dict[str, Tuple[str, List]] = None,
     ) -> Tuple[str, List]:
         """
         Build SQL for aggregating multiple fields with one or two group_by fields in a single query.
@@ -348,14 +420,17 @@ class SummaryQueryBuilder:
             scenario_id: The scenario to aggregate
             fields: Dictionary mapping field names to their types
             group_fields: List of fields to group by (1 or 2)
-            filter_sql: Optional SQL JOIN clauses for filters
+            filter_sql: Optional SQL JOIN clauses for filters (excluding those merged with groups)
             filter_params: Parameters for filter JOINs
+            group_filter_conditions: Dict mapping group field names to (condition_sql, params) for filters on group fields
 
         Returns:
             Tuple of (SQL query, parameters)
         """
         if filter_params is None:
             filter_params = []
+        if group_filter_conditions is None:
+            group_filter_conditions = {}
 
         if len(group_fields) > 2:
             raise ValueError("Maximum of 2 group_by fields supported")
@@ -383,14 +458,26 @@ class SummaryQueryBuilder:
             select_clause = ",\n                ".join(select_parts)
             field_list_str = "', '".join(f.replace("'", "''") for f in fields.keys())
 
+            # Build group JOIN with optional filter condition
+            group_join_sql = f"""
+                INNER JOIN datasets_scenariodatametrics g 
+                    ON m.feature_id = g.feature_id 
+                    AND g.scenario_id = %s 
+                    AND g.key = %s"""
+            
+            params_list = [scenario_id, group_field]
+            
+            # Add filter condition if this group field has one
+            if group_field in group_filter_conditions:
+                condition_sql, condition_params = group_filter_conditions[group_field]
+                group_join_sql += condition_sql
+                params_list.extend(condition_params)
+
             sql = f"""
                 SELECT 
                     {select_clause}
                 FROM datasets_scenariodatametrics m
-                INNER JOIN datasets_scenariodatametrics g 
-                    ON m.feature_id = g.feature_id 
-                    AND g.scenario_id = %s 
-                    AND g.key = %s
+                {group_join_sql}
                 {filter_sql}
                 WHERE m.scenario_id = %s 
                     AND m.key IN ('{field_list_str}')
@@ -398,7 +485,7 @@ class SummaryQueryBuilder:
                 ORDER BY g.string_value
             """
 
-            params = [scenario_id, group_field] + filter_params + [scenario_id]
+            params = params_list + filter_params + [scenario_id]
         else:
             # Two group fields
             field1, field2 = group_fields
@@ -421,18 +508,42 @@ class SummaryQueryBuilder:
             select_clause = ",\n                ".join(select_parts)
             field_list_str = "', '".join(f.replace("'", "''") for f in fields.keys())
 
+            # Build first group JOIN with optional filter condition
+            group1_join_sql = f"""
+                INNER JOIN datasets_scenariodatametrics g1 
+                    ON m.feature_id = g1.feature_id 
+                    AND g1.scenario_id = %s 
+                    AND g1.key = %s"""
+            
+            params_list = [scenario_id, field1]
+            
+            # Add filter condition if field1 has one
+            if field1 in group_filter_conditions:
+                condition_sql, condition_params = group_filter_conditions[field1]
+                group1_join_sql += condition_sql
+                params_list.extend(condition_params)
+
+            # Build second group JOIN with optional filter condition
+            group2_join_sql = f"""
+                INNER JOIN datasets_scenariodatametrics g2 
+                    ON m.feature_id = g2.feature_id 
+                    AND g2.scenario_id = %s 
+                    AND g2.key = %s"""
+            
+            params_list.extend([scenario_id, field2])
+            
+            # Add filter condition if field2 has one
+            if field2 in group_filter_conditions:
+                condition_sql, condition_params = group_filter_conditions[field2]
+                group2_join_sql += condition_sql
+                params_list.extend(condition_params)
+
             sql = f"""
                 SELECT 
                     {select_clause}
                 FROM datasets_scenariodatametrics m
-                INNER JOIN datasets_scenariodatametrics g1 
-                    ON m.feature_id = g1.feature_id 
-                    AND g1.scenario_id = %s 
-                    AND g1.key = %s
-                INNER JOIN datasets_scenariodatametrics g2 
-                    ON m.feature_id = g2.feature_id 
-                    AND g2.scenario_id = %s 
-                    AND g2.key = %s
+                {group1_join_sql}
+                {group2_join_sql}
                 {filter_sql}
                 WHERE m.scenario_id = %s 
                     AND m.key IN ('{field_list_str}')
@@ -440,11 +551,7 @@ class SummaryQueryBuilder:
                 ORDER BY g1.string_value, g2.string_value
             """
 
-            params = (
-                [scenario_id, field1, scenario_id, field2]
-                + filter_params
-                + [scenario_id]
-            )
+            params = params_list + filter_params + [scenario_id]
 
         return sql, params
 
