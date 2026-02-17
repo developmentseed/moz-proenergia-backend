@@ -253,18 +253,18 @@ class MultiFieldSummaryView(APIView):
             # Check if field is configured
             if field not in field_type_map:
                 continue
-            
+
             # Check if field has any data
             if ScenarioDataMetrics.objects.filter(
                 scenario=scenario, key=field
             ).exists():
                 fields_with_data[field] = field_type_map[field]
-        
+
         # 7. Use CombinedFieldAggregator for batch processing
         # This dramatically reduces the number of queries
         if fields_with_data:
             aggregator = CombinedFieldAggregator()
-            
+
             # Use batch processing for all cases (0, 1, or 2 group_by fields)
             summaries = aggregator.compute_summaries_batch(
                 scenario_id=scenario.id,
@@ -276,7 +276,7 @@ class MultiFieldSummaryView(APIView):
             )
         else:
             summaries = {}
-        
+
         # Add empty results for fields without data or invalid fields
         for field in requested_fields:
             if field not in summaries:

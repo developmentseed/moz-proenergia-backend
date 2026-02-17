@@ -273,52 +273,54 @@ class SummaryQueryBuilder:
     ) -> Tuple[str, List]:
         """
         Build SQL for aggregating multiple fields in a single query.
-        
+
         This method uses conditional aggregation to compute statistics for
         multiple fields in a single table scan, dramatically reducing query count.
-        
+
         Args:
             scenario_id: The scenario to aggregate
             fields: Dictionary mapping field names to their types ('numeric' or 'string')
             filter_sql: Optional SQL JOIN clauses for filters
             filter_params: Parameters for filter JOINs
-            
+
         Returns:
             Tuple of (SQL query, parameters)
         """
         if filter_params is None:
             filter_params = []
-        
+
         # Separate numeric and string fields
         numeric_fields = [f for f, t in fields.items() if t == "numeric"]
         string_fields = [f for f, t in fields.items() if t == "string"]
-        
+
         # Build SELECT clause with conditional aggregations
         select_parts = []
-        
+
         # Add numeric field aggregations
         for field in numeric_fields:
             field_safe = field.replace("'", "''")  # Escape field name for SQL
-            select_parts.extend([
-                f"COUNT(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_count",
-                f"MIN(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_min",
-                f"MAX(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_max",
-                f"SUM(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_sum",
-            ])
-        
+            select_parts.extend(
+                [
+                    f"COUNT(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_count",
+                    f"MIN(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_min",
+                    f"MAX(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_max",
+                    f"SUM(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_sum",
+                ]
+            )
+
         # For string fields, we need a different approach - get counts
         for field in string_fields:
             field_safe = field.replace("'", "''")
             select_parts.append(
                 f"COUNT(CASE WHEN m.key = '{field_safe}' THEN 1 END) as {field}_count"
             )
-        
+
         select_clause = ",\n                ".join(select_parts)
-        
+
         # Build the query
         field_list = list(fields.keys())
         field_list_str = "', '".join(f.replace("'", "''") for f in field_list)
-        
+
         sql = f"""
             SELECT 
                 {select_clause}
@@ -327,10 +329,10 @@ class SummaryQueryBuilder:
             WHERE m.scenario_id = %s 
                 AND m.key IN ('{field_list_str}')
         """
-        
+
         params = filter_params + [scenario_id]
         return sql, params
-    
+
     def build_multi_field_grouped_query(
         self,
         scenario_id: int,
@@ -341,44 +343,46 @@ class SummaryQueryBuilder:
     ) -> Tuple[str, List]:
         """
         Build SQL for aggregating multiple fields with one or two group_by fields in a single query.
-        
+
         Args:
             scenario_id: The scenario to aggregate
             fields: Dictionary mapping field names to their types
             group_fields: List of fields to group by (1 or 2)
             filter_sql: Optional SQL JOIN clauses for filters
             filter_params: Parameters for filter JOINs
-            
+
         Returns:
             Tuple of (SQL query, parameters)
         """
         if filter_params is None:
             filter_params = []
-        
+
         if len(group_fields) > 2:
             raise ValueError("Maximum of 2 group_by fields supported")
-        
+
         # Separate numeric and string fields
         numeric_fields = [f for f, t in fields.items() if t == "numeric"]
-        
+
         # Build SELECT clause based on number of group fields
         if len(group_fields) == 1:
             # Single group field
             group_field = group_fields[0]
             select_parts = ["g.string_value as group_value"]
-            
+
             for field in numeric_fields:
                 field_safe = field.replace("'", "''")
-                select_parts.extend([
-                    f"COUNT(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_count",
-                    f"MIN(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_min",
-                    f"MAX(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_max",
-                    f"SUM(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_sum",
-                ])
-            
+                select_parts.extend(
+                    [
+                        f"COUNT(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_count",
+                        f"MIN(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_min",
+                        f"MAX(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_max",
+                        f"SUM(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_sum",
+                    ]
+                )
+
             select_clause = ",\n                ".join(select_parts)
             field_list_str = "', '".join(f.replace("'", "''") for f in fields.keys())
-            
+
             sql = f"""
                 SELECT 
                     {select_clause}
@@ -393,25 +397,30 @@ class SummaryQueryBuilder:
                 GROUP BY g.string_value
                 ORDER BY g.string_value
             """
-            
+
             params = [scenario_id, group_field] + filter_params + [scenario_id]
         else:
             # Two group fields
             field1, field2 = group_fields
-            select_parts = ["g1.string_value as group1_value", "g2.string_value as group2_value"]
-            
+            select_parts = [
+                "g1.string_value as group1_value",
+                "g2.string_value as group2_value",
+            ]
+
             for field in numeric_fields:
                 field_safe = field.replace("'", "''")
-                select_parts.extend([
-                    f"COUNT(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_count",
-                    f"MIN(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_min",
-                    f"MAX(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_max",
-                    f"SUM(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_sum",
-                ])
-            
+                select_parts.extend(
+                    [
+                        f"COUNT(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_count",
+                        f"MIN(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_min",
+                        f"MAX(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_max",
+                        f"SUM(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_sum",
+                    ]
+                )
+
             select_clause = ",\n                ".join(select_parts)
             field_list_str = "', '".join(f.replace("'", "''") for f in fields.keys())
-            
+
             sql = f"""
                 SELECT 
                     {select_clause}
@@ -430,9 +439,13 @@ class SummaryQueryBuilder:
                 GROUP BY g1.string_value, g2.string_value
                 ORDER BY g1.string_value, g2.string_value
             """
-            
-            params = [scenario_id, field1, scenario_id, field2] + filter_params + [scenario_id]
-        
+
+            params = (
+                [scenario_id, field1, scenario_id, field2]
+                + filter_params
+                + [scenario_id]
+            )
+
         return sql, params
 
     def execute_query(self, sql: str, params: List) -> List[Dict[str, Any]]:

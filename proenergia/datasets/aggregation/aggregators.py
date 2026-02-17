@@ -122,7 +122,7 @@ class FilteredAggregator(BaseAggregator):
         field_type: str,
         filter_parser: FilterParser,
         filter_string: str,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """
         Compute filtered aggregation using optimized SQL.
@@ -192,7 +192,7 @@ class SingleGroupAggregator(BaseAggregator):
         all_group_values: List[str],
         filter_parser: Optional[FilterParser] = None,
         filter_string: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """
         Compute grouped aggregation using single SQL query.
@@ -303,7 +303,7 @@ class MultiGroupAggregator(BaseAggregator):
         all_group_values: Dict[str, List[str]],
         filter_parser: Optional[FilterParser] = None,
         filter_string: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """
         Compute nested grouped aggregation using single SQL query.
@@ -432,14 +432,14 @@ class MultiGroupAggregator(BaseAggregator):
 class CombinedFieldAggregator(BaseAggregator):
     """
     Aggregator that processes multiple fields in a single query for optimal performance.
-    
+
     This aggregator uses conditional aggregation to compute statistics for all requested
     fields in one database query, dramatically reducing the number of queries needed.
     """
-    
+
     def __init__(self):
         self.query_builder = SummaryQueryBuilder()
-    
+
     def compute_summaries_batch(
         self,
         scenario_id: int,
@@ -451,7 +451,7 @@ class CombinedFieldAggregator(BaseAggregator):
     ) -> Dict[str, Dict[str, Any]]:
         """
         Compute summaries for multiple fields in a single query.
-        
+
         Args:
             scenario_id: The scenario to aggregate
             fields: Dictionary mapping field names to their types
@@ -459,7 +459,7 @@ class CombinedFieldAggregator(BaseAggregator):
             all_group_values: Dictionary mapping group field names to their possible values
             filter_parser: Optional filter parser
             filter_string: Optional filter string
-            
+
         Returns:
             Dictionary with field names as keys and their summaries as values
         """
@@ -470,27 +470,28 @@ class CombinedFieldAggregator(BaseAggregator):
             filters = filter_parser.parse_filter_string(filter_string)
             filter_sql, filter_params = filter_parser.build_filter_sql(filters)
             filter_params = filter_parser.fill_scenario_ids(filter_params, scenario_id)
-        
+
         # Separate numeric fields (we'll handle string fields separately for now)
         numeric_fields = {k: v for k, v in fields.items() if v == "numeric"}
-        
-        
+
         summaries = {}
-        
+
         if numeric_fields and group_fields:
             # Execute grouped query
             sql, params = self.query_builder.build_multi_field_grouped_query(
                 scenario_id, numeric_fields, group_fields, filter_sql, filter_params
             )
             results = self.query_builder.execute_query(sql, params)
-            
+
             # Also get overall stats
             overall_sql, overall_params = self.query_builder.build_multi_field_query(
                 scenario_id, numeric_fields, filter_sql, filter_params
             )
-            overall_results = self.query_builder.execute_query(overall_sql, overall_params)
+            overall_results = self.query_builder.execute_query(
+                overall_sql, overall_params
+            )
             overall_row = overall_results[0] if overall_results else {}
-            
+
             # Process results for each field
             for field_name, field_type in numeric_fields.items():
                 # Build overall summary
@@ -498,11 +499,23 @@ class CombinedFieldAggregator(BaseAggregator):
                 summary = {
                     "type": "numeric",
                     "count": overall_row.get(f"{field_lower}_count", 0) or 0,
-                    "min": float(overall_row.get(f"{field_lower}_min")) if overall_row.get(f"{field_lower}_min") is not None else None,
-                    "max": float(overall_row.get(f"{field_lower}_max")) if overall_row.get(f"{field_lower}_max") is not None else None,
-                    "sum": float(overall_row.get(f"{field_lower}_sum")) if overall_row.get(f"{field_lower}_sum") is not None else None,
+                    "min": (
+                        float(overall_row.get(f"{field_lower}_min"))
+                        if overall_row.get(f"{field_lower}_min") is not None
+                        else None
+                    ),
+                    "max": (
+                        float(overall_row.get(f"{field_lower}_max"))
+                        if overall_row.get(f"{field_lower}_max") is not None
+                        else None
+                    ),
+                    "sum": (
+                        float(overall_row.get(f"{field_lower}_sum"))
+                        if overall_row.get(f"{field_lower}_sum") is not None
+                        else None
+                    ),
                 }
-                
+
                 # Build grouped data
                 if len(group_fields) == 1:
                     # Single group field
@@ -511,33 +524,62 @@ class CombinedFieldAggregator(BaseAggregator):
                         group_value = row["group_value"]
                         grouped[group_value] = {
                             "count": row.get(f"{field_lower}_count", 0) or 0,
-                            "min": float(row.get(f"{field_lower}_min")) if row.get(f"{field_lower}_min") is not None else None,
-                            "max": float(row.get(f"{field_lower}_max")) if row.get(f"{field_lower}_max") is not None else None,
-                            "sum": float(row.get(f"{field_lower}_sum")) if row.get(f"{field_lower}_sum") is not None else None,
+                            "min": (
+                                float(row.get(f"{field_lower}_min"))
+                                if row.get(f"{field_lower}_min") is not None
+                                else None
+                            ),
+                            "max": (
+                                float(row.get(f"{field_lower}_max"))
+                                if row.get(f"{field_lower}_max") is not None
+                                else None
+                            ),
+                            "sum": (
+                                float(row.get(f"{field_lower}_sum"))
+                                if row.get(f"{field_lower}_sum") is not None
+                                else None
+                            ),
                         }
-                    
+
                     # Fill in empty groups
                     if all_group_values and group_fields[0] in all_group_values:
                         for value in all_group_values[group_fields[0]]:
                             if value not in grouped:
-                                grouped[value] = {"count": 0, "min": None, "max": None, "sum": None}
+                                grouped[value] = {
+                                    "count": 0,
+                                    "min": None,
+                                    "max": None,
+                                    "sum": None,
+                                }
                 else:
                     # Two group fields - nested structure
                     grouped = {}
                     for row in results:
                         group1_value = row["group1_value"]
                         group2_value = row["group2_value"]
-                        
+
                         if group1_value not in grouped:
                             grouped[group1_value] = {}
-                        
+
                         grouped[group1_value][group2_value] = {
                             "count": row.get(f"{field_lower}_count", 0) or 0,
-                            "min": float(row.get(f"{field_lower}_min")) if row.get(f"{field_lower}_min") is not None else None,
-                            "max": float(row.get(f"{field_lower}_max")) if row.get(f"{field_lower}_max") is not None else None,
-                            "sum": float(row.get(f"{field_lower}_sum")) if row.get(f"{field_lower}_sum") is not None else None,
+                            "min": (
+                                float(row.get(f"{field_lower}_min"))
+                                if row.get(f"{field_lower}_min") is not None
+                                else None
+                            ),
+                            "max": (
+                                float(row.get(f"{field_lower}_max"))
+                                if row.get(f"{field_lower}_max") is not None
+                                else None
+                            ),
+                            "sum": (
+                                float(row.get(f"{field_lower}_sum"))
+                                if row.get(f"{field_lower}_sum") is not None
+                                else None
+                            ),
                         }
-                    
+
                     # Fill in empty groups
                     if all_group_values and len(group_fields) == 2:
                         field1, field2 = group_fields
@@ -547,8 +589,13 @@ class CombinedFieldAggregator(BaseAggregator):
                                     grouped[value1] = {}
                                 for value2 in all_group_values[field2]:
                                     if value2 not in grouped[value1]:
-                                        grouped[value1][value2] = {"count": 0, "min": None, "max": None, "sum": None}
-                
+                                        grouped[value1][value2] = {
+                                            "count": 0,
+                                            "min": None,
+                                            "max": None,
+                                            "sum": None,
+                                        }
+
                 summary["grouped"] = grouped
                 summaries[field_name] = summary
         elif numeric_fields:
@@ -557,7 +604,7 @@ class CombinedFieldAggregator(BaseAggregator):
                 scenario_id, numeric_fields, filter_sql, filter_params
             )
             results = self.query_builder.execute_query(sql, params)
-            
+
             if results:
                 row = results[0]
                 # Process results for each field
@@ -567,15 +614,27 @@ class CombinedFieldAggregator(BaseAggregator):
                     summaries[field_name] = {
                         "type": "numeric",
                         "count": row.get(f"{field_lower}_count", 0) or 0,
-                        "min": float(row.get(f"{field_lower}_min")) if row.get(f"{field_lower}_min") is not None else None,
-                        "max": float(row.get(f"{field_lower}_max")) if row.get(f"{field_lower}_max") is not None else None,
-                        "sum": float(row.get(f"{field_lower}_sum")) if row.get(f"{field_lower}_sum") is not None else None,
+                        "min": (
+                            float(row.get(f"{field_lower}_min"))
+                            if row.get(f"{field_lower}_min") is not None
+                            else None
+                        ),
+                        "max": (
+                            float(row.get(f"{field_lower}_max"))
+                            if row.get(f"{field_lower}_max") is not None
+                            else None
+                        ),
+                        "sum": (
+                            float(row.get(f"{field_lower}_sum"))
+                            if row.get(f"{field_lower}_sum") is not None
+                            else None
+                        ),
                     }
             else:
                 # No results - return zeros
                 for field_name in numeric_fields:
                     summaries[field_name] = {"count": 0}
-        
+
         # Handle string fields separately for now (future optimization)
         for field_name, field_type in fields.items():
             if field_type == "string":
@@ -584,49 +643,57 @@ class CombinedFieldAggregator(BaseAggregator):
                 if group_fields and len(group_fields) == 1:
                     aggregator = SingleGroupAggregator()
                     summaries[field_name] = aggregator.compute_summary(
-                        scenario_id, field_name, field_type,
+                        scenario_id,
+                        field_name,
+                        field_type,
                         group_field=group_fields[0],
-                        all_group_values=all_group_values.get(group_fields[0]) if all_group_values else None,
+                        all_group_values=(
+                            all_group_values.get(group_fields[0])
+                            if all_group_values
+                            else None
+                        ),
                         filter_parser=filter_parser,
-                        filter_string=filter_string
+                        filter_string=filter_string,
                     )
                 elif group_fields and len(group_fields) > 1:
                     aggregator = MultiGroupAggregator()
                     summaries[field_name] = aggregator.compute_summary(
-                        scenario_id, field_name, field_type,
+                        scenario_id,
+                        field_name,
+                        field_type,
                         group_fields=group_fields,
                         all_group_values=all_group_values,
                         filter_parser=filter_parser,
-                        filter_string=filter_string
+                        filter_string=filter_string,
                     )
                 elif filter_parser and filter_string:
                     aggregator = FilteredAggregator()
                     summaries[field_name] = aggregator.compute_summary(
-                        scenario_id, field_name, field_type,
+                        scenario_id,
+                        field_name,
+                        field_type,
                         filter_parser=filter_parser,
-                        filter_string=filter_string
+                        filter_string=filter_string,
                     )
                 else:
                     aggregator = SimpleAggregator()
                     summaries[field_name] = aggregator.compute_summary(
                         scenario_id, field_name, field_type
                     )
-        
+
         return summaries
-    
+
     def compute_summary(
         self, scenario_id: int, field: str, field_type: str, **kwargs
     ) -> Dict[str, Any]:
         """
         Compute summary for a single field (for compatibility).
-        
+
         This method exists for interface compatibility but internally
         uses the batch method for consistency.
         """
         fields = {field: field_type}
-        results = self.compute_summaries_batch(
-            scenario_id, fields, **kwargs
-        )
+        results = self.compute_summaries_batch(scenario_id, fields, **kwargs)
         return results.get(field, {"count": 0})
 
 
