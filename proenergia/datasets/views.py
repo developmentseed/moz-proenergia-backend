@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .aggregation import FilterParser, get_aggregator, CombinedFieldAggregator
-from .filters import ScenarioDataFilter, VectorDatasetFilter
+from .filters import VectorDatasetFilter
 from .models import (
     DataModel,
     Scenario,

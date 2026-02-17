@@ -91,7 +91,7 @@ class SQLInjectionSecurityTest(TestCase):
             filters = parser.parse_filter_string(filter_string)
 
             # Build SQL with malicious value
-            filter_sql, filter_params = parser.build_filter_sql(filters)
+            filter_sql, filter_params, _ = parser.build_filter_sql(filters)
 
             # The malicious value should be in params, not in SQL string
             self.assertIn(malicious_value, filter_params)
@@ -167,7 +167,7 @@ class SQLInjectionSecurityTest(TestCase):
 
             # Should not raise an error
             filters = parser.parse_filter_string(filter_string)
-            filter_sql, filter_params = parser.build_filter_sql(filters)
+            filter_sql, filter_params, _ = parser.build_filter_sql(filters)
 
             # Value should be in parameters, properly escaped
             self.assertIn(value, filter_params)
@@ -182,7 +182,7 @@ class SQLInjectionSecurityTest(TestCase):
         # Build query with malicious filter value
         malicious_filter = "location=Maputo' OR '1'='1"
         filters = parser.parse_filter_string(malicious_filter)
-        filter_sql, filter_params = parser.build_filter_sql(filters)
+        filter_sql, filter_params, _ = parser.build_filter_sql(filters)
 
         # Fill in scenario IDs
         filter_params = parser.fill_scenario_ids(filter_params, self.scenario.id)
@@ -228,7 +228,7 @@ class SQLInjectionSecurityTest(TestCase):
         # Multiple filters should generate f0, f1, f2 etc. aliases
         filter_string = "location=Maputo,Pop2030__gte=1000,district=Central"
         filters = parser.parse_filter_string(filter_string)
-        filter_sql, _ = parser.build_filter_sql(filters)
+        filter_sql, _, _ = parser.build_filter_sql(filters)
 
         # Check that aliases are present and follow expected pattern
         self.assertIn("f0", filter_sql)
