@@ -580,7 +580,7 @@ class TestMultiFieldSummaryView(APITestCase):
         # Central: 1 (SHS), 3 (ExistingGrid), 4 (SHS), 6 (GridExtension), 11 (MiniGrid_PV)
         # Sul: 5 (SHS)
         grouped = cost_summary["grouped"]
-        
+
         central_group = grouped["Central"]
         self.assertEqual(central_group["SHS"]["count"], 2)  # rows 1, 4
         self.assertEqual(central_group["ExistingGrid"]["count"], 1)  # row 3
@@ -612,7 +612,7 @@ class TestMultiFieldSummaryView(APITestCase):
         central_group = grouped["Central"]
         self.assertIn("values", central_group["SHS"])
         self.assertEqual(central_group["SHS"]["values"]["Maputo"], 2)  # rows 1, 4
-        
+
         self.assertIn("values", central_group["ExistingGrid"])
         self.assertEqual(central_group["ExistingGrid"]["values"]["Maputo"], 1)  # row 3
 
@@ -620,7 +620,7 @@ class TestMultiFieldSummaryView(APITestCase):
         norte_group = grouped["Norte"]
         self.assertIn("values", norte_group["SHS"])
         self.assertEqual(norte_group["SHS"]["values"]["Tete"], 1)  # row 9
-        
+
         self.assertIn("values", norte_group["ExistingGrid"])
         self.assertEqual(norte_group["ExistingGrid"]["values"]["Tete"], 1)  # row 10
 
