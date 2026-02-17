@@ -121,7 +121,7 @@ class MultiFieldSummaryView(APIView):
     ## Parameters
     - **fields** (required): Comma-separated field names (e.g., `Pop2030,Technology2030`)
     - **q** (optional): Filters using `field=value`, `field__min=value`, `field__max=value`, `field__in=val1;val2`
-    - **group_by** (optional): Group results by a string field
+    - **group_by** (optional): Group results by string fields (max 2), comma-separated (e.g., `district,Technology2030`)
 
     ## Response Structure
     ```json
@@ -148,7 +148,7 @@ class MultiFieldSummaryView(APIView):
                 }
             }
         },
-        "group_by": "Admin_1"  // Only when grouping used
+        "group_by": ["Admin_1"]  // Array of group_by fields (when grouping used)
     }
     ```
 
@@ -162,6 +162,11 @@ class MultiFieldSummaryView(APIView):
     **With filtering and grouping:**
     ```
     GET /api/v1/scenario/1/summaries/?fields=Pop2030&q=Admin_1=Maputo,Pop2030__min=1000&group_by=Technology2030
+    ```
+
+    **With multiple group_by fields:**
+    ```
+    GET /api/v1/scenario/1/summaries/?fields=Pop2030&group_by=district,Technology2030
     ```
 
     ## Errors
@@ -199,36 +204,49 @@ class MultiFieldSummaryView(APIView):
         field_type_map = self._get_field_type_map(scenario.model)
 
         # 4. Parse and validate group_by parameter
-        group_by = request.GET.get("group_by", "").strip()
-        group_by_values = None
+        group_by_fields = []
+        group_by_values = {}
+        group_by_param = request.GET.get("group_by", "").strip()
 
-        if group_by:
-            # Validate group_by field exists and is a string field
-            if group_by not in field_type_map:
+        if group_by_param:
+            # Parse comma-separated group_by fields
+            group_by_fields = [f.strip() for f in group_by_param.split(",") if f.strip()]
+            
+            # Limit to maximum 2 fields
+            if len(group_by_fields) > 2:
                 return Response(
-                    {
-                        "error": f"Group by field '{group_by}' is not configured for summaries."
-                    },
+                    {"error": "Maximum of 2 group_by fields allowed."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+            
+            # Validate each group_by field
+            for field in group_by_fields:
+                # Validate field exists and is a string field
+                if field not in field_type_map:
+                    return Response(
+                        {
+                            "error": f"Group by field '{field}' is not configured for summaries."
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
-            if field_type_map[group_by] != "string":
-                return Response(
-                    {"error": f"Group by field '{group_by}' must be a string field."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+                if field_type_map[field] != "string":
+                    return Response(
+                        {"error": f"Group by field '{field}' must be a string field."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
-            # Check group_by field has data
-            if not ScenarioDataMetrics.objects.filter(
-                scenario=scenario, key=group_by
-            ).exists():
-                return Response(
-                    {"error": f"No data found for group by field '{group_by}'."},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
+                # Check field has data
+                if not ScenarioDataMetrics.objects.filter(
+                    scenario=scenario, key=field
+                ).exists():
+                    return Response(
+                        {"error": f"No data found for group by field '{field}'."},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
 
-            # Get all possible values for the group_by field (including those that might be filtered out)
-            group_by_values = self._get_all_group_values(scenario, group_by)
+                # Get all possible values for this group_by field
+                group_by_values[field] = self._get_all_group_values(scenario, field)
 
         # 5. Apply filters once if provided
         filter_params = request.GET.get("q", "")
@@ -274,14 +292,15 @@ class MultiFieldSummaryView(APIView):
             summary = self._compute_field_summary(metrics_query, field_type)
 
             # Add grouped summaries if group_by is provided
-            if group_by and group_by_values:
+            if group_by_fields and group_by_values:
                 summary["grouped"] = self._compute_grouped_summaries(
                     scenario,
                     field,
                     field_type,
-                    group_by,
+                    group_by_fields,
                     group_by_values,
-                    base_feature_subquery,
+                    filter_params if filter_params else None,
+                    field_type_map,
                 )
 
             summaries[field] = summary
@@ -293,8 +312,8 @@ class MultiFieldSummaryView(APIView):
             "summaries": summaries,
         }
 
-        if group_by:
-            response["group_by"] = group_by
+        if group_by_fields:
+            response["group_by"] = group_by_fields
 
         return Response(response)
 
@@ -403,14 +422,52 @@ class MultiFieldSummaryView(APIView):
         scenario,
         field,
         field_type,
-        group_by_field,
+        group_by_fields,
         all_group_values,
+        filter_params,
+        field_type_map,
+    ):
+        """Compute summaries grouped by one or two fields using efficient subqueries"""
+        if len(group_by_fields) == 1:
+            # For single grouping, keep existing approach for now
+            base_feature_subquery = None
+            if filter_params:
+                base_feature_subquery = self._get_filtered_feature_subquery(
+                    scenario, filter_params, field_type_map
+                )
+            return self._compute_single_level_grouped_summaries(
+                scenario,
+                field,
+                field_type,
+                group_by_fields[0],
+                all_group_values[group_by_fields[0]],
+                base_feature_subquery,
+            )
+        else:
+            # For nested grouping, pass filter params directly to avoid materialization
+            return self._compute_nested_grouped_summaries(
+                scenario,
+                field,
+                field_type,
+                group_by_fields,
+                all_group_values,
+                filter_params,
+                field_type_map,
+            )
+
+    def _compute_single_level_grouped_summaries(
+        self,
+        scenario,
+        field,
+        field_type,
+        group_by_field,
+        group_values,
         base_feature_subquery,
     ):
-        """Compute summaries grouped by another field using efficient subqueries"""
+        """Compute summaries grouped by a single field"""
         grouped = {}
 
-        for group_value in all_group_values:
+        for group_value in group_values:
             # Build a subquery to get feature_ids for this group value
             # This avoids creating large IN clauses with thousands of IDs
             group_feature_subquery = ScenarioDataMetrics.objects.filter(
@@ -483,6 +540,267 @@ class MultiFieldSummaryView(APIView):
                         },
                     }
 
+        return grouped
+
+    def _compute_nested_grouped_summaries(
+        self,
+        scenario,
+        field,
+        field_type,
+        group_by_fields,
+        all_group_values,
+        filter_params,
+        field_type_map,
+    ):
+        """Compute summaries grouped by two fields using optimized SQL"""
+        field1, field2 = group_by_fields
+        
+        # Parse filters if provided
+        filters = None
+        if filter_params:
+            try:
+                filters = self.parse_filter_string(filter_params)
+            except ValueError:
+                # Invalid filter, return empty groups
+                return self._create_empty_nested_groups(field1, field2, all_group_values, field_type)
+        
+        # Execute optimized query based on field type
+        if field_type == "numeric":
+            results = self._execute_numeric_grouped_query(
+                scenario, field, field1, field2, filters, field_type_map
+            )
+        else:
+            results = self._execute_string_grouped_query(
+                scenario, field, field1, field2, filters, field_type_map
+            )
+        
+        # Process results into nested structure
+        grouped = self._process_nested_results(results, field_type)
+        
+        # Fill in empty groups
+        return self._fill_empty_groups(grouped, all_group_values, field1, field2, field_type)
+    
+    def _execute_numeric_grouped_query(self, scenario, field, field1, field2, filters, field_type_map):
+        """Execute optimized SQL for numeric field grouping with integrated filters"""
+        from django.db import connection
+        
+        # Separate numeric and string fields for filter building
+        numeric_fields = set(k for k, v in field_type_map.items() if v == "numeric")
+        
+        sql = """
+            SELECT 
+                g1.string_value as group1_value,
+                g2.string_value as group2_value,
+                COUNT(m.numeric_value) as count,
+                MIN(m.numeric_value) as min_val,
+                MAX(m.numeric_value) as max_val,
+                SUM(m.numeric_value) as sum_val
+            FROM datasets_scenariodatametrics m
+            INNER JOIN datasets_scenariodatametrics g1 
+                ON m.feature_id = g1.feature_id 
+                AND g1.scenario_id = %s 
+                AND g1.key = %s
+            INNER JOIN datasets_scenariodatametrics g2 
+                ON m.feature_id = g2.feature_id 
+                AND g2.scenario_id = %s 
+                AND g2.key = %s
+        """
+        params = [scenario.id, field1, scenario.id, field2]
+        
+        # Add filter JOINs if filters are present
+        if filters:
+            for idx, (field_name, operator, value) in enumerate(filters):
+                alias = f"f{idx}"
+                sql += f"""
+            INNER JOIN datasets_scenariodatametrics {alias}
+                ON m.feature_id = {alias}.feature_id
+                AND {alias}.scenario_id = %s
+                AND {alias}.key = %s
+                """
+                params.extend([scenario.id, field_name])
+                
+                # Add filter conditions based on field type and operator
+                if field_name in numeric_fields:
+                    try:
+                        numeric_val = float(value)
+                        if operator == "gte":
+                            sql += f" AND {alias}.numeric_value >= %s"
+                        elif operator == "lte":
+                            sql += f" AND {alias}.numeric_value <= %s"
+                        else:
+                            sql += f" AND {alias}.numeric_value = %s"
+                        params.append(numeric_val)
+                    except (ValueError, TypeError):
+                        pass  # Skip invalid numeric filters
+                else:
+                    # String field
+                    if operator == "in":
+                        value_list = value if isinstance(value, list) else [value]
+                        placeholders = ','.join(['%s'] * len(value_list))
+                        sql += f" AND {alias}.string_value IN ({placeholders})"
+                        params.extend(value_list)
+                    else:
+                        sql += f" AND {alias}.string_value = %s"
+                        params.append(value)
+        
+        sql += """
+            WHERE m.scenario_id = %s 
+                AND m.key = %s
+            GROUP BY g1.string_value, g2.string_value
+        """
+        params.extend([scenario.id, field])
+        
+        with connection.cursor() as cursor:
+            cursor.execute(sql, params)
+            columns = [col[0] for col in cursor.description]
+            return [dict(zip(columns, row)) for row in cursor.fetchall()]
+    
+    def _execute_string_grouped_query(self, scenario, field, field1, field2, filters, field_type_map):
+        """Execute optimized SQL for string field grouping with integrated filters"""
+        from django.db import connection
+        
+        # Separate numeric and string fields for filter building
+        numeric_fields = set(k for k, v in field_type_map.items() if v == "numeric")
+        
+        sql = """
+            SELECT 
+                g1.string_value as group1_value,
+                g2.string_value as group2_value,
+                m.string_value as string_value,
+                COUNT(*) as count
+            FROM datasets_scenariodatametrics m
+            INNER JOIN datasets_scenariodatametrics g1 
+                ON m.feature_id = g1.feature_id 
+                AND g1.scenario_id = %s 
+                AND g1.key = %s
+            INNER JOIN datasets_scenariodatametrics g2 
+                ON m.feature_id = g2.feature_id 
+                AND g2.scenario_id = %s 
+                AND g2.key = %s
+        """
+        params = [scenario.id, field1, scenario.id, field2]
+        
+        # Add filter JOINs if filters are present
+        if filters:
+            for idx, (field_name, operator, value) in enumerate(filters):
+                alias = f"f{idx}"
+                sql += f"""
+            INNER JOIN datasets_scenariodatametrics {alias}
+                ON m.feature_id = {alias}.feature_id
+                AND {alias}.scenario_id = %s
+                AND {alias}.key = %s
+                """
+                params.extend([scenario.id, field_name])
+                
+                # Add filter conditions based on field type and operator
+                if field_name in numeric_fields:
+                    try:
+                        numeric_val = float(value)
+                        if operator == "gte":
+                            sql += f" AND {alias}.numeric_value >= %s"
+                        elif operator == "lte":
+                            sql += f" AND {alias}.numeric_value <= %s"
+                        else:
+                            sql += f" AND {alias}.numeric_value = %s"
+                        params.append(numeric_val)
+                    except (ValueError, TypeError):
+                        pass  # Skip invalid numeric filters
+                else:
+                    # String field
+                    if operator == "in":
+                        value_list = value if isinstance(value, list) else [value]
+                        placeholders = ','.join(['%s'] * len(value_list))
+                        sql += f" AND {alias}.string_value IN ({placeholders})"
+                        params.extend(value_list)
+                    else:
+                        sql += f" AND {alias}.string_value = %s"
+                        params.append(value)
+        
+        sql += """
+            WHERE m.scenario_id = %s 
+                AND m.key = %s
+            GROUP BY g1.string_value, g2.string_value, m.string_value
+            ORDER BY g1.string_value, g2.string_value, m.string_value
+        """
+        params.extend([scenario.id, field])
+        
+        with connection.cursor() as cursor:
+            cursor.execute(sql, params)
+            columns = [col[0] for col in cursor.description]
+            return [dict(zip(columns, row)) for row in cursor.fetchall()]
+    
+    def _process_nested_results(self, results, field_type):
+        """Process query results into nested dictionary structure"""
+        grouped = {}
+        
+        if field_type == "numeric":
+            for row in results:
+                g1_val = row["group1_value"]
+                g2_val = row["group2_value"]
+                
+                if g1_val not in grouped:
+                    grouped[g1_val] = {}
+                
+                grouped[g1_val][g2_val] = {
+                    "count": row["count"] or 0,
+                    "min": float(row["min_val"]) if row["min_val"] is not None else None,
+                    "max": float(row["max_val"]) if row["max_val"] is not None else None,
+                    "sum": float(row["sum_val"]) if row["sum_val"] is not None else None,
+                }
+        else:
+            # String field processing
+            for row in results:
+                g1_val = row["group1_value"]
+                g2_val = row["group2_value"]
+                str_val = row["string_value"]
+                count = row["count"]
+                
+                if g1_val not in grouped:
+                    grouped[g1_val] = {}
+                if g2_val not in grouped[g1_val]:
+                    grouped[g1_val][g2_val] = {"count": 0, "values": {}}
+                
+                if str_val is not None:
+                    grouped[g1_val][g2_val]["values"][str_val] = count
+                    grouped[g1_val][g2_val]["count"] += count
+        
+        return grouped
+    
+    def _fill_empty_groups(self, grouped, all_group_values, field1, field2, field_type):
+        """Fill in empty groups with zero counts"""
+        for value1 in all_group_values[field1]:
+            if value1 not in grouped:
+                grouped[value1] = {}
+            
+            for value2 in all_group_values[field2]:
+                if value2 not in grouped[value1]:
+                    if field_type == "numeric":
+                        grouped[value1][value2] = {
+                            "count": 0,
+                            "min": None,
+                            "max": None,
+                            "sum": None,
+                        }
+                    else:
+                        grouped[value1][value2] = {"count": 0, "values": {}}
+        
+        return grouped
+    
+    def _create_empty_nested_groups(self, field1, field2, all_group_values, field_type):
+        """Create empty nested group structure when no data matches filters"""
+        grouped = {}
+        for value1 in all_group_values[field1]:
+            grouped[value1] = {}
+            for value2 in all_group_values[field2]:
+                if field_type == "numeric":
+                    grouped[value1][value2] = {
+                        "count": 0,
+                        "min": None,
+                        "max": None,
+                        "sum": None,
+                    }
+                else:
+                    grouped[value1][value2] = {"count": 0, "values": {}}
         return grouped
 
     def parse_filter_string(

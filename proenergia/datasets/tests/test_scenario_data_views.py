@@ -343,7 +343,7 @@ class TestMultiFieldSummaryView(APITestCase):
         self.assertEqual(res.status_code, 200)
         data = res.json()
 
-        self.assertEqual(data["group_by"], "Technology2030")
+        self.assertEqual(data["group_by"], ["Technology2030"])
         cost_summary = data["summaries"]["InvestmentGen"]
         self.assertIn("grouped", cost_summary)
 
@@ -504,3 +504,133 @@ class TestMultiFieldSummaryView(APITestCase):
         # Should have count=0 when filter results in no data
         self.assertIn("InvestmentGen", data["summaries"])
         self.assertEqual(data["summaries"]["InvestmentGen"]["count"], 0)
+
+    def test_group_by_two_fields(self):
+        """Test nested grouping with two fields"""
+        url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
+        res = self.client.get(
+            url, {"fields": "Pop2030", "group_by": "district,Technology2030"}
+        )
+
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+
+        self.assertEqual(data["group_by"], ["district", "Technology2030"])
+        pop_summary = data["summaries"]["Pop2030"]
+        self.assertIn("grouped", pop_summary)
+
+        # Check nested structure
+        grouped = pop_summary["grouped"]
+        self.assertIn("Central", grouped)
+        self.assertIn("Norte", grouped)
+        self.assertIn("Sul", grouped)
+
+        # Check Central district has nested Technology groups
+        central_group = grouped["Central"]
+        self.assertIn("SHS", central_group)
+        self.assertIn("GridExtension", central_group)
+        self.assertIn("ExistingGrid", central_group)
+        self.assertIn("MiniGrid_PV", central_group)
+
+        # Verify specific nested group data
+        central_shs = central_group["SHS"]
+        self.assertEqual(central_shs["count"], 2)  # rows 1, 4
+        self.assertEqual(central_shs["sum"], 2700)  # 1500 + 1200
+
+        # Check Norte district
+        norte_group = grouped["Norte"]
+        self.assertIn("GridExtension", norte_group)
+        self.assertIn("MiniGrid_PV", norte_group)
+        self.assertIn("ExistingGrid", norte_group)
+        self.assertIn("SHS", norte_group)
+
+        norte_grid = norte_group["GridExtension"]
+        self.assertEqual(norte_grid["count"], 1)  # row 2
+        self.assertEqual(norte_grid["sum"], 2300)
+
+    def test_group_by_exceeds_limit(self):
+        """Test error when more than 2 group_by fields provided"""
+        url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
+        res = self.client.get(
+            url, {"fields": "Pop2030", "group_by": "district,Technology2030,location"}
+        )
+
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("Maximum of 2 group_by fields allowed", res.json()["error"])
+
+    def test_group_by_two_fields_with_filters(self):
+        """Test nested grouping with filters applied"""
+        url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
+        res = self.client.get(
+            url,
+            {
+                "fields": "InvestmentGen",
+                "group_by": "district,Technology2030",
+                "q": "location=Maputo",
+            },
+        )
+
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+
+        self.assertEqual(data["group_by"], ["district", "Technology2030"])
+        cost_summary = data["summaries"]["InvestmentGen"]
+
+        # Only Maputo entries should be included (rows 1,3,4,5,6,11)
+        # Central: 1 (SHS), 3 (ExistingGrid), 4 (SHS), 6 (GridExtension), 11 (MiniGrid_PV)
+        # Sul: 5 (SHS)
+        grouped = cost_summary["grouped"]
+        
+        central_group = grouped["Central"]
+        self.assertEqual(central_group["SHS"]["count"], 2)  # rows 1, 4
+        self.assertEqual(central_group["ExistingGrid"]["count"], 1)  # row 3
+        self.assertEqual(central_group["GridExtension"]["count"], 1)  # row 6
+        self.assertEqual(central_group["MiniGrid_PV"]["count"], 1)  # row 11
+
+        sul_group = grouped["Sul"]
+        self.assertEqual(sul_group["SHS"]["count"], 1)  # row 5
+
+        # Norte should have empty groups since no Maputo entries in Norte
+        norte_group = grouped["Norte"]
+        self.assertEqual(norte_group["SHS"]["count"], 0)
+        self.assertEqual(norte_group["GridExtension"]["count"], 0)
+
+    def test_group_by_two_fields_string_summary(self):
+        """Test string field summary with nested grouping"""
+        url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
+        res = self.client.get(
+            url, {"fields": "location", "group_by": "district,Technology2030"}
+        )
+
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+
+        location_summary = data["summaries"]["location"]
+        grouped = location_summary["grouped"]
+
+        # Check Central district
+        central_group = grouped["Central"]
+        self.assertIn("values", central_group["SHS"])
+        self.assertEqual(central_group["SHS"]["values"]["Maputo"], 2)  # rows 1, 4
+        
+        self.assertIn("values", central_group["ExistingGrid"])
+        self.assertEqual(central_group["ExistingGrid"]["values"]["Maputo"], 1)  # row 3
+
+        # Check Norte district
+        norte_group = grouped["Norte"]
+        self.assertIn("values", norte_group["SHS"])
+        self.assertEqual(norte_group["SHS"]["values"]["Tete"], 1)  # row 9
+        
+        self.assertIn("values", norte_group["ExistingGrid"])
+        self.assertEqual(norte_group["ExistingGrid"]["values"]["Tete"], 1)  # row 10
+
+    def test_group_by_with_invalid_second_field(self):
+        """Test error when second group_by field is invalid"""
+        url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
+        res = self.client.get(
+            url, {"fields": "Pop2030", "group_by": "district,invalid_field"}
+        )
+
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("invalid_field", res.json()["error"])
+        self.assertIn("not configured", res.json()["error"])
