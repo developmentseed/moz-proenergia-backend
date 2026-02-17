@@ -117,9 +117,9 @@ class FilterParser:
                 )
 
     def build_filter_sql(
-        self, 
+        self,
         filters: List[Tuple[str, str, Union[str, List[str]]]],
-        group_fields: List[str] = None
+        group_fields: List[str] = None,
     ) -> Tuple[str, List, Dict[str, str]]:
         """
         Build SQL JOIN clauses and parameters for filters.
@@ -127,7 +127,7 @@ class FilterParser:
         This generates INNER JOINs that efficiently filter results by joining
         on the same metrics table with different conditions. Each filter adds
         a JOIN that ensures only features matching ALL conditions are included.
-        
+
         When a filter field matches a group_by field, we can reuse the group JOIN
         and add the filter condition there, avoiding redundant JOINs.
 
@@ -146,8 +146,10 @@ class FilterParser:
 
         sql_parts = []
         params = []
-        group_filter_conditions = {}  # Maps group field name to SQL condition and params
-        
+        group_filter_conditions = (
+            {}
+        )  # Maps group field name to SQL condition and params
+
         if group_fields is None:
             group_fields = []
 
@@ -158,20 +160,26 @@ class FilterParser:
                 # This field will be JOINed as g1 or g2, so add filter condition there
                 group_idx = group_fields.index(field_name) + 1  # g1 or g2
                 alias = f"g{group_idx}"
-                
+
                 # Build the filter condition to be added to the group JOIN
                 condition_sql = ""
                 condition_params = []
-                
+
                 if field_name in self.numeric_fields:
                     try:
                         numeric_val = float(value)
                         if operator == "gte":
-                            condition_sql = f"                AND {alias}.numeric_value >= %s"
+                            condition_sql = (
+                                f"                AND {alias}.numeric_value >= %s"
+                            )
                         elif operator == "lte":
-                            condition_sql = f"                AND {alias}.numeric_value <= %s"
+                            condition_sql = (
+                                f"                AND {alias}.numeric_value <= %s"
+                            )
                         else:  # equality
-                            condition_sql = f"                AND {alias}.numeric_value = %s"
+                            condition_sql = (
+                                f"                AND {alias}.numeric_value = %s"
+                            )
                         condition_params = [numeric_val]
                     except (ValueError, TypeError):
                         raise ValueError(
@@ -187,7 +195,7 @@ class FilterParser:
                     else:  # equality
                         condition_sql = f"                AND {alias}.string_value = %s"
                         condition_params = [value]
-                
+
                 group_filter_conditions[field_name] = (condition_sql, condition_params)
             else:
                 # Not a group field, create a separate filter JOIN as before
@@ -202,7 +210,9 @@ class FilterParser:
                 AND {alias}.key = %s""")
 
                 # Add scenario_id and field name as parameters
-                params.extend([None, field_name])  # scenario_id will be filled by caller
+                params.extend(
+                    [None, field_name]
+                )  # scenario_id will be filled by caller
 
                 # Add value condition based on field type and operator
                 if field_name in self.numeric_fields:
@@ -235,7 +245,9 @@ class FilterParser:
                         )
                         params.extend(value_list)
                     else:  # equality
-                        sql_parts.append(f"                AND {alias}.string_value = %s")
+                        sql_parts.append(
+                            f"                AND {alias}.string_value = %s"
+                        )
                         params.append(value)
 
         return "".join(sql_parts), params, group_filter_conditions

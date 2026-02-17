@@ -116,9 +116,9 @@ class SummaryQueryBuilder:
                 ON m.feature_id = g.feature_id 
                 AND g.scenario_id = %s 
                 AND g.key = %s"""
-            
+
             params_list = [scenario_id, group_field]
-            
+
             # Add filter condition if this group field has one
             if group_field in group_filter_conditions:
                 condition_sql, condition_params = group_filter_conditions[group_field]
@@ -149,9 +149,9 @@ class SummaryQueryBuilder:
                 ON m.feature_id = g.feature_id 
                 AND g.scenario_id = %s 
                 AND g.key = %s"""
-            
+
             params_list = [scenario_id, group_field]
-            
+
             # Add filter condition if this group field has one
             if group_field in group_filter_conditions:
                 condition_sql, condition_params = group_filter_conditions[group_field]
@@ -240,9 +240,9 @@ class SummaryQueryBuilder:
                 ON m.feature_id = g1.feature_id 
                 AND g1.scenario_id = %s 
                 AND g1.key = %s"""
-            
+
             params_list = [scenario_id, field1]
-            
+
             # Add filter condition if field1 has one
             if field1 in group_filter_conditions:
                 condition_sql, condition_params = group_filter_conditions[field1]
@@ -255,9 +255,9 @@ class SummaryQueryBuilder:
                 ON m.feature_id = g2.feature_id 
                 AND g2.scenario_id = %s 
                 AND g2.key = %s"""
-            
+
             params_list.extend([scenario_id, field2])
-            
+
             # Add filter condition if field2 has one
             if field2 in group_filter_conditions:
                 condition_sql, condition_params = group_filter_conditions[field2]
@@ -290,9 +290,9 @@ class SummaryQueryBuilder:
                 ON m.feature_id = g1.feature_id 
                 AND g1.scenario_id = %s 
                 AND g1.key = %s"""
-            
+
             params_list = [scenario_id, field1]
-            
+
             # Add filter condition if field1 has one
             if field1 in group_filter_conditions:
                 condition_sql, condition_params = group_filter_conditions[field1]
@@ -305,9 +305,9 @@ class SummaryQueryBuilder:
                 ON m.feature_id = g2.feature_id 
                 AND g2.scenario_id = %s 
                 AND g2.key = %s"""
-            
+
             params_list.extend([scenario_id, field2])
-            
+
             # Add filter condition if field2 has one
             if field2 in group_filter_conditions:
                 condition_sql, condition_params = group_filter_conditions[field2]
@@ -464,9 +464,9 @@ class SummaryQueryBuilder:
                     ON m.feature_id = g.feature_id 
                     AND g.scenario_id = %s 
                     AND g.key = %s"""
-            
+
             params_list = [scenario_id, group_field]
-            
+
             # Add filter condition if this group field has one
             if group_field in group_filter_conditions:
                 condition_sql, condition_params = group_filter_conditions[group_field]
@@ -514,9 +514,9 @@ class SummaryQueryBuilder:
                     ON m.feature_id = g1.feature_id 
                     AND g1.scenario_id = %s 
                     AND g1.key = %s"""
-            
+
             params_list = [scenario_id, field1]
-            
+
             # Add filter condition if field1 has one
             if field1 in group_filter_conditions:
                 condition_sql, condition_params = group_filter_conditions[field1]
@@ -529,9 +529,9 @@ class SummaryQueryBuilder:
                     ON m.feature_id = g2.feature_id 
                     AND g2.scenario_id = %s 
                     AND g2.key = %s"""
-            
+
             params_list.extend([scenario_id, field2])
-            
+
             # Add filter condition if field2 has one
             if field2 in group_filter_conditions:
                 condition_sql, condition_params = group_filter_conditions[field2]
