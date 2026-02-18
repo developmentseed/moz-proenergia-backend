@@ -564,6 +564,98 @@ class TestMultiFieldSummaryView(APITestCase):
         self.assertEqual(res.status_code, 400)
         self.assertIn("Maximum of 2 group_by fields allowed", res.json()["error"])
 
+    def test_field_names_with_special_characters(self):
+        """Test that field names with spaces and special characters work correctly"""
+        # Add fields with special characters to the model configuration
+        self.model.metric_field_types["Staple_Crop Production (t/y)"] = "numeric"
+        self.model.metric_field_types["Cash Crop Production (t/y)"] = "numeric"
+        self.model.metric_field_types["Perishable_Crop Production (t/y)"] = "numeric"
+        self.model.save()
+
+        # Create test data with special character field names
+        for feature_id in [1, 2, 3]:
+            ScenarioDataMetrics.objects.create(
+                scenario=self.scenario,
+                feature_id=feature_id,
+                key="Staple_Crop Production (t/y)",
+                numeric_value=100.0 * feature_id,
+            )
+            ScenarioDataMetrics.objects.create(
+                scenario=self.scenario,
+                feature_id=feature_id,
+                key="Cash Crop Production (t/y)",
+                numeric_value=50.0 * feature_id,
+            )
+            ScenarioDataMetrics.objects.create(
+                scenario=self.scenario,
+                feature_id=feature_id,
+                key="Perishable_Crop Production (t/y)",
+                numeric_value=75.0 * feature_id,
+            )
+
+        # Test single field with special characters
+        url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
+        res = self.client.get(url, {"fields": "Staple_Crop Production (t/y)"})
+
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("Staple_Crop Production (t/y)", data["summaries"])
+
+        staple_summary = data["summaries"]["Staple_Crop Production (t/y)"]
+        self.assertEqual(staple_summary["type"], "numeric")
+        self.assertEqual(staple_summary["count"], 3)
+        self.assertEqual(staple_summary["min"], 100.0)
+        self.assertEqual(staple_summary["max"], 300.0)
+        self.assertEqual(staple_summary["sum"], 600.0)
+
+        # Test multiple fields with special characters
+        res = self.client.get(
+            url,
+            {
+                "fields": "Staple_Crop Production (t/y),Cash Crop Production (t/y),Perishable_Crop Production (t/y)"
+            },
+        )
+
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("Staple_Crop Production (t/y)", data["summaries"])
+        self.assertIn("Cash Crop Production (t/y)", data["summaries"])
+        self.assertIn("Perishable_Crop Production (t/y)", data["summaries"])
+
+        cash_summary = data["summaries"]["Cash Crop Production (t/y)"]
+        self.assertEqual(cash_summary["count"], 3)
+        self.assertEqual(cash_summary["sum"], 300.0)
+
+        perishable_summary = data["summaries"]["Perishable_Crop Production (t/y)"]
+        self.assertEqual(perishable_summary["count"], 3)
+        self.assertEqual(perishable_summary["sum"], 450.0)
+
+        # Test with filters
+        res = self.client.get(
+            url,
+            {
+                "fields": "Staple_Crop Production (t/y)",
+                "q": "Cash Crop Production (t/y)__min=100",
+            },
+        )
+
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        filtered_summary = data["summaries"]["Staple_Crop Production (t/y)"]
+        # Should only include features 2 and 3 (where Cash Crop >= 100)
+        self.assertEqual(filtered_summary["count"], 2)
+        self.assertEqual(filtered_summary["min"], 200.0)
+
+        # Test with group_by
+        res = self.client.get(
+            url,
+            {"fields": "Staple_Crop Production (t/y)", "group_by": "Technology2030"},
+        )
+
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("grouped", data["summaries"]["Staple_Crop Production (t/y)"])
+
     def test_group_by_two_fields_with_filters(self):
         """Test nested grouping with filters applied"""
         url = reverse("datasets:scenario-summaries", args=[self.scenario.id])
