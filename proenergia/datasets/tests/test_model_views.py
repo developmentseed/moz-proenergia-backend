@@ -197,9 +197,10 @@ class TestDataModelViews(APITestCase):
             {"value": 1000, "color": "#ddd"},
             {"value": 10000, "color": "#ff00dd"},
         ]
+        assert req.data.get("results")[0]["updated"]
 
     @patch("proenergia.datasets.tasks.generate_scenario_pmtiles.delay")
-    def test_model_detail_unauthenticated(self, mock_task):
+    def test_model_detail(self, mock_task):
         url = reverse("datasets:model-detail", args=[self.model_1.id])
         # upload files again
         file = SimpleUploadedFile(
@@ -238,6 +239,7 @@ class TestDataModelViews(APITestCase):
         assert (
             req.data["scenarios"][0]["model_file"] == "scenarios/clean-cooking-1_v2.csv"
         )
+        assert req.data.get("updated")
 
     def tearDown(self):
         ScenarioFile.objects.all().delete()

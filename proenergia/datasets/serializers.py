@@ -63,6 +63,7 @@ class DataModelSerializer(serializers.ModelSerializer):
             "visualization_column",
             "color_coding",
             "scenarios",
+            "updated",
         ]
 
 
