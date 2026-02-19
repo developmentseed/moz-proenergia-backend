@@ -158,10 +158,12 @@ class MultiFieldSummaryView(APIView):
     ```
 
     ## Errors
-    - `400`: Missing/invalid fields, unsupported operators
-    - `404`: No data found for specified fields
+    - `400`: Missing `fields` parameter, invalid/non-string `group_by` fields, unsupported filter operators, more than 2 `group_by` fields
+    - `404`: No data found for `group_by` field
 
-    Fields must be configured in DataModel.metric_field_types. Use DataModel API to discover available fields.
+    ## Field Handling
+    Fields not configured in DataModel.metric_field_types or without data return `{"count": 0}` rather than an error.
+    Use DataModel API to discover available fields.
     """
 
     permission_classes = [IsAuthenticatedOrReadOnly]
