@@ -104,6 +104,10 @@ def merge_vector_scenario_files(
     The resulting file will be a FlatGeobuf.
     """
     vector = gpd.read_file(vector_file_path)
+    # The FID is stored as the index when reading FlatGeobuf; reset it so
+    # "id" becomes a regular column that can be used as a merge key.
+    if "id" not in vector.columns:
+        vector = vector.reset_index().rename(columns={"index": "id"})
     delimiter = detect_csv_delimiter(scenario_file_path)
 
     # Read CSV with robust error handling
@@ -159,6 +163,7 @@ def generate_scenario_pmtiles(self, id: int):
         columns = [i.get("column") for i in model.filter_fields]
         if model.visualization_column and model.visualization_column not in columns:
             columns.append(model.visualization_column)
+
         merge_vector_scenario_files(
             get_file_variant(vf.file.path, "fgb"),
             sf.file.path,
