@@ -72,6 +72,19 @@ class Common(Configuration):
         )
     }
 
+    # Cache Configuration
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.db.DatabaseCache",
+            "LOCATION": "summaries_cache_table",
+            "TIMEOUT": 86400,  # 24 hours default
+            "OPTIONS": {
+                "MAX_ENTRIES": 10000,
+                "CULL_FREQUENCY": 4,  # Delete 1/4 of entries when MAX_ENTRIES is reached
+            },
+        }
+    }
+
     # General
     APPEND_SLASH = False
     TIME_ZONE = "UTC"
