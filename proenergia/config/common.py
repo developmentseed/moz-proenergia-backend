@@ -81,7 +81,7 @@ class Common(Configuration):
             "OPTIONS": {
                 "MAX_ENTRIES": 10000,
                 "CULL_FREQUENCY": 4,  # Delete 1/4 of entries when MAX_ENTRIES is reached
-            }
+            },
         }
     }
 
