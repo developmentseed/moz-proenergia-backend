@@ -54,6 +54,10 @@ fi
 echo "Running database migrations..."
 python manage.py migrate
 
+# Create cache table for database cache backend
+echo "Creating cache table..."
+python manage.py createcachetable
+
 # Collect static files
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
