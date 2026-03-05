@@ -2,6 +2,12 @@ from django.contrib import admin, messages
 from django.forms import CheckboxSelectMultiple, ModelForm
 from unfold.admin import ModelAdmin
 
+from proenergia.datasets.tasks import (
+    generate_pmtiles,
+    generate_scenario_pmtiles,
+    import_scenario_data_csv,
+)
+
 from .models import (
     DataModel,
     Scenario,
@@ -102,6 +108,7 @@ class VectorFileAdmin(PermissionBasedModelAdmin):
     fields = ["dataset", "file", "status", "error_message"]
     readonly_fields = ["error_message", "status"]
     list_filter = ["dataset", "status"]
+    actions = ["reprocess_files"]
 
     def get_fields(self, request, obj=None):
         fields = super().get_fields(request, obj)
@@ -134,6 +141,20 @@ class VectorFileAdmin(PermissionBasedModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+    @admin.action(description="Reprocess files")
+    def reprocess_files(self, request, queryset):
+        files = queryset.filter(status__in=["error", "ready"])
+
+        for obj in files:
+            generate_pmtiles.delay(obj.id)
+
+        if files.count():
+            messages.success(request, f"{files.count()} files queued for reprocessing.")
+        else:
+            messages.error(
+                request, "Files in created or processing state cannot be reprocessed."
+            )
 
 
 class DataModelAdminForm(ModelForm):
@@ -257,6 +278,7 @@ class ScenarioFileAdmin(ModelAdmin):
     fields = ["scenario", "file", "status", "error_message"]
     readonly_fields = ["status", "error_message"]
     list_filter = ["scenario", "status"]
+    actions = ["reprocess_files"]
 
     def get_fields(self, request, obj=None):
         fields = super().get_fields(request, obj)
@@ -276,3 +298,18 @@ class ScenarioFileAdmin(ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+    @admin.action(description="Reprocess files")
+    def reprocess_files(self, request, queryset):
+        files = queryset.filter(status__in=["error", "ready"])
+
+        for obj in files:
+            generate_scenario_pmtiles.delay(obj.id)
+            import_scenario_data_csv.delay(obj.id)
+
+        if files.count():
+            messages.success(request, f"{files.count()} files queued for reprocessing.")
+        else:
+            messages.error(
+                request, "Files in created or processing state cannot be reprocessed."
+            )
