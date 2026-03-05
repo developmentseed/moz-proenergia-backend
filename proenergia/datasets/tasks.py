@@ -218,6 +218,8 @@ class DataImporter:
             for i, row in enumerate(reader, 1):
                 # Process row: extract ID, rest goes to JSON
                 external_id = row.pop("id")  # Assuming 'id' column exists
+                if not external_id:
+                    continue
                 self.imported_ids.append(external_id)
 
                 # Convert numeric strings to appropriate types
