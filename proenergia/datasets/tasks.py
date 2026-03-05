@@ -25,6 +25,7 @@ def call_tippecanoe(input_path: str, output_path: str):
             "-z14",
             "-zg",
             "--projection=EPSG:4326",
+            "--drop-densest-as-needed",
             "-o",
             output_path,
             "-l",
@@ -110,12 +111,15 @@ def merge_vector_scenario_files(
         vector = vector.reset_index().rename(columns={"index": "id"})
     delimiter = detect_csv_delimiter(scenario_file_path)
 
+    selected_columns = list(set(selected_columns + ["id"]))
+
     # Read CSV with robust error handling
     try:
         model_data = pd.read_csv(
             scenario_file_path,
             sep=delimiter,
             encoding="utf-8",
+            usecols=selected_columns,  # Load only required columns upfront
             on_bad_lines="skip",  # Skip malformed lines instead of failing
             engine="python",  # More flexible parser
         )
@@ -123,11 +127,7 @@ def merge_vector_scenario_files(
         logger.error(f"Failed to read CSV file {scenario_file_path}: {e}")
         raise
 
-    # append id and remove duplicated columns
-    selected_columns = list(set(selected_columns + ["id"]))
-    vector.merge(model_data[selected_columns], on="id").to_file(
-        merged_file_path, driver="FlatGeobuf"
-    )
+    vector.merge(model_data, on="id").to_file(merged_file_path, driver="FlatGeobuf")
     logger.info(f"Merged file created on {merged_file_path}.")
 
 
