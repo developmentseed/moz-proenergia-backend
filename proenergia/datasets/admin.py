@@ -162,6 +162,7 @@ class DataModelAdminForm(ModelForm):
         model = DataModel
         fields = [
             "name",
+            "description",
             "filter_fields",
             "popup_fields",
             "summary_fields",
@@ -242,6 +243,26 @@ class DataModelAdminForm(ModelForm):
                         self.add_error(
                             "summary_fields",
                             "The value for the methods key should be sum, count, average, min or max.",
+                        )
+
+                    if "chartType" in keys and i[1].get("chartType") not in [
+                        "bar",
+                        "donut",
+                        "column",
+                        "area",
+                    ]:
+                        self.add_error(
+                            "summary_fields",
+                            "The value for the chartType key should be bar, donut, column or area.",
+                        )
+
+                    if "hasDecimal" in keys and i[1].get("hasDecimal") not in [
+                        True,
+                        False,
+                    ]:
+                        self.add_error(
+                            "summary_fields",
+                            "The value for the hasDecimal key should be True or False.",
                         )
 
         if color_coding:
