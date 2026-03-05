@@ -42,8 +42,8 @@ ReadWritePaths=/var/www/proenergia /var/log/proenergia /var/run/proenergia-celer
 
 # Resource limits
 LimitNOFILE=65536
-MemoryHigh=3G
-MemoryMax=4G
+MemoryHigh=16G
+MemoryMax=20G
 
 [Install]
 WantedBy=multi-user.target
