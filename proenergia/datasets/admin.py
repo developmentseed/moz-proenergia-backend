@@ -248,12 +248,14 @@ class DataModelAdminForm(ModelForm):
                     if "chartType" in keys and i[1].get("chartType") not in [
                         "bar",
                         "donut",
+                        "stacked",
                         "column",
                         "area",
+                        "highlight",
                     ]:
                         self.add_error(
                             "summary_fields",
-                            "The value for the chartType key should be bar, donut, column or area.",
+                            "The value for the chartType key should be bar, donut, stacked, column, area or highlight.",
                         )
 
                     if "hasDecimal" in keys and i[1].get("hasDecimal") not in [

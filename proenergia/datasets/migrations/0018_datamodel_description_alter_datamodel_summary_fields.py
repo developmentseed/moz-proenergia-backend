@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("datasets", "0017_alter_scenario_model_alter_scenariodata_scenario_and_more"),
     ]
