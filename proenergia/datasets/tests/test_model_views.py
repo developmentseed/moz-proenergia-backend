@@ -53,6 +53,7 @@ class TestDataModelViews(APITestCase):
         )
         self.model_1 = DataModel.objects.create(
             name="PUE",
+            description="Productive Use of Electricity",
             filter_fields=[
                 {
                     "label": "Population",
@@ -141,6 +142,9 @@ class TestDataModelViews(APITestCase):
         assert req.status_code == status.HTTP_200_OK
         assert req.data.get("count") == 2
         assert req.data.get("results")[0]["name"] == "PUE"
+        assert (
+            req.data.get("results")[0]["description"] == "Productive Use of Electricity"
+        )
         assert req.data.get("results")[1]["name"] == "Clean Cooking"
         assert (
             req.data.get("results")[0]["scenarios"][0]["name"]
