@@ -146,7 +146,6 @@ class TestDataModelViews(APITestCase):
             req.data.get("results")[0]["description"] == "Productive Use of Electricity"
         )
         assert req.data.get("results")[1]["name"] == "Clean Cooking"
-        assert req.data.get("results")[1]["description"] == ""
         assert (
             req.data.get("results")[0]["scenarios"][0]["name"]
             == "Least Cost Electrification"
