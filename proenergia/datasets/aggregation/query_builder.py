@@ -6,6 +6,7 @@ with various combinations of filters and grouping. Raw SQL is used instead
 of Django ORM to achieve better performance for complex aggregations.
 """
 
+import re
 from typing import List, Tuple, Dict, Optional, Any
 from django.db import connection
 
@@ -21,6 +22,38 @@ class SummaryQueryBuilder:
 
     All queries use parameterized placeholders to prevent SQL injection.
     """
+
+    @staticmethod
+    def sanitize_field_for_alias(field_name: str) -> str:
+        """
+        Sanitize a field name to be used as a SQL column alias.
+
+        Replaces spaces and special characters with underscores to create
+        valid SQL identifiers. This ensures fields with special characters
+        like "Staple_Crop Production (t/y)" work correctly.
+
+        Args:
+            field_name: The original field name
+
+        Returns:
+            A sanitized version safe for use as a SQL alias
+        """
+        # Replace any non-alphanumeric characters (except underscores) with underscores
+        sanitized = re.sub(r"[^a-zA-Z0-9_]", "_", field_name)
+
+        # Ensure it starts with a letter or underscore (SQL identifier rules)
+        if sanitized and not sanitized[0].isalpha() and sanitized[0] != "_":
+            sanitized = "f_" + sanitized
+
+        # Remove consecutive underscores and trailing underscores
+        sanitized = re.sub(r"_+", "_", sanitized)
+        sanitized = sanitized.strip("_")
+
+        # Ensure we always have a valid alias
+        if not sanitized:
+            sanitized = "field"
+
+        return sanitized.lower()  # PostgreSQL converts to lowercase anyway
 
     def build_filtered_query(
         self,
@@ -341,7 +374,7 @@ class SummaryQueryBuilder:
         fields: Dict[str, str],  # field_name -> field_type mapping
         filter_sql: str = "",
         filter_params: List = None,
-    ) -> Tuple[str, List]:
+    ) -> Tuple[str, List, Dict[str, str]]:
         """
         Build SQL for aggregating multiple fields in a single query.
 
@@ -355,7 +388,8 @@ class SummaryQueryBuilder:
             filter_params: Parameters for filter JOINs
 
         Returns:
-            Tuple of (SQL query, parameters)
+            Tuple of (SQL query, parameters, alias_mapping)
+            alias_mapping: Dict mapping sanitized aliases back to original field names
         """
         if filter_params is None:
             filter_params = []
@@ -366,24 +400,36 @@ class SummaryQueryBuilder:
 
         # Build SELECT clause with conditional aggregations
         select_parts = []
+        alias_mapping = {}  # Maps sanitized alias -> original field name
 
         # Add numeric field aggregations
         for field in numeric_fields:
             field_safe = field.replace("'", "''")  # Escape field name for SQL
+            field_alias = self.sanitize_field_for_alias(field)
+
+            # Track the mapping for each aggregation type
+            alias_mapping[f"{field_alias}_count"] = field
+            alias_mapping[f"{field_alias}_min"] = field
+            alias_mapping[f"{field_alias}_max"] = field
+            alias_mapping[f"{field_alias}_sum"] = field
+
             select_parts.extend(
                 [
-                    f"COUNT(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_count",
-                    f"MIN(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_min",
-                    f"MAX(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_max",
-                    f"SUM(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_sum",
+                    f"COUNT(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field_alias}_count",
+                    f"MIN(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field_alias}_min",
+                    f"MAX(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field_alias}_max",
+                    f"SUM(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field_alias}_sum",
                 ]
             )
 
         # For string fields, we need a different approach - get counts
         for field in string_fields:
             field_safe = field.replace("'", "''")
+            field_alias = self.sanitize_field_for_alias(field)
+            alias_mapping[f"{field_alias}_count"] = field
+
             select_parts.append(
-                f"COUNT(CASE WHEN m.key = '{field_safe}' THEN 1 END) as {field}_count"
+                f"COUNT(CASE WHEN m.key = '{field_safe}' THEN 1 END) as {field_alias}_count"
             )
 
         select_clause = ",\n                ".join(select_parts)
@@ -402,7 +448,7 @@ class SummaryQueryBuilder:
         """
 
         params = filter_params + [scenario_id]
-        return sql, params
+        return sql, params, alias_mapping
 
     def build_multi_field_grouped_query(
         self,
@@ -412,7 +458,7 @@ class SummaryQueryBuilder:
         filter_sql: str = "",
         filter_params: List = None,
         group_filter_conditions: Dict[str, Tuple[str, List]] = None,
-    ) -> Tuple[str, List]:
+    ) -> Tuple[str, List, Dict[str, str]]:
         """
         Build SQL for aggregating multiple fields with one or two group_by fields in a single query.
 
@@ -425,7 +471,8 @@ class SummaryQueryBuilder:
             group_filter_conditions: Dict mapping group field names to (condition_sql, params) for filters on group fields
 
         Returns:
-            Tuple of (SQL query, parameters)
+            Tuple of (SQL query, parameters, alias_mapping)
+            alias_mapping: Dict mapping sanitized aliases back to original field names
         """
         if filter_params is None:
             filter_params = []
@@ -437,6 +484,7 @@ class SummaryQueryBuilder:
 
         # Separate numeric and string fields
         numeric_fields = [f for f, t in fields.items() if t == "numeric"]
+        alias_mapping = {}  # Maps sanitized alias -> original field name
 
         # Build SELECT clause based on number of group fields
         if len(group_fields) == 1:
@@ -446,12 +494,20 @@ class SummaryQueryBuilder:
 
             for field in numeric_fields:
                 field_safe = field.replace("'", "''")
+                field_alias = self.sanitize_field_for_alias(field)
+
+                # Track the mapping for each aggregation type
+                alias_mapping[f"{field_alias}_count"] = field
+                alias_mapping[f"{field_alias}_min"] = field
+                alias_mapping[f"{field_alias}_max"] = field
+                alias_mapping[f"{field_alias}_sum"] = field
+
                 select_parts.extend(
                     [
-                        f"COUNT(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_count",
-                        f"MIN(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_min",
-                        f"MAX(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_max",
-                        f"SUM(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_sum",
+                        f"COUNT(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field_alias}_count",
+                        f"MIN(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field_alias}_min",
+                        f"MAX(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field_alias}_max",
+                        f"SUM(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field_alias}_sum",
                     ]
                 )
 
@@ -496,12 +552,20 @@ class SummaryQueryBuilder:
 
             for field in numeric_fields:
                 field_safe = field.replace("'", "''")
+                field_alias = self.sanitize_field_for_alias(field)
+
+                # Track the mapping for each aggregation type
+                alias_mapping[f"{field_alias}_count"] = field
+                alias_mapping[f"{field_alias}_min"] = field
+                alias_mapping[f"{field_alias}_max"] = field
+                alias_mapping[f"{field_alias}_sum"] = field
+
                 select_parts.extend(
                     [
-                        f"COUNT(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_count",
-                        f"MIN(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_min",
-                        f"MAX(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_max",
-                        f"SUM(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field}_sum",
+                        f"COUNT(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field_alias}_count",
+                        f"MIN(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field_alias}_min",
+                        f"MAX(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field_alias}_max",
+                        f"SUM(CASE WHEN m.key = '{field_safe}' THEN m.numeric_value END) as {field_alias}_sum",
                     ]
                 )
 
@@ -553,7 +617,7 @@ class SummaryQueryBuilder:
 
             params = params_list + filter_params + [scenario_id]
 
-        return sql, params
+        return sql, params, alias_mapping
 
     def execute_query(self, sql: str, params: List) -> List[Dict[str, Any]]:
         """

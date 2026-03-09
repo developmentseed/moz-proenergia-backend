@@ -56,6 +56,7 @@ class DataModelSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
+            "description",
             "filter_fields",
             "popup_fields",
             "summary_fields",

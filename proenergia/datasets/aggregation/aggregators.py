@@ -479,19 +479,23 @@ class CombinedFieldAggregator:
 
         if numeric_fields and group_fields:
             # Execute grouped query with merged filter conditions
-            sql, params = self.query_builder.build_multi_field_grouped_query(
-                scenario_id,
-                numeric_fields,
-                group_fields,
-                filter_sql,
-                filter_params,
-                group_filter_conditions,
+            sql, params, alias_mapping = (
+                self.query_builder.build_multi_field_grouped_query(
+                    scenario_id,
+                    numeric_fields,
+                    group_fields,
+                    filter_sql,
+                    filter_params,
+                    group_filter_conditions,
+                )
             )
             results = self.query_builder.execute_query(sql, params)
 
             # Also get overall stats
-            overall_sql, overall_params = self.query_builder.build_multi_field_query(
-                scenario_id, numeric_fields, filter_sql, filter_params
+            overall_sql, overall_params, overall_alias_mapping = (
+                self.query_builder.build_multi_field_query(
+                    scenario_id, numeric_fields, filter_sql, filter_params
+                )
             )
             overall_results = self.query_builder.execute_query(
                 overall_sql, overall_params
@@ -500,24 +504,24 @@ class CombinedFieldAggregator:
 
             # Process results for each field
             for field_name, field_type in numeric_fields.items():
-                # Build overall summary
-                field_lower = field_name.lower()
+                # Build overall summary using sanitized alias
+                field_alias = self.query_builder.sanitize_field_for_alias(field_name)
                 summary = {
                     "type": "numeric",
-                    "count": overall_row.get(f"{field_lower}_count", 0) or 0,
+                    "count": overall_row.get(f"{field_alias}_count", 0) or 0,
                     "min": (
-                        float(overall_row.get(f"{field_lower}_min"))
-                        if overall_row.get(f"{field_lower}_min") is not None
+                        float(overall_row.get(f"{field_alias}_min"))
+                        if overall_row.get(f"{field_alias}_min") is not None
                         else None
                     ),
                     "max": (
-                        float(overall_row.get(f"{field_lower}_max"))
-                        if overall_row.get(f"{field_lower}_max") is not None
+                        float(overall_row.get(f"{field_alias}_max"))
+                        if overall_row.get(f"{field_alias}_max") is not None
                         else None
                     ),
                     "sum": (
-                        float(overall_row.get(f"{field_lower}_sum"))
-                        if overall_row.get(f"{field_lower}_sum") is not None
+                        float(overall_row.get(f"{field_alias}_sum"))
+                        if overall_row.get(f"{field_alias}_sum") is not None
                         else None
                     ),
                 }
@@ -529,20 +533,20 @@ class CombinedFieldAggregator:
                     for row in results:
                         group_value = row["group_value"]
                         grouped[group_value] = {
-                            "count": row.get(f"{field_lower}_count", 0) or 0,
+                            "count": row.get(f"{field_alias}_count", 0) or 0,
                             "min": (
-                                float(row.get(f"{field_lower}_min"))
-                                if row.get(f"{field_lower}_min") is not None
+                                float(row.get(f"{field_alias}_min"))
+                                if row.get(f"{field_alias}_min") is not None
                                 else None
                             ),
                             "max": (
-                                float(row.get(f"{field_lower}_max"))
-                                if row.get(f"{field_lower}_max") is not None
+                                float(row.get(f"{field_alias}_max"))
+                                if row.get(f"{field_alias}_max") is not None
                                 else None
                             ),
                             "sum": (
-                                float(row.get(f"{field_lower}_sum"))
-                                if row.get(f"{field_lower}_sum") is not None
+                                float(row.get(f"{field_alias}_sum"))
+                                if row.get(f"{field_alias}_sum") is not None
                                 else None
                             ),
                         }
@@ -568,20 +572,20 @@ class CombinedFieldAggregator:
                             grouped[group1_value] = {}
 
                         grouped[group1_value][group2_value] = {
-                            "count": row.get(f"{field_lower}_count", 0) or 0,
+                            "count": row.get(f"{field_alias}_count", 0) or 0,
                             "min": (
-                                float(row.get(f"{field_lower}_min"))
-                                if row.get(f"{field_lower}_min") is not None
+                                float(row.get(f"{field_alias}_min"))
+                                if row.get(f"{field_alias}_min") is not None
                                 else None
                             ),
                             "max": (
-                                float(row.get(f"{field_lower}_max"))
-                                if row.get(f"{field_lower}_max") is not None
+                                float(row.get(f"{field_alias}_max"))
+                                if row.get(f"{field_alias}_max") is not None
                                 else None
                             ),
                             "sum": (
-                                float(row.get(f"{field_lower}_sum"))
-                                if row.get(f"{field_lower}_sum") is not None
+                                float(row.get(f"{field_alias}_sum"))
+                                if row.get(f"{field_alias}_sum") is not None
                                 else None
                             ),
                         }
@@ -606,7 +610,7 @@ class CombinedFieldAggregator:
                 summaries[field_name] = summary
         elif numeric_fields:
             # Execute non-grouped query
-            sql, params = self.query_builder.build_multi_field_query(
+            sql, params, alias_mapping = self.query_builder.build_multi_field_query(
                 scenario_id, numeric_fields, filter_sql, filter_params
             )
             results = self.query_builder.execute_query(sql, params)
@@ -615,24 +619,26 @@ class CombinedFieldAggregator:
                 row = results[0]
                 # Process results for each field
                 for field_name, field_type in numeric_fields.items():
-                    # PostgreSQL converts column aliases to lowercase, so we need to match that
-                    field_lower = field_name.lower()
+                    # Use the sanitized alias to get results from the row
+                    field_alias = self.query_builder.sanitize_field_for_alias(
+                        field_name
+                    )
                     summaries[field_name] = {
                         "type": "numeric",
-                        "count": row.get(f"{field_lower}_count", 0) or 0,
+                        "count": row.get(f"{field_alias}_count", 0) or 0,
                         "min": (
-                            float(row.get(f"{field_lower}_min"))
-                            if row.get(f"{field_lower}_min") is not None
+                            float(row.get(f"{field_alias}_min"))
+                            if row.get(f"{field_alias}_min") is not None
                             else None
                         ),
                         "max": (
-                            float(row.get(f"{field_lower}_max"))
-                            if row.get(f"{field_lower}_max") is not None
+                            float(row.get(f"{field_alias}_max"))
+                            if row.get(f"{field_alias}_max") is not None
                             else None
                         ),
                         "sum": (
-                            float(row.get(f"{field_lower}_sum"))
-                            if row.get(f"{field_lower}_sum") is not None
+                            float(row.get(f"{field_alias}_sum"))
+                            if row.get(f"{field_alias}_sum") is not None
                             else None
                         ),
                     }

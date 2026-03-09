@@ -25,6 +25,7 @@ def call_tippecanoe(input_path: str, output_path: str):
             "-z14",
             "-zg",
             "--projection=EPSG:4326",
+            "--drop-densest-as-needed",
             "-o",
             output_path,
             "-l",
@@ -104,7 +105,13 @@ def merge_vector_scenario_files(
     The resulting file will be a FlatGeobuf.
     """
     vector = gpd.read_file(vector_file_path)
+    # The FID is stored as the index when reading FlatGeobuf; reset it so
+    # "id" becomes a regular column that can be used as a merge key.
+    if "id" not in vector.columns:
+        vector = vector.reset_index().rename(columns={"index": "id"})
     delimiter = detect_csv_delimiter(scenario_file_path)
+
+    selected_columns = list(set(selected_columns + ["id"]))
 
     # Read CSV with robust error handling
     try:
@@ -112,6 +119,7 @@ def merge_vector_scenario_files(
             scenario_file_path,
             sep=delimiter,
             encoding="utf-8",
+            usecols=selected_columns,  # Load only required columns upfront
             on_bad_lines="skip",  # Skip malformed lines instead of failing
             engine="python",  # More flexible parser
         )
@@ -119,11 +127,7 @@ def merge_vector_scenario_files(
         logger.error(f"Failed to read CSV file {scenario_file_path}: {e}")
         raise
 
-    # append id and remove duplicated columns
-    selected_columns = list(set(selected_columns + ["id"]))
-    vector.merge(model_data[selected_columns], on="id").to_file(
-        merged_file_path, driver="FlatGeobuf"
-    )
+    vector.merge(model_data, on="id").to_file(merged_file_path, driver="FlatGeobuf")
     logger.info(f"Merged file created on {merged_file_path}.")
 
 
@@ -159,6 +163,7 @@ def generate_scenario_pmtiles(self, id: int):
         columns = [i.get("column") for i in model.filter_fields]
         if model.visualization_column and model.visualization_column not in columns:
             columns.append(model.visualization_column)
+
         merge_vector_scenario_files(
             get_file_variant(vf.file.path, "fgb"),
             sf.file.path,
@@ -213,6 +218,8 @@ class DataImporter:
             for i, row in enumerate(reader, 1):
                 # Process row: extract ID, rest goes to JSON
                 external_id = row.pop("id")  # Assuming 'id' column exists
+                if not external_id:
+                    continue
                 self.imported_ids.append(external_id)
 
                 # Convert numeric strings to appropriate types

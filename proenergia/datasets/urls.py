@@ -27,4 +27,9 @@ urlpatterns = [
         views.MultiFieldSummaryView.as_view(),
         name="scenario-summaries",
     ),
+    path(
+        "scenario/<int:pk>/summaries/cache/",
+        views.PurgeSummaryCacheView.as_view(),
+        name="scenario-summaries-cache",
+    ),
 ]

@@ -15,6 +15,7 @@ from proenergia.datasets.tasks import (
     generate_scenario_pmtiles,
     import_scenario_data_csv,
 )
+from proenergia.datasets.utils import get_file_variant
 
 
 class VectorDataset(models.Model):
@@ -99,12 +100,19 @@ def delete_vector_file(sender, instance, **kwargs):
     """
     if instance.file:
         # Using default_storage for better compatibility with different storage backends
-        if default_storage.exists(instance.file.name):
-            default_storage.delete(instance.file.name)
+        # Delete uploaded file and derived formats
+        for file in [
+            instance.file.name,
+            get_file_variant(instance.file.name, "fgb"),
+            get_file_variant(instance.file.name, "pmtiles"),
+        ]:
+            if default_storage.exists(file):
+                default_storage.delete(file)
 
 
 class DataModel(models.Model):
     name = models.CharField(max_length=155, unique=True)
+    description = models.TextField(max_length=2000, null=True, blank=True)
     filter_fields = models.JSONField(
         default=list,
         help_text="""A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "column": "File/Database column name"}""",
@@ -115,7 +123,10 @@ class DataModel(models.Model):
     )
     summary_fields = models.JSONField(
         default=list(),
-        help_text="""A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "columns": ["column_1", "column_2"], "unit": "Unit of measurement", "method": "sum", "group_by": "column to aggregate data (optional)"}""",
+        help_text="""A list containing JSON objects following this structure:<br>
+            {"label": "Field label", "description": "Field description", "columns": ["column_1", "column_2"], "unit": "Unit of measurement (optional)", "method": "One of: sum, average, count, min, max", "group_by": "column to aggregate data (optional)", "category": "The category where the field will be shown in the frontend summary section (optional)", "chartType": "One of: bar, donut, stacked, column, area, highlight (optional)", "hasDecimal": false}
+            <br>The "method" field is optional and defaults to "sum". The "hasDecimal" field is optional and defaults to false.
+        """,
     )
     metric_field_types = models.JSONField(
         default=dict,
@@ -149,7 +160,7 @@ class DataModel(models.Model):
 class Scenario(models.Model):
     name = models.CharField(max_length=155, unique=True)
     model = models.ForeignKey(
-        DataModel, on_delete=models.PROTECT, related_name="scenarios"
+        DataModel, on_delete=models.CASCADE, related_name="scenarios"
     )
     vector_dataset = models.ForeignKey(VectorDataset, on_delete=models.PROTECT)
 
@@ -176,7 +187,7 @@ def generate_scenario_file_name(instance, filename):
 
 
 class ScenarioFile(models.Model):
-    scenario = models.ForeignKey(Scenario, models.PROTECT, related_name="files")
+    scenario = models.ForeignKey(Scenario, models.CASCADE, related_name="files")
     created = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, models.PROTECT, related_name="scenario_files"
@@ -196,6 +207,22 @@ class ScenarioFile(models.Model):
         ordering = ["id"]
 
 
+@receiver(pre_delete, sender=ScenarioFile)
+def delete_scenario_file(sender, instance, **kwargs):
+    """
+    Delete the file from storage when a ScenarioFile instance is deleted
+    """
+    if instance.file:
+        # Delete uploaded file and derived formats
+        for file in [
+            instance.file.name,
+            get_file_variant(instance.file.name, "fgb"),
+            get_file_variant(instance.file.name, "pmtiles"),
+        ]:
+            if default_storage.exists(file):
+                default_storage.delete(file)
+
+
 @receiver(post_save, sender=ScenarioFile)
 def trigger_generate_scenario_pmtiles(sender, instance, created, **kwargs):
     """Trigger generate_scenario_pmtiles Celery task when a new ScenarioFile instance is created."""
@@ -206,7 +233,7 @@ def trigger_generate_scenario_pmtiles(sender, instance, created, **kwargs):
 
 class ScenarioData(models.Model):
     feature_id = models.IntegerField()
-    scenario = models.ForeignKey(Scenario, models.PROTECT, related_name="data")
+    scenario = models.ForeignKey(Scenario, models.CASCADE, related_name="data")
     metadata = models.JSONField(default=dict)
 
     def __str__(self):
