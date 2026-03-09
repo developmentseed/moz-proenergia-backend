@@ -2,6 +2,7 @@ import re
 
 from django.contrib import admin, messages
 from django.forms import CheckboxSelectMultiple, ModelForm
+from django_json_widget.widgets import JSONEditorWidget
 from unfold.admin import ModelAdmin
 
 from proenergia.datasets.tasks import (
@@ -174,6 +175,42 @@ class DataModelAdminForm(ModelForm):
         ]
         widgets = {
             "contextual_layers": CheckboxSelectMultiple(),
+            "filter_fields": JSONEditorWidget(
+                height="400px",
+                width="90%",
+                options={
+                    "mode": "tree",
+                    "modes": ["tree", "form", "view", "code", "text"],
+                    "search": True,
+                },
+            ),
+            "popup_fields": JSONEditorWidget(
+                height="400px",
+                width="90%",
+                options={
+                    "mode": "tree",
+                    "modes": ["tree", "form", "view", "code", "text"],
+                    "search": True,
+                },
+            ),
+            "summary_fields": JSONEditorWidget(
+                height="400px",
+                width="90%",
+                options={
+                    "mode": "tree",
+                    "modes": ["tree", "form", "view", "code", "text"],
+                    "search": True,
+                },
+            ),
+            "color_coding": JSONEditorWidget(
+                height="400px",
+                width="90%",
+                options={
+                    "mode": "tree",
+                    "modes": ["tree", "form", "view", "code", "text"],
+                    "search": True,
+                },
+            ),
         }
 
     def __init__(self, *args, **kwargs):
