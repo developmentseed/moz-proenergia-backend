@@ -1,3 +1,5 @@
+import re
+
 from django.contrib import admin, messages
 from django.forms import CheckboxSelectMultiple, ModelForm
 from unfold.admin import ModelAdmin
@@ -264,7 +266,7 @@ class DataModelAdminForm(ModelForm):
                     ]:
                         self.add_error(
                             "summary_fields",
-                            "The value for the hasDecimal key should be True or False.",
+                            "The value for the hasDecimal key should be true or false. If not specified, it's assumed to be false.",
                         )
 
         if color_coding:
@@ -275,6 +277,15 @@ class DataModelAdminForm(ModelForm):
                     keys = i[1].keys()
                     if "value" not in keys or "color" not in keys:
                         self.add_error("color_coding", "Missing a required key.")
+
+                    regex = re.compile(
+                        r"^#?(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})$", re.IGNORECASE
+                    )
+                    if i[1].get("color") and regex.match(i[1].get("color")) is None:
+                        self.add_error(
+                            "color_coding",
+                            "The value for the color key should be a valid hex color code.",
+                        )
 
 
 @admin.register(DataModel)

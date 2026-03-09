@@ -47,7 +47,17 @@ class TestScenarioAdmin(TestCase):
                         "method": "sum",
                         "unit": "individuals",
                         "group_by": "age",
-                    }
+                    },
+                    {
+                        "label": "Technology by District",
+                        "description": "Technology by District",
+                        "columns": ["Tech", "District"],
+                        "method": "count",
+                        "group_by": "age",
+                        "chartType": "bar",
+                        "category": "Stats",
+                        "hasDecimal": True,
+                    },
                 ]
             ),
             "visualization_column": "Pop",
@@ -56,7 +66,19 @@ class TestScenarioAdmin(TestCase):
                     {
                         "value": 1000,
                         "color": "#eee3dd",
-                    }
+                    },
+                    {
+                        "value": 2000,
+                        "color": "#333",
+                    },
+                    {
+                        "value": 3000,
+                        "color": "#FFF",
+                    },
+                    {
+                        "value": 4000,
+                        "color": "#999FFF",
+                    },
                 ]
             ),
         }
@@ -304,10 +326,17 @@ class TestScenarioAdmin(TestCase):
         self.assertEqual(DataModel.objects.count(), 1)
 
         # missing color key in color_coding
-        data["color_coding"] = [
-            {
-                "value": 1000,
-            }
-        ]
+        data["color_coding"] = json.dumps(
+            [
+                {
+                    "value": 1000,
+                }
+            ]
+        )
+        self.client.post(self.url, data)
+        self.assertEqual(DataModel.objects.count(), 1)
+
+        # invalid color hex code in color_coding
+        data["color_coding"] = json.dumps([{"value": 1000, "color": "#455f"}])
         self.client.post(self.url, data)
         self.assertEqual(DataModel.objects.count(), 1)
