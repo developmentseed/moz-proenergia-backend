@@ -304,10 +304,12 @@ class TestScenarioAdmin(TestCase):
         self.assertEqual(DataModel.objects.count(), 1)
 
         # missing color key in color_coding
-        data["color_coding"] = [
-            {
-                "value": 1000,
-            }
-        ]
+        data["color_coding"] = json.dumps(
+            [
+                {
+                    "value": 1000,
+                }
+            ]
+        )
         self.client.post(self.url, data)
         self.assertEqual(DataModel.objects.count(), 1)
