@@ -218,7 +218,9 @@ class DataImporter:
             for i, row in enumerate(reader, 1):
                 # Process row: extract ID, rest goes to JSON
                 try:
-                    external_id = row.pop("id")  # Assuming 'id' column exists
+                    external_id = row.pop("id")
+                    if not external_id:
+                        continue
                 except KeyError:
                     continue
 
