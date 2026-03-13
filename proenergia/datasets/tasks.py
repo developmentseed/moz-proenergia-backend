@@ -211,7 +211,7 @@ class DataImporter:
 
     def stream_csv_chunks(self) -> Iterator[List[Dict]]:
         """Stream CSV in chunks to minimize memory usage"""
-        with open(self.scenario_file.file.path, "r", encoding="utf-8") as f:
+        with open(self.scenario_file.file.path, "r", encoding="utf-8-sig") as f:
             reader = csv.DictReader(f, delimiter=self.delimiter)
             current_chunk = []
 
