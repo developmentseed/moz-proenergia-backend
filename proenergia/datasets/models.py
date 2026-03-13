@@ -158,12 +158,10 @@ class DataModel(models.Model):
     summary_fields = models.JSONField(
         _("summary fields"),
         default=list(),
-        help_text=_(
-            """A list containing JSON objects following this structure:<br>
+        help_text=_("""A list containing JSON objects following this structure:<br>
             {"label": "Field label", "description": "Field description", "columns": ["column_1", "column_2"], "unit": "Unit of measurement (optional)", "method": "One of: sum, average, count, min, max", "group_by": "column to aggregate data (optional)", "category": "The category where the field will be shown in the frontend summary section (optional)", "chartType": "One of: bar, donut, stacked, column, area, highlight (optional)", "hasDecimal": false}
             <br>The "method" field is optional and defaults to "sum". The "hasDecimal" field is optional and defaults to false.
-        """
-        ),
+        """),
     )
     metric_field_types = models.JSONField(
         _("metric field types"),
