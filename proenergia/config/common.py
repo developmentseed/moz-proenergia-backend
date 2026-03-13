@@ -46,13 +46,13 @@ class Common(Configuration):
     MIDDLEWARE = (
         "django.middleware.security.SecurityMiddleware",
         "django.contrib.sessions.middleware.SessionMiddleware",
+        "django.middleware.locale.LocaleMiddleware",
         "corsheaders.middleware.CorsMiddleware",
         "django.middleware.common.CommonMiddleware",
         "django.middleware.csrf.CsrfViewMiddleware",
         "django.contrib.auth.middleware.AuthenticationMiddleware",
         "django.contrib.messages.middleware.MessageMiddleware",
         "django.middleware.clickjacking.XFrameOptionsMiddleware",
-        "django.middleware.locale.LocaleMiddleware",
     )
 
     ALLOWED_HOSTS = ["*"]
@@ -91,13 +91,14 @@ class Common(Configuration):
     # General
     APPEND_SLASH = False
     TIME_ZONE = "UTC"
-    LANGUAGE_CODE = "en-us"
+    LANGUAGE_CODE = "en"
     USE_I18N = True
     USE_L10N = True
     LANGUAGES = (
-        ("en", _("English")),
-        ("pt", _("Portuguese")),
+        ("en", "English"),
+        ("pt", "Portuguese"),
     )
+    LOCALE_PATHS = (join(BASE_DIR, "locale"),)
     USE_TZ = True
     LOGIN_REDIRECT_URL = "/"
 
@@ -241,7 +242,7 @@ class Common(Configuration):
     UNFOLD = {
         "SITE_TITLE": "Mozambique PROENERGIA+",
         "SITE_HEADER": "Mozambique PROENERGIA+",
-        "SITE_SUBHEADER": "Administration Interface",
+        "SITE_SUBHEADER": _("Administration Interface"),
         "SHOW_LANGUAGES": True,
         "EXTENSIONS": {
             "modeltranslation": {

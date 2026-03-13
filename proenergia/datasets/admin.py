@@ -2,7 +2,7 @@ import re
 
 from django.contrib import admin, messages
 from django.forms import CheckboxSelectMultiple, ModelForm
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 from django_json_widget.widgets import JSONEditorWidget
 from unfold.admin import ModelAdmin

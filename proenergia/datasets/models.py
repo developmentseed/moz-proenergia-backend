@@ -53,6 +53,8 @@ class VectorDataset(models.Model):
 
     class Meta:
         ordering = ["id"]
+        verbose_name = _("vector dataset")
+        verbose_name_plural = _("vector datasets")
 
 
 STATUS = [
@@ -106,6 +108,8 @@ class VectorFile(models.Model):
 
     class Meta:
         ordering = ["id"]
+        verbose_name = _("vector file")
+        verbose_name_plural = _("vector files")
 
 
 @receiver(post_save, sender=VectorFile)
@@ -154,10 +158,12 @@ class DataModel(models.Model):
     summary_fields = models.JSONField(
         _("summary fields"),
         default=list(),
-        help_text=_("""A list containing JSON objects following this structure:<br>
+        help_text=_(
+            """A list containing JSON objects following this structure:<br>
             {"label": "Field label", "description": "Field description", "columns": ["column_1", "column_2"], "unit": "Unit of measurement (optional)", "method": "One of: sum, average, count, min, max", "group_by": "column to aggregate data (optional)", "category": "The category where the field will be shown in the frontend summary section (optional)", "chartType": "One of: bar, donut, stacked, column, area, highlight (optional)", "hasDecimal": false}
             <br>The "method" field is optional and defaults to "sum". The "hasDecimal" field is optional and defaults to false.
-        """),
+        """
+        ),
     )
     metric_field_types = models.JSONField(
         _("metric field types"),
@@ -198,6 +204,8 @@ class DataModel(models.Model):
 
     class Meta:
         ordering = ["id"]
+        verbose_name = _("data model")
+        verbose_name_plural = _("data models")
 
 
 class Scenario(models.Model):
@@ -225,6 +233,8 @@ class Scenario(models.Model):
 
     class Meta:
         ordering = ["id"]
+        verbose_name = _("scenario")
+        verbose_name_plural = _("scenarios")
 
 
 def generate_scenario_file_name(instance, filename):
@@ -268,6 +278,8 @@ class ScenarioFile(models.Model):
 
     class Meta:
         ordering = ["id"]
+        verbose_name = _("scenario file")
+        verbose_name_plural = _("scenario files")
 
 
 @receiver(pre_delete, sender=ScenarioFile)
@@ -310,6 +322,8 @@ class ScenarioData(models.Model):
     class Meta:
         ordering = ["id"]
         unique_together = [["feature_id", "scenario"]]
+        verbose_name = _("scenario data")
+        verbose_name_plural = _("scenario data")
         indexes = [
             models.Index(fields=["feature_id", "scenario"]),
             GinIndex(fields=["metadata"]),
@@ -348,6 +362,8 @@ class ScenarioDataMetrics(models.Model):
     class Meta:
         ordering = ["id"]
         unique_together = [["scenario", "feature_id", "key"]]
+        verbose_name = _("scenario data metric")
+        verbose_name_plural = _("scenario data metrics")
         indexes = [
             models.Index(fields=["scenario", "key", "numeric_value"]),
             models.Index(fields=["scenario", "key", "string_value"]),
