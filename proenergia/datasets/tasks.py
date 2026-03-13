@@ -211,15 +211,19 @@ class DataImporter:
 
     def stream_csv_chunks(self) -> Iterator[List[Dict]]:
         """Stream CSV in chunks to minimize memory usage"""
-        with open(self.scenario_file.file.path, "r", encoding="utf-8") as f:
+        with open(self.scenario_file.file.path, "r", encoding="utf-8-sig") as f:
             reader = csv.DictReader(f, delimiter=self.delimiter)
             current_chunk = []
 
             for i, row in enumerate(reader, 1):
                 # Process row: extract ID, rest goes to JSON
-                external_id = row.pop("id")  # Assuming 'id' column exists
-                if not external_id:
+                try:
+                    external_id = row.pop("id")
+                    if not external_id:
+                        continue
+                except KeyError:
                     continue
+
                 self.imported_ids.append(external_id)
 
                 # Convert numeric strings to appropriate types
