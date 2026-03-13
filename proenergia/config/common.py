@@ -3,6 +3,7 @@ from os.path import join
 
 import dj_database_url
 from configurations import Configuration
+from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -51,6 +52,7 @@ class Common(Configuration):
         "django.contrib.auth.middleware.AuthenticationMiddleware",
         "django.contrib.messages.middleware.MessageMiddleware",
         "django.middleware.clickjacking.XFrameOptionsMiddleware",
+        "django.middleware.locale.LocaleMiddleware",
     )
 
     ALLOWED_HOSTS = ["*"]
@@ -90,10 +92,12 @@ class Common(Configuration):
     APPEND_SLASH = False
     TIME_ZONE = "UTC"
     LANGUAGE_CODE = "en-us"
-    # If you set this to False, Django will make some optimizations so as not
-    # to load the internationalization machinery.
-    USE_I18N = False
+    USE_I18N = True
     USE_L10N = True
+    LANGUAGES = (
+        ("en", _("English")),
+        ("pt", _("Portuguese")),
+    )
     USE_TZ = True
     LOGIN_REDIRECT_URL = "/"
 
@@ -238,6 +242,15 @@ class Common(Configuration):
         "SITE_TITLE": "Mozambique PROENERGIA+",
         "SITE_HEADER": "Mozambique PROENERGIA+",
         "SITE_SUBHEADER": "Administration Interface",
+        "SHOW_LANGUAGES": True,
+        "EXTENSIONS": {
+            "modeltranslation": {
+                "flags": {
+                    "en": "🇬🇧",
+                    "pt": "🇲🇿",
+                },
+            },
+        },
     }
 
     # Celery Configuration
