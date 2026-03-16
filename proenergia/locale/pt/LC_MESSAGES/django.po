@@ -32,7 +32,7 @@ msgstr "Modelos de Dados"
 
 #: proenergia/config/common.py:265
 msgid "Scenarios"
-msgstr ""
+msgstr "Cenários"
 
 #: proenergia/config/common.py:269
 msgid "Scenario Files"
