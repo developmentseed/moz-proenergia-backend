@@ -164,7 +164,7 @@ msgstr "vector dataset"
 #, fuzzy
 #| msgid "vector dataset"
 msgid "vector datasets"
-msgstr "dataset vetorial"
+msgstr "datasets vetoriais"
 
 #: proenergia/datasets/models.py:61
 msgid "Created"
