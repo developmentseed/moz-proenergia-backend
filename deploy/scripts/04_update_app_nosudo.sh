@@ -33,4 +33,7 @@ python manage.py createcachetable
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
+echo "Compiling translation files..."
+python manage.py compilemessages -f
+
 echo "=== Application update complete ==="
