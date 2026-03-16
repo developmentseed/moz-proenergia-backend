@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.conf.urls.i18n import i18n_patterns
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path, re_path, reverse_lazy
@@ -29,7 +30,8 @@ api_urls = [
 ]
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path("i18n/", include("django.conf.urls.i18n")),
+    *i18n_patterns(path("admin/", admin.site.urls)),
     path("", include(api_urls)),
     path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
     path(f"{API_BASE_URL}/schema/", SpectacularAPIView.as_view(), name="schema"),

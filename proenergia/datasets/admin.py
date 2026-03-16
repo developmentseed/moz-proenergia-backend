@@ -2,6 +2,8 @@ import re
 
 from django.contrib import admin, messages
 from django.forms import CheckboxSelectMultiple, ModelForm
+from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 from django_json_widget.widgets import JSONEditorWidget
 from unfold.admin import ModelAdmin
 
@@ -76,25 +78,25 @@ class VectorDatasetAdmin(PermissionBasedModelAdmin):
             message = f"Set {queryset.count()} VectorDatasets as {value}."
         messages.success(request, message)
 
-    @admin.action(description="Make dataset public")
+    @admin.action(description=_("Make dataset public"))
     def make_public(self, request, queryset):
         queryset.update(is_public=True)
-        self.confirmation_message(request, queryset, "public")
+        self.confirmation_message(request, queryset, _("public"))
 
-    @admin.action(description="Make dataset private")
+    @admin.action(description=_("Make dataset private"))
     def make_private(self, request, queryset):
         queryset.update(is_public=False)
-        self.confirmation_message(request, queryset, "private")
+        self.confirmation_message(request, queryset, _("private"))
 
-    @admin.action(description="Publish dataset")
+    @admin.action(description=_("Publish dataset"))
     def approve(self, request, queryset):
         queryset.update(is_approved=True)
-        self.confirmation_message(request, queryset, "published")
+        self.confirmation_message(request, queryset, _("published"))
 
-    @admin.action(description="Unpublish dataset")
+    @admin.action(description=_("Unpublish dataset"))
     def disapprove(self, request, queryset):
         queryset.update(is_approved=False)
-        self.confirmation_message(request, queryset, "unpublished")
+        self.confirmation_message(request, queryset, _("unpublished"))
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -145,7 +147,7 @@ class VectorFileAdmin(PermissionBasedModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
-    @admin.action(description="Reprocess files")
+    @admin.action(description=_("Reprocess files"))
     def reprocess_files(self, request, queryset):
         files = queryset.filter(status__in=["error", "ready"])
 
@@ -153,10 +155,19 @@ class VectorFileAdmin(PermissionBasedModelAdmin):
             generate_pmtiles.delay(obj.id)
 
         if files.count():
-            messages.success(request, f"{files.count()} files queued for reprocessing.")
+            messages.success(
+                request,
+                ngettext(
+                    "%(count)d file queued for reprocessing.",
+                    "%(count)d files queued for reprocessing.",
+                    files.count(),
+                )
+                % {"count": files.count()},
+            )
         else:
             messages.error(
-                request, "Files in created or processing state cannot be reprocessed."
+                request,
+                _("Files in created or processing state cannot be reprocessed."),
             )
 
 
@@ -229,7 +240,7 @@ class DataModelAdminForm(ModelForm):
 
         if filter_fields:
             if type(filter_fields) is not list:
-                self.add_error("filter_fields", "Content should be a list.")
+                self.add_error("filter_fields", _("Content should be a list."))
             else:
                 for i in enumerate(filter_fields):
                     keys = i[1].keys()
@@ -238,11 +249,11 @@ class DataModelAdminForm(ModelForm):
                         or "description" not in keys
                         or "column" not in keys
                     ):
-                        self.add_error("filter_fields", "Missing a required key.")
+                        self.add_error("filter_fields", _("Missing a required key."))
 
         if popup_fields:
             if type(popup_fields) is not list:
-                self.add_error("popup_fields", "Content should be a list")
+                self.add_error("popup_fields", _("Content should be a list"))
             else:
                 for i in enumerate(popup_fields):
                     keys = i[1].keys()
@@ -251,11 +262,11 @@ class DataModelAdminForm(ModelForm):
                         or "description" not in keys
                         or "column" not in keys
                     ):
-                        self.add_error("popup_fields", "Missing a required key.")
+                        self.add_error("popup_fields", _("Missing a required key."))
 
         if summary_fields:
             if type(summary_fields) is not list:
-                self.add_error("summary_fields", "Content should be a list")
+                self.add_error("summary_fields", _("Content should be a list"))
             else:
                 for i in enumerate(summary_fields):
                     keys = i[1].keys()
@@ -264,12 +275,12 @@ class DataModelAdminForm(ModelForm):
                         or "description" not in keys
                         or "columns" not in keys
                     ):
-                        self.add_error("summary_fields", "Missing a required key.")
+                        self.add_error("summary_fields", _("Missing a required key."))
                     else:
                         if type(i[1].get("columns")) is not list:
                             self.add_error(
                                 "summary_fields",
-                                "The value for the columns key should be a list.",
+                                _("The value for the columns key should be a list."),
                             )
 
                     if "method" in keys and i[1].get("method") not in [
@@ -281,7 +292,9 @@ class DataModelAdminForm(ModelForm):
                     ]:
                         self.add_error(
                             "summary_fields",
-                            "The value for the methods key should be sum, count, average, min or max.",
+                            _(
+                                "The value for the methods key should be sum, count, average, min or max."
+                            ),
                         )
 
                     if "chartType" in keys and i[1].get("chartType") not in [
@@ -294,7 +307,9 @@ class DataModelAdminForm(ModelForm):
                     ]:
                         self.add_error(
                             "summary_fields",
-                            "The value for the chartType key should be bar, donut, stacked, column, area or highlight.",
+                            _(
+                                "The value for the chartType key should be bar, donut, stacked, column, area or highlight."
+                            ),
                         )
 
                     if "hasDecimal" in keys and i[1].get("hasDecimal") not in [
@@ -303,17 +318,19 @@ class DataModelAdminForm(ModelForm):
                     ]:
                         self.add_error(
                             "summary_fields",
-                            "The value for the hasDecimal key should be true or false. If not specified, it's assumed to be false.",
+                            _(
+                                "The value for the hasDecimal key should be true or false. If not specified, it's assumed to be false."
+                            ),
                         )
 
         if color_coding:
             if type(color_coding) is not list:
-                self.add_error("color_coding", "Content should be a list")
+                self.add_error("color_coding", _("Content should be a list"))
             else:
                 for i in enumerate(color_coding):
                     keys = i[1].keys()
                     if "value" not in keys or "color" not in keys:
-                        self.add_error("color_coding", "Missing a required key.")
+                        self.add_error("color_coding", _("Missing a required key."))
 
                     regex = re.compile(
                         r"^#?(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})$", re.IGNORECASE
@@ -321,7 +338,9 @@ class DataModelAdminForm(ModelForm):
                     if i[1].get("color") and regex.match(i[1].get("color")) is None:
                         self.add_error(
                             "color_coding",
-                            "The value for the color key should be a valid hex color code.",
+                            _(
+                                "The value for the color key should be a valid hex color code."
+                            ),
                         )
 
 
@@ -370,7 +389,7 @@ class ScenarioFileAdmin(ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
-    @admin.action(description="Reprocess files")
+    @admin.action(description=_("Reprocess files"))
     def reprocess_files(self, request, queryset):
         files = queryset.filter(status__in=["error", "ready"])
 
@@ -379,8 +398,17 @@ class ScenarioFileAdmin(ModelAdmin):
             import_scenario_data_csv.delay(obj.id)
 
         if files.count():
-            messages.success(request, f"{files.count()} files queued for reprocessing.")
+            messages.success(
+                request,
+                ngettext(
+                    "{%(count)d file queued for reprocessing.",
+                    "{%(count)d files queued for reprocessing.",
+                    files.count(),
+                )
+                % {"count": files.count()},
+            )
         else:
             messages.error(
-                request, "Files in created or processing state cannot be reprocessed."
+                request,
+                _("Files in created or processing state cannot be reprocessed."),
             )

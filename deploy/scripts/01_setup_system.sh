@@ -23,7 +23,8 @@ sudo apt install -y \
     python3 \
     python3-venv \
     python3-dev \
-    python3-pip
+    python3-pip \
+    gettext
 
 # Install PostgreSQL 16 and PostGIS
 sudo apt install -y \
