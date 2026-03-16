@@ -3,6 +3,7 @@ from os.path import join
 
 import dj_database_url
 from configurations import Configuration
+from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -251,6 +252,61 @@ class Common(Configuration):
                     "pt": "🇲🇿",
                 },
             },
+        },
+        "SIDEBAR": {
+            "navigation": [
+                {
+                    "title": _("Datasets"),
+                    "items": [
+                        {
+                            "title": _("Data Models"),
+                            "icon": "modeling",
+                            "link": reverse_lazy("admin:datasets_datamodel_changelist"),
+                        },
+                        {
+                            "title": _("Scenarios"),
+                            "icon": "graph_1",
+                            "link": reverse_lazy("admin:datasets_scenario_changelist"),
+                        },
+                        {
+                            "title": _("Scenario Files"),
+                            "icon": "csv",
+                            "link": reverse_lazy(
+                                "admin:datasets_scenariofile_changelist"
+                            ),
+                        },
+                        {
+                            "title": _("Vector Datasets"),
+                            "icon": "map",
+                            "link": reverse_lazy(
+                                "admin:datasets_vectordataset_changelist"
+                            ),
+                        },
+                        {
+                            "title": _("Vector Files"),
+                            "icon": "file_map_stack",
+                            "link": reverse_lazy(
+                                "admin:datasets_vectorfile_changelist"
+                            ),
+                        },
+                    ],
+                },
+                {
+                    "title": _("Users & Groups"),
+                    "items": [
+                        {
+                            "title": _("Users"),
+                            "icon": "person",
+                            "link": reverse_lazy("admin:users_user_changelist"),
+                        },
+                        {
+                            "title": _("Groups"),
+                            "icon": "groups",
+                            "link": reverse_lazy("admin:auth_group_changelist"),
+                        },
+                    ],
+                },
+            ],
         },
     }
 

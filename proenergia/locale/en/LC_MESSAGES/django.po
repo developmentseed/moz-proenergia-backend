@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-13 21:57+0000\n"
+"POT-Creation-Date: 2026-03-16 14:54+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,4 +20,40 @@ msgstr ""
 
 #: proenergia/config/common.py:245
 msgid "Administration Interface"
+msgstr ""
+
+#: proenergia/config/common.py:258
+msgid "Datasets"
+msgstr ""
+
+#: proenergia/config/common.py:261
+msgid "Data Models"
+msgstr ""
+
+#: proenergia/config/common.py:265
+msgid "Scenarios"
+msgstr ""
+
+#: proenergia/config/common.py:269
+msgid "Scenario Files"
+msgstr ""
+
+#: proenergia/config/common.py:273
+msgid "Vector Datasets"
+msgstr ""
+
+#: proenergia/config/common.py:277
+msgid "Vector Files"
+msgstr ""
+
+#: proenergia/config/common.py:283
+msgid "Users & Groups"
+msgstr ""
+
+#: proenergia/config/common.py:286
+msgid "Users"
+msgstr ""
+
+#: proenergia/config/common.py:290
+msgid "Groups"
 msgstr ""

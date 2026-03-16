@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-13 21:22+0000\n"
+"POT-Creation-Date: 2026-03-16 14:54+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -112,7 +112,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: proenergia/datasets/models.py:23 proenergia/datasets/models.py:140
-#: proenergia/datasets/models.py:212
+#: proenergia/datasets/models.py:210
 msgid "name"
 msgstr ""
 
@@ -121,7 +121,7 @@ msgid "description"
 msgstr ""
 
 #: proenergia/datasets/models.py:27 proenergia/datasets/models.py:84
-#: proenergia/datasets/models.py:256
+#: proenergia/datasets/models.py:254
 msgid "created"
 msgstr ""
 
@@ -130,7 +130,7 @@ msgid "updated"
 msgstr ""
 
 #: proenergia/datasets/models.py:32 proenergia/datasets/models.py:88
-#: proenergia/datasets/models.py:260
+#: proenergia/datasets/models.py:258
 msgid "created by"
 msgstr ""
 
@@ -150,7 +150,7 @@ msgstr ""
 msgid "is approved"
 msgstr ""
 
-#: proenergia/datasets/models.py:56 proenergia/datasets/models.py:222
+#: proenergia/datasets/models.py:56 proenergia/datasets/models.py:220
 msgid "vector dataset"
 msgstr ""
 
@@ -178,15 +178,15 @@ msgstr ""
 msgid "dataset"
 msgstr ""
 
-#: proenergia/datasets/models.py:92 proenergia/datasets/models.py:264
+#: proenergia/datasets/models.py:92 proenergia/datasets/models.py:262
 msgid "status"
 msgstr ""
 
-#: proenergia/datasets/models.py:95 proenergia/datasets/models.py:267
+#: proenergia/datasets/models.py:95 proenergia/datasets/models.py:265
 msgid "file"
 msgstr ""
 
-#: proenergia/datasets/models.py:103 proenergia/datasets/models.py:273
+#: proenergia/datasets/models.py:103 proenergia/datasets/models.py:271
 msgid "error message"
 msgstr ""
 
@@ -224,7 +224,7 @@ msgstr ""
 msgid "summary fields"
 msgstr ""
 
-#: proenergia/datasets/models.py:162
+#: proenergia/datasets/models.py:161
 msgid ""
 "A list containing JSON objects following this structure:<br>\n"
 "            {\"label\": \"Field label\", \"description\": \"Field "
@@ -239,102 +239,102 @@ msgid ""
 "        "
 msgstr ""
 
-#: proenergia/datasets/models.py:169
+#: proenergia/datasets/models.py:167
 msgid "metric field types"
 msgstr ""
 
-#: proenergia/datasets/models.py:172
+#: proenergia/datasets/models.py:170
 msgid ""
 "Mapping of field names to their data types for metrics extraction. "
 "Structure: {'field_name': 'numeric', 'field_name_2': 'string'}. This is "
 "automatically populated from data introspection."
 msgstr ""
 
-#: proenergia/datasets/models.py:176
+#: proenergia/datasets/models.py:174
 msgid "visualization column"
 msgstr ""
 
-#: proenergia/datasets/models.py:179
+#: proenergia/datasets/models.py:177
 msgid ""
 "Column on the model results data file whose values will be used to define "
 "the data-driven visualization style."
 msgstr ""
 
-#: proenergia/datasets/models.py:185
+#: proenergia/datasets/models.py:183
 msgid "color coding"
 msgstr ""
 
-#: proenergia/datasets/models.py:188
+#: proenergia/datasets/models.py:186
 msgid ""
 "A list containing JSON objects following this structure: {\"value\": "
 "\"visualization column value\", \"color\": \"#000000\"}"
 msgstr ""
 
-#: proenergia/datasets/models.py:193
+#: proenergia/datasets/models.py:191
 msgid "contextual layers"
 msgstr ""
 
-#: proenergia/datasets/models.py:198
+#: proenergia/datasets/models.py:196
 msgid "Vector datasets that can be visualized together with the model data."
 msgstr ""
 
-#: proenergia/datasets/models.py:207
+#: proenergia/datasets/models.py:205
 msgid "data model"
 msgstr ""
 
-#: proenergia/datasets/models.py:208
+#: proenergia/datasets/models.py:206
 msgid "data models"
 msgstr ""
 
-#: proenergia/datasets/models.py:216
+#: proenergia/datasets/models.py:214
 msgid "model"
 msgstr ""
 
-#: proenergia/datasets/models.py:236 proenergia/datasets/models.py:253
-#: proenergia/datasets/models.py:314 proenergia/datasets/models.py:342
+#: proenergia/datasets/models.py:234 proenergia/datasets/models.py:251
+#: proenergia/datasets/models.py:312 proenergia/datasets/models.py:340
 msgid "scenario"
 msgstr ""
 
-#: proenergia/datasets/models.py:237
+#: proenergia/datasets/models.py:235
 msgid "scenarios"
 msgstr ""
 
-#: proenergia/datasets/models.py:281
+#: proenergia/datasets/models.py:279
 msgid "scenario file"
 msgstr ""
 
-#: proenergia/datasets/models.py:282
+#: proenergia/datasets/models.py:280
 msgid "scenario files"
 msgstr ""
 
-#: proenergia/datasets/models.py:310 proenergia/datasets/models.py:345
+#: proenergia/datasets/models.py:308 proenergia/datasets/models.py:343
 msgid "feature id"
 msgstr ""
 
-#: proenergia/datasets/models.py:317
+#: proenergia/datasets/models.py:315
 msgid "metadata"
 msgstr ""
 
-#: proenergia/datasets/models.py:325 proenergia/datasets/models.py:326
+#: proenergia/datasets/models.py:323 proenergia/datasets/models.py:324
 msgid "scenario data"
 msgstr ""
 
-#: proenergia/datasets/models.py:346
+#: proenergia/datasets/models.py:344
 msgid "key"
 msgstr ""
 
-#: proenergia/datasets/models.py:348
+#: proenergia/datasets/models.py:346
 msgid "numeric value"
 msgstr ""
 
-#: proenergia/datasets/models.py:356
+#: proenergia/datasets/models.py:354
 msgid "string value"
 msgstr ""
 
-#: proenergia/datasets/models.py:365
+#: proenergia/datasets/models.py:363
 msgid "scenario data metric"
 msgstr ""
 
-#: proenergia/datasets/models.py:366
+#: proenergia/datasets/models.py:364
 msgid "scenario data metrics"
 msgstr ""
