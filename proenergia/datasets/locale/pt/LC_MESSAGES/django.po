@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-16 14:54+0000\n"
+"POT-Creation-Date: 2026-03-17 19:52+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: PT <LL@li.org>\n"
@@ -53,7 +53,7 @@ msgstr "despublicado"
 msgid "Reprocess files"
 msgstr "Reprocessar arquivos"
 
-#: proenergia/datasets/admin.py:161
+#: proenergia/datasets/admin.py:161 proenergia/datasets/admin.py:404
 #, python-format
 msgid "%(count)d file queued for reprocessing."
 msgid_plural "%(count)d files queued for reprocessing."
@@ -109,13 +109,6 @@ msgstr ""
 msgid "The value for the color key should be a valid hex color code."
 msgstr ""
 "O valor para o campo color deve ser um código hexadecimal de cor válido."
-
-#: proenergia/datasets/admin.py:404
-#, python-format
-msgid "{%(count)d file queued for reprocessing."
-msgid_plural "{%(count)d files queued for reprocessing."
-msgstr[0] "{%(count)d arquivo enviado para reprocessamento."
-msgstr[1] "{%(count)d arquivos enviados para reprocessamento."
 
 #: proenergia/datasets/models.py:23 proenergia/datasets/models.py:140
 #: proenergia/datasets/models.py:210

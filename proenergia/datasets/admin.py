@@ -401,8 +401,8 @@ class ScenarioFileAdmin(ModelAdmin):
             messages.success(
                 request,
                 ngettext(
-                    "{%(count)d file queued for reprocessing.",
-                    "{%(count)d files queued for reprocessing.",
+                    "%(count)d file queued for reprocessing.",
+                    "%(count)d files queued for reprocessing.",
                     files.count(),
                 )
                 % {"count": files.count()},
