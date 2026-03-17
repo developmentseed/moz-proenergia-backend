@@ -22,10 +22,10 @@ def call_tippecanoe(input_path: str, output_path: str):
         [
             "tippecanoe",
             "-Z5",
-            "-z14",
             "-zg",
+            "-pk",
+            "-pf",
             "--projection=EPSG:4326",
-            "--drop-densest-as-needed",
             "-o",
             output_path,
             "-l",
