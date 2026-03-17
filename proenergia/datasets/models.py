@@ -196,6 +196,7 @@ class DataModel(models.Model):
             "Vector datasets that can be visualized together with the model data."
         ),
     )
+    updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.name}"
