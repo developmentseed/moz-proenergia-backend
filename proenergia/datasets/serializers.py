@@ -29,6 +29,16 @@ class VectorDatasetSerializer(serializers.ModelSerializer):
         return vector_file.file.name if vector_file else None
 
 
+class SimpleScenarioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Scenario
+        fields = [
+            "id",
+            "name",
+            "presentation_order",
+        ]
+
+
 class ScenarioSerializer(serializers.ModelSerializer):
     model_file = serializers.SerializerMethodField()
     vector_dataset = VectorDatasetSerializer()
@@ -52,7 +62,7 @@ class ScenarioSerializer(serializers.ModelSerializer):
 
 
 class DataModelSerializer(serializers.ModelSerializer):
-    scenarios = ScenarioSerializer(many=True, read_only=True)
+    scenarios = SimpleScenarioSerializer(many=True, read_only=True)
 
     class Meta:
         model = DataModel
