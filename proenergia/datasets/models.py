@@ -138,6 +138,11 @@ def delete_vector_file(sender, instance, **kwargs):
 
 class DataModel(models.Model):
     name = models.CharField(_("name"), max_length=155, unique=True)
+    presentation_order = models.IntegerField(
+        _("presentation_order"),
+        default=0,
+        help_text=_("Order of the item to be presented in the application."),
+    )
     description = models.TextField(
         _("description"), max_length=2000, null=True, blank=True
     )
@@ -201,13 +206,18 @@ class DataModel(models.Model):
         return f"{self.name}"
 
     class Meta:
-        ordering = ["id"]
+        ordering = ["presentation_order", "id"]
         verbose_name = _("data model")
         verbose_name_plural = _("data models")
 
 
 class Scenario(models.Model):
     name = models.CharField(_("name"), max_length=155, unique=True)
+    presentation_order = models.IntegerField(
+        _("presentation_order"),
+        default=0,
+        help_text=_("Order of the item to be presented in the application."),
+    )
     model = models.ForeignKey(
         DataModel,
         on_delete=models.CASCADE,
@@ -230,7 +240,7 @@ class Scenario(models.Model):
             return None
 
     class Meta:
-        ordering = ["id"]
+        ordering = ["presentation_order", "id"]
         verbose_name = _("scenario")
         verbose_name_plural = _("scenarios")
 

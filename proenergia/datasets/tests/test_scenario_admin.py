@@ -20,6 +20,7 @@ class TestScenarioAdmin(TestCase):
         self.client.login(username="superadmin", password="testpass123")
         data = {
             "name": "Least Cost Electrification",
+            "presentation_order": 2,
             "filter_fields": json.dumps(
                 [
                     {
@@ -88,6 +89,7 @@ class TestScenarioAdmin(TestCase):
         # same name
         data = {
             "name": "Least Cost Electrification",
+            "presentation_order": 2,
             "filter_fields": json.dumps(
                 [
                     {
@@ -130,6 +132,7 @@ class TestScenarioAdmin(TestCase):
         # missing column in filter fields
         data = {
             "name": "PUE",
+            "presentation_order": 2,
             "filter_fields": json.dumps(
                 [
                     {
@@ -171,6 +174,7 @@ class TestScenarioAdmin(TestCase):
         # missing label in filter fields
         data = {
             "name": "Clean Cooking",
+            "presentation_order": 2,
             "filter_fields": json.dumps(
                 [
                     {
@@ -219,6 +223,7 @@ class TestScenarioAdmin(TestCase):
         self.assertEqual(DataModel.objects.count(), 1)
         data = {
             "name": "Least Cost Electrification 2",
+            "presentation_order": 2,
             "filter_fields": json.dumps(
                 [
                     {
@@ -243,6 +248,7 @@ class TestScenarioAdmin(TestCase):
         # missing label in summary_fields
         data = {
             "name": "B",
+            "presentation_order": 2,
             "filter_fields": json.dumps(
                 [
                     {
@@ -286,6 +292,7 @@ class TestScenarioAdmin(TestCase):
         # missing value in color_coding
         data = {
             "name": "New",
+            "presentation_order": 2,
             "filter_fields": json.dumps(
                 [
                     {

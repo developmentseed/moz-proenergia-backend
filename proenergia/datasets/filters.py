@@ -7,7 +7,7 @@ from django_filters import (
     OrderingFilter,
 )
 
-from .models import VectorDataset
+from .models import DataModel, VectorDataset
 
 
 class VectorDatasetFilter(FilterSet):
@@ -28,3 +28,14 @@ class VectorDatasetFilter(FilterSet):
     class Meta:
         model = VectorDataset
         fields = ["name", "source", "created", "updated", "model"]
+
+
+class DataModelFilter(FilterSet):
+    name = CharFilter(field_name="name", lookup_expr="icontains")
+    order_by = OrderingFilter(
+        fields=("name", "id", "presentation_order"),
+    )
+
+    class Meta:
+        model = DataModel
+        fields = ["name"]
