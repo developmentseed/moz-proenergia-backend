@@ -157,6 +157,22 @@ class TestDataModelViews(APITestCase):
         assert req.data.get("results")[1]["scenarios"][0]["model_file"].startswith(
             "scenarios/clean-cooking-1_v1"
         )
+        assert (
+            req.data.get("results")[0]["scenarios"][0]["vector_dataset"]["id"]
+            == self.dataset_1.id
+        )
+        assert (
+            req.data.get("results")[0]["scenarios"][0]["vector_dataset"]["name"]
+            == self.dataset_1.name
+        )
+        assert (
+            req.data.get("results")[1]["scenarios"][0]["vector_dataset"]["id"]
+            == self.dataset_2.id
+        )
+        assert (
+            req.data.get("results")[1]["scenarios"][0]["vector_dataset"]["name"]
+            == self.dataset_2.name
+        )
         assert req.data.get("results")[0]["filter_fields"] == [
             {
                 "label": "Population",
