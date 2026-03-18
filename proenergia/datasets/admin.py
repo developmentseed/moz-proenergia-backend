@@ -177,6 +177,7 @@ class DataModelAdminForm(ModelForm):
         fields = [
             "name",
             "description",
+            "presentation_order",
             "filter_fields",
             "popup_fields",
             "summary_fields",
@@ -346,6 +347,8 @@ class DataModelAdminForm(ModelForm):
 
 @admin.register(DataModel)
 class DataModelAdmin(ModelAdmin):
+    list_display = ["name", "presentation_order"]
+    list_editable = ["presentation_order"]
     form = DataModelAdminForm
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
@@ -358,8 +361,9 @@ class DataModelAdmin(ModelAdmin):
 
 @admin.register(Scenario)
 class ScenarioAdmin(ModelAdmin):
-    list_display = ["name", "model"]
-    fields = ["name", "model", "vector_dataset"]
+    list_display = ["name", "model", "presentation_order"]
+    list_editable = ["presentation_order"]
+    fields = ["name", "model", "vector_dataset", "presentation_order"]
 
 
 @admin.register(ScenarioFile)

@@ -1,4 +1,5 @@
 import hashlib
+
 from django.core.cache import cache
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
@@ -10,8 +11,8 @@ from rest_framework.permissions import (
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .aggregation import FilterParser, get_aggregator, CombinedFieldAggregator
-from .filters import VectorDatasetFilter
+from .aggregation import CombinedFieldAggregator, FilterParser
+from .filters import DataModelFilter, VectorDatasetFilter
 from .models import (
     DataModel,
     Scenario,
@@ -73,6 +74,7 @@ class DataModelListView(ListAPIView):
     queryset = DataModel.objects.prefetch_related("scenarios")
     serializer_class = DataModelSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    filterset_class = DataModelFilter
 
 
 class DataModelDetailView(RetrieveAPIView):
