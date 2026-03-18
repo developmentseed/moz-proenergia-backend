@@ -31,12 +31,14 @@ class VectorDatasetSerializer(serializers.ModelSerializer):
 
 class ScenarioSerializer(serializers.ModelSerializer):
     model_file = serializers.SerializerMethodField()
+    vector_dataset = VectorDatasetSerializer()
 
     class Meta:
         model = Scenario
         fields = [
             "id",
             "name",
+            "vector_dataset",
             "model_file",
         ]
 
