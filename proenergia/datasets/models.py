@@ -139,7 +139,7 @@ def delete_vector_file(sender, instance, **kwargs):
 class DataModel(models.Model):
     name = models.CharField(_("name"), max_length=155, unique=True)
     presentation_order = models.IntegerField(
-        _("presentation_order"),
+        _("presentation order"),
         default=0,
         help_text=_("Order of the item to be presented in the application."),
     )
@@ -214,7 +214,7 @@ class DataModel(models.Model):
 class Scenario(models.Model):
     name = models.CharField(_("name"), max_length=155, unique=True)
     presentation_order = models.IntegerField(
-        _("presentation_order"),
+        _("presentation order"),
         default=0,
         help_text=_("Order of the item to be presented in the application."),
     )
