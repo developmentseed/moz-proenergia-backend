@@ -10,7 +10,6 @@ from unfold.admin import ModelAdmin
 from proenergia.datasets.tasks import (
     generate_pmtiles,
     generate_scenario_pmtiles,
-    import_scenario_data_csv,
 )
 
 from .models import (
@@ -399,7 +398,6 @@ class ScenarioFileAdmin(ModelAdmin):
 
         for obj in files:
             generate_scenario_pmtiles.delay(obj.id)
-            import_scenario_data_csv.delay(obj.id)
 
         if files.count():
             messages.success(

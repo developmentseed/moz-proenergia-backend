@@ -19,10 +19,9 @@ from ..models import (
 
 
 class TestScenarioDataDetailViews(APITestCase):
-    @patch("proenergia.datasets.tasks.import_scenario_data_csv.delay")
     @patch("proenergia.datasets.tasks.generate_pmtiles.delay")
     @patch("proenergia.datasets.tasks.generate_scenario_pmtiles.delay")
-    def setUp(self, mock_1, mock_2, mock_3):
+    def setUp(self, mock_1, mock_2):
         self.scenario_csv = "./proenergia/datasets/fixtures/scenario.csv"
         self.superadmin = get_user_model().objects.create_superuser(
             username="superadmin", email="admin@example.com", password="testpass123"

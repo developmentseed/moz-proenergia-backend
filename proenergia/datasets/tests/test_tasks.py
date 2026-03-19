@@ -101,10 +101,11 @@ class TestScenarioFilePostSaveTasks(TestCase):
         self.assertTrue("location" in merged_gdf.columns)
         self.assertFalse("country" in merged_gdf.columns)
 
-    @patch("proenergia.datasets.tasks.import_scenario_data_csv.delay")
     @patch("proenergia.datasets.tasks.generate_pmtiles.delay")
     @patch("proenergia.datasets.tasks.generate_scenario_pmtiles.delay")
-    def test_generate_scenario_pmtiles(self, mock_scenario, mock_2, mock_importer):
+    def test_generate_scenario_pmtiles(
+        self, mock_generate_scenario_pmtiles, mock_generate_pmtiles
+    ):
         self.superadmin = get_user_model().objects.create_superuser(
             username="superadmin", email="admin@example.com", password="testpass123"
         )
@@ -160,8 +161,8 @@ class TestScenarioFilePostSaveTasks(TestCase):
             created_by=self.superadmin,
             status="ready",
         )
-        mock_scenario.assert_called_with(self.scenario_file_1.id)
-        mock_importer.assert_called_with(self.scenario_file_1.id)
+        mock_generate_pmtiles.assert_called_with(self.vector_file_1.id)
+        mock_generate_scenario_pmtiles.assert_called_with(self.scenario_file_1.id)
 
         # import csv and check ScenarioData items were created
         import_scenario_data_csv(self.scenario_file_1.id)
@@ -189,8 +190,8 @@ class TestScenarioFilePostSaveTasks(TestCase):
             status="ready",
         )
 
-        mock_scenario.assert_called_with(self.scenario_file_2.id)
-        mock_importer.assert_called_with(self.scenario_file_2.id)
+        mock_generate_pmtiles.assert_called_with(self.vector_file_1.id)
+        mock_generate_scenario_pmtiles.assert_called_with(self.scenario_file_2.id)
 
         import_scenario_data_csv(self.scenario_file_2.id)
         self.assertEqual(

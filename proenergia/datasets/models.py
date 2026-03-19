@@ -14,7 +14,6 @@ from django.utils.translation import gettext_lazy as _
 from proenergia.datasets.tasks import (
     generate_pmtiles,
     generate_scenario_pmtiles,
-    import_scenario_data_csv,
 )
 from proenergia.datasets.utils import get_file_variant
 
@@ -311,7 +310,6 @@ def trigger_generate_scenario_pmtiles(sender, instance, created, **kwargs):
     """Trigger generate_scenario_pmtiles Celery task when a new ScenarioFile instance is created."""
     if created:
         generate_scenario_pmtiles.delay(instance.id)
-        import_scenario_data_csv.delay(instance.id)
 
 
 class ScenarioData(models.Model):

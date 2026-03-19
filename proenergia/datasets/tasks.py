@@ -125,7 +125,7 @@ def merge_vector_scenario_files(
         )
     except Exception as e:
         logger.error(f"Failed to read CSV file {scenario_file_path}: {e}")
-        raise
+        raise e
 
     vector.merge(model_data, on="id").to_file(merged_file_path, driver="FlatGeobuf")
     logger.info(f"Merged file created on {merged_file_path}.")
@@ -172,10 +172,9 @@ def generate_scenario_pmtiles(self, id: int):
         )
         call_tippecanoe(fgb_path, get_file_variant(sf.file.path, "pmtiles"))
 
-        sf.status = "ready"
-        sf.save(update_fields=["status"])
+        import_scenario_data_csv(id)
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        print(f"Unexpected error during PMTiles generation: {e}")
         sf.error_message = e
         sf.status = "error"
         sf.save(update_fields=["status", "error_message"])
@@ -326,17 +325,9 @@ def sync_scenario_metrics(scenario):
     )
 
 
-@shared_task(bind=True, max_retries=5, default_retry_delay=2)
-def import_scenario_data_csv(self, scenario_file_id: int):
+def import_scenario_data_csv(scenario_file_id: int):
     ScenarioFile = apps.get_model("datasets", "ScenarioFile")
-    try:
-        importer = DataImporter(scenario_file_id)
-    except ScenarioFile.DoesNotExist as e:
-        # Retry with exponential backoff
-        logger.warning(
-            f"ScenarioFile {id} not found, retrying... (attempt {self.request.retries + 1})"
-        )
-        raise self.retry(exc=e, countdown=2**self.request.retries)
+    importer = DataImporter(scenario_file_id)
 
     stats = importer.import_csv()
     logger.info(
@@ -344,9 +335,16 @@ def import_scenario_data_csv(self, scenario_file_id: int):
     )
 
     # Sync metrics after successful import
+    sf = ScenarioFile.objects.get(id=scenario_file_id)
     try:
-        scenario = ScenarioFile.objects.get(id=scenario_file_id).scenario
+        scenario = sf.scenario
         sync_scenario_metrics(scenario)
+
+        sf.status = "ready"
+        sf.save(update_fields=["status"])
         logger.info(f"Metrics synced successfully for scenario {scenario.id}")
     except Exception as e:
         logger.error(f"Failed to sync metrics for scenario: {e}")
+        sf.status = "error"
+        sf.error_message = e
+        sf.save(update_fields=["status", "error_message"])
