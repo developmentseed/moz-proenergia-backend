@@ -1,6 +1,7 @@
 import re
 
 from django.contrib import admin, messages
+from django.contrib.admin.decorators import display
 from django.forms import CheckboxSelectMultiple, ModelForm
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
@@ -363,12 +364,20 @@ class DataModelAdmin(ModelAdmin):
 class ScenarioAdmin(ModelAdmin):
     list_display = ["name", "model", "presentation_order"]
     list_editable = ["presentation_order"]
+    list_filter = ["model"]
     fields = ["name", "model", "vector_dataset", "presentation_order"]
 
 
 @admin.register(ScenarioFile)
 class ScenarioFileAdmin(ModelAdmin):
-    list_display = ["id", "scenario", "created", "status"]
+    @display(
+        boolean=True,
+        description=_("Is active"),
+    )
+    def is_active(self, obj):
+        return obj.scenario.latest_file() == obj
+
+    list_display = ["id", "scenario", "created", "status", "is_active"]
     fields = ["scenario", "file", "status", "error_message"]
     readonly_fields = ["status", "error_message"]
     list_filter = ["scenario", "status"]
