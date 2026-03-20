@@ -276,6 +276,13 @@ class ScenarioFile(models.Model):
         unique=True,
         validators=[FileExtensionValidator(allowed_extensions=["csv"])],
     )
+    low_zoom_as_points = models.BooleanField(
+        _("Represent features as points in lower zoom levels"),
+        default=False,
+        help_text=_(
+            "If enabled, features will be represented as points in lower zoom levels. It's recommended for large datasets composed by many squared polygons."
+        ),
+    )
     error_message = models.TextField(
         _("error message"), default="", blank=True, null=True
     )
