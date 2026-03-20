@@ -2,7 +2,7 @@ from django.conf import settings
 from django.conf.urls.i18n import i18n_patterns
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path, re_path, reverse_lazy
+from django.urls import include, path, re_path
 from django.views.generic.base import RedirectView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.authtoken import views
@@ -43,7 +43,8 @@ urlpatterns = [
     # the 'api-root' from django rest-frameworks default router
     # http://www.django-rest-framework.org/api-guide/routers/#defaultrouter
     re_path(
-        r"^$", RedirectView.as_view(url=reverse_lazy("swagger-ui"), permanent=False)
+        r"^$",
+        RedirectView.as_view(url=settings.FRONTEND_URL, permanent=False),
     ),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
