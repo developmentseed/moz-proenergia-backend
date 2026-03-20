@@ -377,7 +377,7 @@ class ScenarioFileAdmin(ModelAdmin):
         return obj.scenario.latest_file() == obj
 
     list_display = ["id", "scenario", "created", "status", "is_active"]
-    fields = ["scenario", "file", "status", "error_message"]
+    fields = ["scenario", "file", "low_zoom_as_points", "status", "error_message"]
     readonly_fields = ["status", "error_message"]
     list_filter = ["scenario", "status"]
     actions = ["reprocess_files"]

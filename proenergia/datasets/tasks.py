@@ -3,6 +3,7 @@ import json
 import logging
 import subprocess
 import time
+from os import remove
 from os.path import basename, dirname, join, splitext
 from typing import Dict, Iterator, List
 
@@ -17,12 +18,14 @@ from proenergia.datasets.utils import detect_csv_delimiter, get_file_variant
 logger = logging.getLogger(__name__)
 
 
-def call_tippecanoe(input_path: str, output_path: str):
+def call_tippecanoe(
+    input_path: str, output_path: str, min_zoom: int = 5, max_zoom: int | None = None
+):
     subprocess.run(
         [
             "tippecanoe",
-            "-Z5",
-            "-zg",
+            f"-Z{min_zoom}",
+            f"-z{max_zoom}" if max_zoom else "-zg",
             "-pk",
             "-pf",
             "--projection=EPSG:4326",
@@ -37,6 +40,22 @@ def call_tippecanoe(input_path: str, output_path: str):
         capture_output=True,
         text=True,
     )
+
+
+def join_pmtiles(low_zoom_path: str, high_zoom_path: str, output_path: str):
+    subprocess.run(
+        ["tile-join", "-o", output_path, low_zoom_path, high_zoom_path, "-f"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+
+def create_centroid_geom_file(input_file: str, output_file: str):
+    """Create a geospatial file with the centroid geometries of the input file."""
+    gdf = gpd.read_file(input_file)
+    gdf.geometry = gdf.centroid
+    gdf.to_file(output_file)
 
 
 def to_pmtiles(file_path: str):
@@ -170,11 +189,31 @@ def generate_scenario_pmtiles(self, id: int):
             columns,
             fgb_path,
         )
-        call_tippecanoe(fgb_path, get_file_variant(sf.file.path, "pmtiles"))
+        pmtiles_final_path = get_file_variant(sf.file.path, "pmtiles")
+
+        # if low_zoom_as_points is selected, use centroid geometries for low zoom levels
+        if sf.low_zoom_as_points:
+            low_zoom_file = pmtiles_final_path.replace(".pmtiles", "_low_zoom.pmtiles")
+            high_zoom_file = pmtiles_final_path.replace(
+                ".pmtiles", "_high_zoom.pmtiles"
+            )
+            centroid_file = fgb_path.replace(".fgb", "_centroid.fgb")
+            create_centroid_geom_file(fgb_path, centroid_file)
+            call_tippecanoe(centroid_file, low_zoom_file, min_zoom=5, max_zoom=10)
+            call_tippecanoe(fgb_path, high_zoom_file, min_zoom=11, max_zoom=14)
+            join_pmtiles(low_zoom_file, high_zoom_file, pmtiles_final_path)
+            # delete intermediate files
+            remove(centroid_file)
+            remove(low_zoom_file)
+            remove(high_zoom_file)
+        else:
+            call_tippecanoe(fgb_path, pmtiles_final_path)
+
+        logger.info(f"Created PMTiles for scenario {sf.id} on {pmtiles_final_path}")
 
         import_scenario_data_csv(id)
     except Exception as e:
-        print(f"Unexpected error during PMTiles generation: {e}")
+        logger.error(f"Unexpected error during PMTiles generation: {e}")
         sf.error_message = e
         sf.status = "error"
         sf.save(update_fields=["status", "error_message"])
@@ -337,12 +376,11 @@ def import_scenario_data_csv(scenario_file_id: int):
     # Sync metrics after successful import
     sf = ScenarioFile.objects.get(id=scenario_file_id)
     try:
-        scenario = sf.scenario
-        sync_scenario_metrics(scenario)
+        sync_scenario_metrics(sf.scenario)
 
         sf.status = "ready"
         sf.save(update_fields=["status"])
-        logger.info(f"Metrics synced successfully for scenario {scenario.id}")
+        logger.info(f"Metrics synced successfully for scenario {sf.scenario.id}")
     except Exception as e:
         logger.error(f"Failed to sync metrics for scenario: {e}")
         sf.status = "error"
