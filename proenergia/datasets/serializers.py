@@ -13,7 +13,9 @@ class VectorDatasetSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
+            "name_pt",
             "description",
+            "description_pt",
             "source",
             "created",
             "updated",
@@ -38,6 +40,7 @@ class ScenarioSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
+            "name_pt",
             "presentation_order",
             "vector_dataset",
             "model_file",
@@ -59,7 +62,9 @@ class DataModelSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
+            "name_pt",
             "description",
+            "description_pt",
             "presentation_order",
             "filter_fields",
             "popup_fields",

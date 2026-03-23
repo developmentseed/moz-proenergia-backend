@@ -6,6 +6,7 @@ from django.forms import CheckboxSelectMultiple, ModelForm
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 from django_json_widget.widgets import JSONEditorWidget
+from modeltranslation.admin import TabbedTranslationAdmin
 from unfold.admin import ModelAdmin
 
 from proenergia.datasets.tasks import (
@@ -53,7 +54,7 @@ class PermissionBasedModelAdmin(ModelAdmin):
 
 
 @admin.register(VectorDataset)
-class VectorDatasetAdmin(PermissionBasedModelAdmin):
+class VectorDatasetAdmin(PermissionBasedModelAdmin, TabbedTranslationAdmin):
     list_display = ["name", "updated", "is_public", "is_approved"]
     fields = ["name", "description", "source"]
     actions = ["make_public", "make_private", "approve", "disapprove"]
@@ -346,7 +347,7 @@ class DataModelAdminForm(ModelForm):
 
 
 @admin.register(DataModel)
-class DataModelAdmin(ModelAdmin):
+class DataModelAdmin(ModelAdmin, TabbedTranslationAdmin):
     list_display = ["name", "presentation_order"]
     list_editable = ["presentation_order"]
     form = DataModelAdminForm
@@ -360,7 +361,7 @@ class DataModelAdmin(ModelAdmin):
 
 
 @admin.register(Scenario)
-class ScenarioAdmin(ModelAdmin):
+class ScenarioAdmin(ModelAdmin, TabbedTranslationAdmin):
     list_display = ["name", "model", "presentation_order"]
     list_editable = ["presentation_order"]
     list_filter = ["model"]
