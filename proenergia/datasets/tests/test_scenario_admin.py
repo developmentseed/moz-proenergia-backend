@@ -19,7 +19,7 @@ class TestScenarioAdmin(TestCase):
     def test_validation(self):
         self.client.login(username="superadmin", password="testpass123")
         data = {
-            "name": "Least Cost Electrification",
+            "name_en": "Least Cost Electrification",
             "presentation_order": 2,
             "filter_fields": json.dumps(
                 [
@@ -88,7 +88,7 @@ class TestScenarioAdmin(TestCase):
 
         # same name
         data = {
-            "name": "Least Cost Electrification",
+            "name_en": "Least Cost Electrification",
             "presentation_order": 2,
             "filter_fields": json.dumps(
                 [
@@ -131,7 +131,7 @@ class TestScenarioAdmin(TestCase):
         self.assertEqual(DataModel.objects.count(), 1)
         # missing column in filter fields
         data = {
-            "name": "PUE",
+            "name_en": "PUE",
             "presentation_order": 2,
             "filter_fields": json.dumps(
                 [
@@ -173,7 +173,7 @@ class TestScenarioAdmin(TestCase):
         self.assertEqual(DataModel.objects.count(), 1)
         # missing label in filter fields
         data = {
-            "name": "Clean Cooking",
+            "name_en": "Clean Cooking",
             "presentation_order": 2,
             "filter_fields": json.dumps(
                 [
@@ -197,7 +197,7 @@ class TestScenarioAdmin(TestCase):
         # missing column in popup_fields
         self.assertEqual(DataModel.objects.count(), 1)
         data = {
-            "name": "Another Model",
+            "name_en": "Another Model",
             "filter_fields": json.dumps(
                 [
                     {
@@ -222,7 +222,7 @@ class TestScenarioAdmin(TestCase):
         # missing label in popup_fields
         self.assertEqual(DataModel.objects.count(), 1)
         data = {
-            "name": "Least Cost Electrification 2",
+            "name_en": "Least Cost Electrification 2",
             "presentation_order": 2,
             "filter_fields": json.dumps(
                 [
@@ -247,7 +247,7 @@ class TestScenarioAdmin(TestCase):
 
         # missing label in summary_fields
         data = {
-            "name": "B",
+            "name_en": "B",
             "presentation_order": 2,
             "filter_fields": json.dumps(
                 [
@@ -291,7 +291,7 @@ class TestScenarioAdmin(TestCase):
 
         # missing value in color_coding
         data = {
-            "name": "New",
+            "name_en": "New",
             "presentation_order": 2,
             "filter_fields": json.dumps(
                 [

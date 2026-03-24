@@ -7,13 +7,17 @@ class VectorDatasetSerializer(serializers.ModelSerializer):
     created_by = serializers.ReadOnlyField(source="created_by.name")
     last_updated_by = serializers.ReadOnlyField(source="last_updated_by.name")
     raw_file = serializers.SerializerMethodField()
+    name = serializers.CharField(source="name_en")
+    description = serializers.CharField(source="description_en")
 
     class Meta:
         model = VectorDataset
         fields = [
             "id",
             "name",
+            "name_pt",
             "description",
+            "description_pt",
             "source",
             "created",
             "updated",
@@ -32,12 +36,14 @@ class VectorDatasetSerializer(serializers.ModelSerializer):
 class ScenarioSerializer(serializers.ModelSerializer):
     model_file = serializers.SerializerMethodField()
     vector_dataset = VectorDatasetSerializer()
+    name = serializers.CharField(source="name_en")
 
     class Meta:
         model = Scenario
         fields = [
             "id",
             "name",
+            "name_pt",
             "presentation_order",
             "vector_dataset",
             "model_file",
@@ -53,13 +59,17 @@ class ScenarioSerializer(serializers.ModelSerializer):
 
 class DataModelSerializer(serializers.ModelSerializer):
     scenarios = ScenarioSerializer(many=True, read_only=True)
+    name = serializers.CharField(source="name_en")
+    description = serializers.CharField(source="description_en")
 
     class Meta:
         model = DataModel
         fields = [
             "id",
             "name",
+            "name_pt",
             "description",
+            "description_pt",
             "presentation_order",
             "filter_fields",
             "popup_fields",

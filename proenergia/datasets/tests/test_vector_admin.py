@@ -34,8 +34,8 @@ class VectorDatasetAdmin(TestCase):
         self.assertContains(response, "Is approved")
 
         data = {
-            "name": "Test Dataset",
-            "description": "Test Description",
+            "name_en": "Test Dataset",
+            "description_en": "Test Description",
         }
         response = self.client.post(url, data)
 
@@ -57,8 +57,8 @@ class VectorDatasetAdmin(TestCase):
         self.assertNotContains(response, "Is approved")
 
         data = {
-            "name": "Test Dataset",
-            "description": "Test Description",
+            "name_en": "Test Dataset",
+            "description_en": "Test Description",
         }
         response = self.client.post(url, data)
 
@@ -109,8 +109,8 @@ class VectorDatasetAdmin(TestCase):
         self.assertEqual(response.status_code, 200)
 
         data = {
-            "name": "Updated Dataset",
-            "description": "Updated Description",
+            "name_en": "Updated Dataset",
+            "description_en": "Updated Description",
         }
         response = self.client.post(url, data)
 
@@ -136,8 +136,8 @@ class VectorDatasetAdmin(TestCase):
         self.assertEqual(response.status_code, 200)
 
         data = {
-            "name": "Updated Dataset",
-            "description": "Updated Description",
+            "name_en": "Updated Dataset",
+            "description_en": "Updated Description",
         }
         response = self.client.post(url, data)
 

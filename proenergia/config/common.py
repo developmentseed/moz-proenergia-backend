@@ -11,6 +11,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 class Common(Configuration):
     INSTALLED_APPS = (
+        # modeltranslation must come before unfold and django.contrib.admin
+        "modeltranslation",
         # unfold
         "unfold",  # before django.contrib.admin
         "unfold.contrib.filters",  # optional, if special filters are needed
@@ -99,6 +101,8 @@ class Common(Configuration):
         ("en", "English"),
         ("pt", "Portuguese"),
     )
+    MODELTRANSLATION_DEFAULT_LANGUAGE = "en"
+    MODELTRANSLATION_PREPOPULATE_LANGUAGE = "en"
     LOCALE_PATHS = (join(BASE_DIR, "locale"),)
     USE_TZ = True
     LOGIN_REDIRECT_URL = "/"
