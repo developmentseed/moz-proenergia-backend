@@ -149,14 +149,14 @@ class DataModel(models.Model):
         _("filter fields"),
         default=list,
         help_text=_(
-            """A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "column": "File/Database column name"}"""
+            """A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "column": "File/Database column name", "label_pt": "Label in Portuguese", "description_pt": "Description in Portuguese"}"""
         ),
     )
     popup_fields = models.JSONField(
         _("popup fields"),
         default=list,
         help_text=_(
-            """A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "column": "File/Database column name", "unit": "Unit of measurement"}"""
+            """A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "column": "File/Database column name", "unit": "Unit of measurement", "label_pt": "Label in Portuguese", "description_pt": "Description in Portuguese"}"""
         ),
     )
     summary_fields = models.JSONField(
@@ -164,7 +164,7 @@ class DataModel(models.Model):
         default=list(),
         help_text=_("""A list containing JSON objects following this structure:<br>
             {"label": "Field label", "description": "Field description", "columns": ["column_1", "column_2"], "unit": "Unit of measurement (optional)", "method": "One of: sum, average, count, min, max", "group_by": "column to aggregate data (optional)", "category": "The category where the field will be shown in the frontend summary section (optional)", "chartType": "One of: bar, donut, stacked, column, area, highlight (optional)", "hasDecimal": false}
-            <br>The "method" field is optional and defaults to "sum". The "hasDecimal" field is optional and defaults to false.
+            <br>The "method" field is optional and defaults to "sum". The "hasDecimal" field is optional and defaults to false. You can also add "label_pt" and "description_pt" fields for translated labels and descriptions.
         """),
     )
     metric_field_types = models.JSONField(
