@@ -16,8 +16,20 @@ cd $APP_DIR
 
 # Clone the repository if it doesn't exist
 if [ ! -d "app/.git" ]; then
+    # Save existing .env if it exists
+    if [ -f "app/.env" ]; then
+        echo "Saving existing .env file..."
+        cp app/.env /tmp/proenergia.env.backup
+    fi
+    
     echo "Cloning repository..."
     git clone $REPO_URL app
+    
+    # Restore .env
+    if [ -f "/tmp/proenergia.env.backup" ]; then
+        echo "Restoring .env file..."
+        mv /tmp/proenergia.env.backup app/.env
+    fi
 else
     echo "Repository already exists, pulling latest changes..."
     cd app
