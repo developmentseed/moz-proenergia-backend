@@ -185,6 +185,7 @@ cat > "$ENV_FILE" << EOF
 DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY
 DJANGO_DEBUG=False
 DJANGO_SETTINGS_MODULE=proenergia.config.production
+DJANGO_CONFIGURATION=Production
 
 # Database Configuration
 DATABASE_URL=postgis://$DB_USER:$DB_PASSWORD@localhost:5432/$DB_NAME
