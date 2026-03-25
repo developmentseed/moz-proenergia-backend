@@ -43,12 +43,14 @@ pip install --upgrade pip
 echo "Installing Python dependencies..."
 pip install -r requirements.txt
 
-# Copy environment file if it doesn't exist
+# Check if environment file exists (should be created by 01_setup_infrastructure.sh)
 if [ ! -f ".env" ]; then
-    echo "Creating environment file from template..."
-    cp ../deploy/.env.production .env
-    echo "IMPORTANT: Edit .env file with your actual values!"
+    echo "ERROR: .env file not found!"
+    echo "Please run 01_setup_infrastructure.sh first to generate the .env file."
+    exit 1
 fi
+
+echo "Using existing .env file"
 
 # Run database migrations
 echo "Running database migrations..."
@@ -62,12 +64,17 @@ python manage.py createcachetable
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
-# Create superuser (optional)
-echo "To create a superuser, run:"
-echo "python manage.py createsuperuser"
+# Compile translation messages
+echo "Compiling translation files..."
+python manage.py compilemessages -f || echo "Translation compilation skipped (no messages found)"
 
+# Create superuser (optional)
+echo ""
 echo "=== Application setup complete ==="
-echo "Make sure to:"
-echo "1. Update .env file with correct values"
-echo "2. Run migrations again if needed"
-echo "3. Run 03_setup_services.sh as root to configure services"
+echo ""
+echo "To create a Django admin superuser, run:"
+echo "  cd $APP_DIR/app"
+echo "  source venv/bin/activate"
+echo "  python manage.py createsuperuser"
+echo ""
+echo "Next step: Run ./03_setup_services.sh as root to configure and start services"

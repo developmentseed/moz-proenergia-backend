@@ -33,6 +33,9 @@ sudo apt install -y \
     postgresql-contrib \
     libpq-dev
 
+# Install RabbitMQ
+sudo apt install -y rabbitmq-server
+
 # Install nginx
 sudo apt install -y nginx
 
@@ -50,8 +53,9 @@ sudo systemctl enable postgresql
 sudo systemctl start nginx
 sudo systemctl enable nginx
 
-echo "=== Database setup will be handled by separate script ==="
-echo "Run ./00_setup_database.sh after this script completes"
+# Start and enable RabbitMQ
+sudo systemctl start rabbitmq-server
+sudo systemctl enable rabbitmq-server
 
 echo "=== Creating application user ==="
 
@@ -71,7 +75,6 @@ sudo chmod 666 /var/log/proenergia/deployment.log
 
 echo "=== System setup complete ==="
 echo "Next steps:"
-echo "1. Run ./00_setup_database.sh to set up PostgreSQL"
-echo "2. Run 02_setup_app.sh as the proenergia user"
-echo "3. Update /var/www/proenergia/app/.env with your settings"
-echo "4. Run 03_setup_services.sh"
+echo "1. Run ./01_setup_infrastructure.sh to set up PostgreSQL, RabbitMQ, and generate .env"
+echo "2. Run ./02_setup_application.sh as the proenergia user"
+echo "3. Run ./03_setup_services.sh to configure and start services"

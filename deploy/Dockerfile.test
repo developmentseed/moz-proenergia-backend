@@ -1,0 +1,57 @@
+# Dockerfile for testing ProEnergia deployment scripts
+# Usage: docker build -f Dockerfile.test -t proenergia-test .
+#        docker run -d --privileged --name proenergia-test -p 8080:80 -p 8443:443 -p 8000:8000 proenergia-test
+#        docker exec -it proenergia-test bash
+
+FROM ubuntu:24.04
+
+# Avoid interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Update and install essential packages
+RUN apt-get update && apt-get install -y \
+    systemd \
+    systemd-sysv \
+    sudo \
+    curl \
+    wget \
+    git \
+    nano \
+    vim \
+    net-tools \
+    iproute2 \
+    ca-certificates \
+    gnupg \
+    lsb-release \
+    software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
+
+# Enable systemd
+ENV container=docker
+VOLUME ["/sys/fs/cgroup"]
+
+# Create a directory for systemd
+RUN mkdir -p /run/systemd && echo 'docker' > /run/systemd/container
+
+# Remove unnecessary systemd services that don't work in containers
+RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
+    /etc/systemd/system/*.wants/* \
+    /lib/systemd/system/local-fs.target.wants/* \
+    /lib/systemd/system/sockets.target.wants/*udev* \
+    /lib/systemd/system/sockets.target.wants/*initctl* \
+    /lib/systemd/system/basic.target.wants/* \
+    /lib/systemd/system/anaconda.target.wants/* \
+    /lib/systemd/system/plymouth* \
+    /lib/systemd/system/systemd-update-utmp*
+
+# Expose ports
+# 80: HTTP
+# 443: HTTPS  
+# 8000: Django development server (if needed)
+EXPOSE 80 443 8000
+
+# Set working directory
+WORKDIR /root
+
+# Use systemd as init
+CMD ["/lib/systemd/systemd"]
