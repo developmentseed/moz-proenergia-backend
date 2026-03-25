@@ -6,7 +6,12 @@ set -e
 # Install to: /usr/local/bin/deploy-proenergia
 
 APP_DIR="/var/www/proenergia/app"
-UPDATE_SCRIPT="$APP_DIR/deploy/scripts/04_update_app_nosudo.sh"
+# Try new script name first, fall back to old name for compatibility
+if [ -f "$APP_DIR/deploy/scripts/05_update_app.sh" ]; then
+    UPDATE_SCRIPT="$APP_DIR/deploy/scripts/05_update_app.sh"
+else
+    UPDATE_SCRIPT="$APP_DIR/deploy/scripts/04_update_app_nosudo.sh"
+fi
 LOG_FILE="/var/log/proenergia/deployment.log"
 
 # Logging function
