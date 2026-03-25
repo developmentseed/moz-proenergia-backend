@@ -15,7 +15,7 @@ REPO_URL="https://github.com/developmentseed/moz-proenergia-backend.git"
 cd $APP_DIR
 
 # Clone the repository if it doesn't exist
-if [ ! -d "app" ]; then
+if [ ! -d "app/.git" ]; then
     echo "Cloning repository..."
     git clone $REPO_URL app
 else
