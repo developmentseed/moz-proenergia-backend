@@ -8,6 +8,9 @@ if [[ $EUID -eq 0 ]]; then
 fi
 
 echo "=== Setting up Python application ==="
+echo "Usage: sudo -u proenergia $0"
+echo "No parameters required for this script"
+echo ""
 
 APP_DIR="/var/www/proenergia"
 REPO_URL="https://github.com/developmentseed/moz-proenergia-backend.git"

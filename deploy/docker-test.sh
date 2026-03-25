@@ -42,7 +42,7 @@ case "$1" in
             --name $CONTAINER_NAME \
             -p 8080:80 \
             -p 8443:443 \
-            -p 8000:8000 \
+            -p 8001:8000 \
             --cgroupns=host \
             -v /sys/fs/cgroup:/sys/fs/cgroup:rw \
             $IMAGE_NAME
@@ -53,7 +53,7 @@ case "$1" in
         echo "  Name: $CONTAINER_NAME"
         echo "  HTTP: http://localhost:8080"
         echo "  HTTPS: https://localhost:8443"
-        echo "  Django: http://localhost:8000"
+        echo "  Django: http://localhost:8001"
         echo ""
         echo -e "${YELLOW}Waiting for systemd to initialize...${NC}"
         sleep 5
@@ -94,7 +94,7 @@ case "$1" in
             --name $CONTAINER_NAME \
             -p 8080:80 \
             -p 8443:443 \
-            -p 8000:8000 \
+            -p 8001:8000 \
             --cgroupns=host \
             -v /sys/fs/cgroup:/sys/fs/cgroup:rw \
             $IMAGE_NAME

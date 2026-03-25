@@ -2,6 +2,9 @@
 set -e
 
 echo "=== Setting up system dependencies ==="
+echo "Usage: $0"
+echo "No parameters required for this script"
+echo ""
 
 # Update system packages
 sudo apt update

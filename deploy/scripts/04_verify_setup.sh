@@ -2,6 +2,8 @@
 set -e
 
 echo "=== ProEnergia Setup Verification ==="
+echo "Usage: $0"
+echo "No parameters required for this script"
 echo ""
 
 # Color codes for output

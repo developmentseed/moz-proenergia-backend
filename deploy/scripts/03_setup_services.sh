@@ -9,8 +9,16 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-DOMAIN=${1:-"your-domain.com"}
-EMAIL=${2:-"admin@your-domain.com"}
+# Check for required domain parameter
+if [ $# -eq 0 ] || [ -z "$1" ]; then
+    echo "Error: Domain parameter is required"
+    echo "Usage: $0 <domain> [email]"
+    echo "Example: $0 example.com admin@example.com"
+    exit 1
+fi
+
+DOMAIN="$1"
+EMAIL=${2:-"admin@$DOMAIN"}
 
 echo "Setting up services for domain: $DOMAIN"
 echo "SSL certificate email: $EMAIL"

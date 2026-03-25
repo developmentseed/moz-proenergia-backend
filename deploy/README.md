@@ -22,11 +22,11 @@ cd moz-proenergia-backend/deploy/scripts
 # Make scripts executable
 chmod +x *.sh
 
-# Run setup scripts in order
+# Run setup scripts in order (DOMAIN IS REQUIRED)
 ./00_setup_system.sh                                    # Install system dependencies
-./01_setup_infrastructure.sh your-domain.com           # Setup PostgreSQL, RabbitMQ, generate .env
+./01_setup_infrastructure.sh your-domain.com           # Setup PostgreSQL, RabbitMQ, generate .env (REQUIRED: domain)
 sudo -u proenergia ./02_setup_application.sh           # Install application
-./03_setup_services.sh your-domain.com admin@email.com # Configure services and SSL
+./03_setup_services.sh your-domain.com admin@email.com # Configure services and SSL (REQUIRED: domain, OPTIONAL: email)
 ./04_verify_setup.sh                                   # Verify installation
 
 # Clean up temporary checkout (optional)
@@ -53,7 +53,7 @@ This script:
 ### Step 2: Infrastructure Setup
 
 ```bash
-./01_setup_infrastructure.sh your-domain.com
+./01_setup_infrastructure.sh your-domain.com  # Domain parameter is REQUIRED
 ```
 
 This script:
@@ -89,7 +89,7 @@ This script (run as proenergia user):
 ### Step 4: Services Configuration
 
 ```bash
-./03_setup_services.sh your-domain.com admin@your-domain.com
+./03_setup_services.sh your-domain.com admin@your-domain.com  # Domain is REQUIRED, email is optional
 ```
 
 This script:
@@ -329,9 +329,9 @@ For issues with the deployment process, please check:
 ## Script Reference
 
 - `00_setup_system.sh` - Install system packages and create user
-- `01_setup_infrastructure.sh` - Configure PostgreSQL, RabbitMQ, and generate .env
-- `02_setup_application.sh` - Install Django application
-- `03_setup_services.sh` - Configure nginx, SSL, and systemd services
+- `01_setup_infrastructure.sh <domain>` - Configure PostgreSQL, RabbitMQ, and generate .env (REQUIRES: domain parameter)
+- `02_setup_application.sh` - Install Django application (run as proenergia user)
+- `03_setup_services.sh <domain> [email]` - Configure nginx, SSL, and systemd services (REQUIRES: domain, OPTIONAL: email)
 - `04_verify_setup.sh` - Verify installation completeness
 - `05_update_app.sh` - Update application (used by deployment system)
 - `deploy-wrapper.sh` - Deployment helper script

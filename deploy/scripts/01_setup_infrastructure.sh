@@ -9,13 +9,17 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-# Get domain parameter
-DOMAIN=${1:-"localhost"}
-if [ "$DOMAIN" == "localhost" ]; then
-    echo "Warning: No domain specified, using localhost"
-    echo "Usage: $0 your-domain.com"
-    echo ""
+# Check for required domain parameter
+if [ $# -eq 0 ] || [ -z "$1" ]; then
+    echo "Error: Domain parameter is required"
+    echo "Usage: $0 <domain>"
+    echo "Example: $0 example.com"
+    exit 1
 fi
+
+# Get domain parameter
+DOMAIN="$1"
+echo "Setting up infrastructure for domain: $DOMAIN"
 
 # Function to generate secure password
 generate_password() {
