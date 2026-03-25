@@ -30,8 +30,12 @@ ReadWritePaths=/var/www/proenergia /var/log/proenergia /var/run/proenergia
 
 # Resource limits
 LimitNOFILE=65536
-MemoryHigh=8G
+# Reduced MemoryHigh to trigger memory pressure earlier and prevent OOM
+MemoryHigh=4G
 MemoryMax=10G
+MemorySwapMax=4G
+# Continue running even if some processes get OOM killed
+OOMPolicy=continue
 
 [Install]
 WantedBy=multi-user.target

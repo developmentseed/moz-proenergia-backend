@@ -6,10 +6,12 @@ bind = "127.0.0.1:8000"
 backlog = 2048
 
 # Worker processes
-workers = multiprocessing.cpu_count() * 2 + 1
+# Reduced workers to prevent memory exhaustion
+# Original: multiprocessing.cpu_count() * 2 + 1
+workers = min(3, multiprocessing.cpu_count())  # Max 3 workers
 worker_class = "sync"
 worker_connections = 1000
-timeout = 30
+timeout = 120  # Increased from 30 to handle long queries
 keepalive = 2
 
 # Restart workers after this many requests, to prevent memory leaks
