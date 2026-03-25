@@ -145,11 +145,19 @@ echo "=== Step 7: Setting up SSL certificate ==="
 
 # Setup SSL with Let's Encrypt
 echo "Setting up SSL certificate..."
-certbot --nginx -d $DOMAIN --email $EMAIL --agree-tos --non-interactive --redirect
+certbot --nginx -d $DOMAIN --email $EMAIL --agree-tos --non-interactive --redirect || {
+    echo ""
+    echo "WARNING: SSL certificate setup failed. The application will run on HTTP only."
+    echo "To retry SSL setup later, run:"
+    echo "  sudo certbot --nginx -d $DOMAIN --email $EMAIL --agree-tos --non-interactive --redirect"
+    echo ""
+}
 
-# Setup auto-renewal
-systemctl enable certbot.timer
-systemctl start certbot.timer
+# Setup auto-renewal (only if certbot is installed)
+if command -v certbot &> /dev/null; then
+    systemctl enable certbot.timer 2>/dev/null || true
+    systemctl start certbot.timer 2>/dev/null || true
+fi
 
 echo ""
 echo "=== Step 8: Configuring firewall ==="
