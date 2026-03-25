@@ -19,7 +19,7 @@ if [ ! -d "app/.git" ]; then
     # Save existing .env if it exists
     if [ -f "app/.env" ]; then
         echo "Saving existing .env file..."
-        cp app/.env /tmp/proenergia.env.backup
+        mv app/.env /tmp/proenergia.env.backup
     fi
     
     echo "Cloning repository..."

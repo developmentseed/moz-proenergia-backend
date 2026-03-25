@@ -178,6 +178,7 @@ ENV_FILE="/var/www/proenergia/app/.env"
 
 # Ensure app directory exists
 mkdir -p /var/www/proenergia/app
+chown proenergia:proenergia /var/www/proenergia/app
 
 cat > "$ENV_FILE" << EOF
 # Django Configuration
