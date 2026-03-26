@@ -293,6 +293,20 @@ class Common(Configuration):
                                 "admin:datasets_vectorfile_changelist"
                             ),
                         },
+                        {
+                            "title": _("Raster Datasets"),
+                            "icon": "globe_asia",
+                            "link": reverse_lazy(
+                                "admin:datasets_rasterdataset_changelist"
+                            ),
+                        },
+                        {
+                            "title": _("Raster Files"),
+                            "icon": "photo_library",
+                            "link": reverse_lazy(
+                                "admin:datasets_rasterfile_changelist"
+                            ),
+                        },
                     ],
                 },
                 {

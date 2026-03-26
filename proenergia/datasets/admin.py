@@ -16,6 +16,8 @@ from proenergia.datasets.tasks import (
 
 from .models import (
     DataModel,
+    RasterDataset,
+    RasterFile,
     Scenario,
     ScenarioFile,
     VectorDataset,
@@ -53,10 +55,23 @@ class PermissionBasedModelAdmin(ModelAdmin):
         return False
 
 
+@admin.register(RasterDataset)
 @admin.register(VectorDataset)
 class VectorDatasetAdmin(PermissionBasedModelAdmin, TabbedTranslationAdmin):
     list_display = ["name", "updated", "is_public", "is_approved"]
-    fields = ["name", "description", "source"]
+    fields = [
+        "name",
+        "description",
+        "source",
+        "contact",
+        "published",
+        "temporal_extent",
+        "crs",
+        "frequency",
+        "lineage",
+        "license",
+        "attribute",
+    ]
     actions = ["make_public", "make_private", "approve", "disapprove"]
 
     def get_fields(self, request, obj=None):
@@ -424,3 +439,34 @@ class ScenarioFileAdmin(ModelAdmin):
                 request,
                 _("Files in created or processing state cannot be reprocessed."),
             )
+
+
+@admin.register(RasterFile)
+class RasterFileAdmin(PermissionBasedModelAdmin):
+    list_display = ["id", "dataset", "created", "created_by"]
+    fields = ["dataset", "file"]
+    readonly_fields = ["created", "created_by"]
+    list_filter = ["created_by", "dataset"]
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.created_by = request.user
+
+        super().save_model(request, obj, form, change)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "dataset":
+            if request.user.is_superuser:
+                kwargs["queryset"] = RasterDataset.objects.all()
+            else:
+                kwargs["queryset"] = RasterDataset.objects.filter(
+                    created_by=request.user
+                )
+
+        elif db_field.name == "created_by":
+            kwargs["initial"] = request.user.id
+
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def has_change_permission(self, request, obj=None):
+        return False
