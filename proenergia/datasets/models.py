@@ -155,6 +155,118 @@ def delete_vector_file(sender, instance, **kwargs):
                 default_storage.delete(file)
 
 
+class RasterDataset(models.Model):
+    name = models.CharField(_("name"), max_length=155, unique=True)
+    description = models.TextField(
+        _("abstract"), max_length=2000, null=True, blank=True
+    )
+    created = models.DateTimeField(_("created"), auto_now_add=True)
+    updated = models.DateTimeField(_("updated"), auto_now=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        models.PROTECT,
+        verbose_name=_("created by"),
+        related_name="raster_datasets",
+    )
+    last_updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        models.PROTECT,
+        verbose_name=_("last updated by"),
+        related_name="+",
+    )
+    source = models.CharField(_("source"), max_length=155, blank=True, null=True)
+    contact = models.CharField(
+        _("point of contact"), max_length=155, blank=True, null=True
+    )
+    published = models.DateField(_("publication date"), blank=True, null=True)
+    temporal_extent = models.CharField(
+        _("temporal extent"), max_length=155, blank=True, null=True
+    )
+    crs = models.CharField(
+        _("coordinate reference system (CRS)"), max_length=155, blank=True, null=True
+    )
+    frequency = models.CharField(
+        _("maintenance frequency"), max_length=155, blank=True, null=True
+    )
+    lineage = models.CharField(_("lineage"), max_length=155, blank=True, null=True)
+    license = models.CharField(
+        _("legal license / Terms of use"), max_length=155, blank=True, null=True
+    )
+    attribute = models.CharField(
+        _("attribute definitions"), max_length=155, blank=True, null=True
+    )
+    is_public = models.BooleanField(_("is public"), default=False)
+    is_approved = models.BooleanField(_("is approved"), default=False)
+
+    def __str__(self):
+        return self.name
+
+    def latest_file(self):
+        try:
+            return self.files.latest("created")
+        except ObjectDoesNotExist:
+            return None
+
+    class Meta:
+        ordering = ["id"]
+        verbose_name = _("raster dataset")
+        verbose_name_plural = _("raster datasets")
+
+
+def generate_raster_file_name(instance, filename):
+    """Generate a filename with the slugified dataset name
+    and the file extension."""
+    name, extension = splitext(filename)
+    version = instance.dataset.files.count() + 1
+
+    return f"raster/{slugify(instance.dataset.name)}_v{version}{extension}"
+
+
+class RasterFile(models.Model):
+    dataset = models.ForeignKey(
+        RasterDataset,
+        models.PROTECT,
+        verbose_name=_("dataset"),
+        related_name="files",
+    )
+    created = models.DateTimeField(_("created"), auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        models.PROTECT,
+        verbose_name=_("created by"),
+        related_name="raster_files",
+    )
+    file = models.FileField(
+        _("file"),
+        upload_to=generate_raster_file_name,
+        unique=True,
+        validators=[
+            FileExtensionValidator(
+                allowed_extensions=["tiff", "tif", "geotiff", "gtiff", "vrt"]
+            )
+        ],
+    )
+
+    def __str__(self):
+        return f"{self.dataset} ({self.created})"
+
+    class Meta:
+        ordering = ["id"]
+        verbose_name = _("raster file")
+        verbose_name_plural = _("raster files")
+
+
+@receiver(pre_delete, sender=RasterFile)
+def delete_raster_file(sender, instance, **kwargs):
+    """
+    Delete the file from storage when a RasterFile instance is deleted
+    """
+    if instance.file:
+        # Using default_storage for better compatibility with different storage backends
+        if default_storage.exists(instance.file.name):
+            default_storage.delete(instance.file.name)
+
+
 class DataModel(models.Model):
     name = models.CharField(_("name"), max_length=155, unique=True)
     presentation_order = models.IntegerField(
@@ -218,6 +330,16 @@ class DataModel(models.Model):
         related_name="models",
         help_text=_(
             "Vector datasets that can be visualized together with the model data."
+        ),
+    )
+    raster_layers = models.ManyToManyField(
+        RasterDataset,
+        verbose_name=_("raster layers"),
+        null=True,
+        blank=True,
+        related_name="models",
+        help_text=_(
+            "Raster datasets that can be visualized together with the model data."
         ),
     )
 
@@ -402,115 +524,3 @@ class ScenarioDataMetrics(models.Model):
             models.Index(fields=["scenario", "key", "string_value"]),
             models.Index(fields=["scenario", "feature_id"]),
         ]
-
-
-def generate_raster_file_name(instance, filename):
-    """Generate a filename with the slugified dataset name
-    and the file extension."""
-    name, extension = splitext(filename)
-    version = instance.dataset.files.count() + 1
-
-    return f"raster/{slugify(instance.dataset.name)}_v{version}{extension}"
-
-
-class RasterDataset(models.Model):
-    name = models.CharField(_("name"), max_length=155, unique=True)
-    description = models.TextField(
-        _("abstract"), max_length=2000, null=True, blank=True
-    )
-    created = models.DateTimeField(_("created"), auto_now_add=True)
-    updated = models.DateTimeField(_("updated"), auto_now=True)
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        models.PROTECT,
-        verbose_name=_("created by"),
-        related_name="raster_datasets",
-    )
-    last_updated_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        models.PROTECT,
-        verbose_name=_("last updated by"),
-        related_name="+",
-    )
-    source = models.CharField(_("source"), max_length=155, blank=True, null=True)
-    contact = models.CharField(
-        _("point of contact"), max_length=155, blank=True, null=True
-    )
-    published = models.DateField(_("publication date"), blank=True, null=True)
-    temporal_extent = models.CharField(
-        _("temporal extent"), max_length=155, blank=True, null=True
-    )
-    crs = models.CharField(
-        _("coordinate reference system (CRS)"), max_length=155, blank=True, null=True
-    )
-    frequency = models.CharField(
-        _("maintenance frequency"), max_length=155, blank=True, null=True
-    )
-    lineage = models.CharField(_("lineage"), max_length=155, blank=True, null=True)
-    license = models.CharField(
-        _("legal license / Terms of use"), max_length=155, blank=True, null=True
-    )
-    attribute = models.CharField(
-        _("attribute definitions"), max_length=155, blank=True, null=True
-    )
-    is_public = models.BooleanField(_("is public"), default=False)
-    is_approved = models.BooleanField(_("is approved"), default=False)
-
-    def __str__(self):
-        return self.name
-
-    def latest_file(self):
-        try:
-            return self.files.latest("created")
-        except ObjectDoesNotExist:
-            return None
-
-    class Meta:
-        ordering = ["id"]
-        verbose_name = _("raster dataset")
-        verbose_name_plural = _("raster datasets")
-
-
-class RasterFile(models.Model):
-    dataset = models.ForeignKey(
-        RasterDataset,
-        models.PROTECT,
-        verbose_name=_("dataset"),
-        related_name="files",
-    )
-    created = models.DateTimeField(_("created"), auto_now_add=True)
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        models.PROTECT,
-        verbose_name=_("created by"),
-        related_name="raster_files",
-    )
-    file = models.FileField(
-        _("file"),
-        upload_to=generate_raster_file_name,
-        unique=True,
-        validators=[
-            FileExtensionValidator(
-                allowed_extensions=["tiff", "tif", "geotiff", "gtiff", "vrt"]
-            )
-        ],
-    )
-
-    def __str__(self):
-        return f"{self.dataset} ({self.created})"
-
-    class Meta:
-        ordering = ["id"]
-        verbose_name = _("raster file")
-        verbose_name_plural = _("raster files")
-
-
-@receiver(pre_delete, sender=RasterFile)
-def delete_raster_file(sender, instance, **kwargs):
-    """
-    Delete the file from storage when a RasterFile instance is deleted
-    """
-    if instance.file:
-        # Using default_storage for better compatibility with different storage backends
-        if default_storage.exists(instance.file.name):
-            default_storage.delete(instance.file.name)

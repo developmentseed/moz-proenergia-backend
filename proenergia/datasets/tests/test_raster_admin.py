@@ -311,7 +311,7 @@ class RasterFileAdmin(TestCase):
         self.assertNotContains(response, "Created by")
 
         file = SimpleUploadedFile(
-            "boundaries.geotiff", b"file_content", content_type="application/geotiff"
+            "boundaries.geotiff", b"file_content", content_type="image/tiff"
         )
 
         data = {
@@ -340,7 +340,7 @@ class RasterFileAdmin(TestCase):
         self.assertNotContains(response, "Created by")
 
         file = SimpleUploadedFile(
-            "boundaries.geotiff", b"file_content", content_type="application/geotiff"
+            "boundaries.geotiff", b"file_content", content_type="image/tiff"
         )
 
         data = {
@@ -357,7 +357,7 @@ class RasterFileAdmin(TestCase):
             "file": SimpleUploadedFile(
                 "boundaries.geotiff",
                 b"file_content",
-                content_type="application/geotiff",
+                content_type="image/tiff",
             ),
         }
         response = self.client.post(url, data)

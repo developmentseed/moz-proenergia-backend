@@ -372,6 +372,10 @@ class DataModelAdmin(ModelAdmin, TabbedTranslationAdmin):
             kwargs["queryset"] = VectorDataset.objects.filter(
                 is_approved=True, files__status="ready"
             ).distinct()
+        if db_field.name == "raster_layers":
+            kwargs["queryset"] = RasterDataset.objects.filter(
+                is_approved=True
+            ).distinct()
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
 
