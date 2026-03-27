@@ -56,6 +56,7 @@ coverage.xml
 .media/
 media/vector/*
 media/raster/*
+media/reference/*
 media/scenarios/*
 local_settings.py
 

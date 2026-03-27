@@ -18,6 +18,8 @@ from .models import (
     DataModel,
     RasterDataset,
     RasterFile,
+    ReferenceDataset,
+    ReferenceFile,
     Scenario,
     ScenarioFile,
     VectorDataset,
@@ -57,6 +59,7 @@ class PermissionBasedModelAdmin(ModelAdmin):
 
 @admin.register(RasterDataset)
 @admin.register(VectorDataset)
+@admin.register(ReferenceDataset)
 class VectorDatasetAdmin(PermissionBasedModelAdmin, TabbedTranslationAdmin):
     list_display = ["name", "updated", "is_public", "is_approved"]
     fields = [
@@ -201,10 +204,12 @@ class DataModelAdminForm(ModelForm):
             "color_coding",
             "contextual_layers",
             "raster_layers",
+            "reference_datasets",
         ]
         widgets = {
             "contextual_layers": CheckboxSelectMultiple(),
             "raster_layers": CheckboxSelectMultiple(),
+            "reference_datasets": CheckboxSelectMultiple(),
             "filter_fields": JSONEditorWidget(
                 height="400px",
                 width="90%",
@@ -378,6 +383,10 @@ class DataModelAdmin(ModelAdmin, TabbedTranslationAdmin):
             kwargs["queryset"] = RasterDataset.objects.filter(
                 is_approved=True
             ).distinct()
+        if db_field.name == "reference_datasets":
+            kwargs["queryset"] = ReferenceDataset.objects.filter(
+                is_approved=True
+            ).distinct()
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
 
@@ -466,6 +475,37 @@ class RasterFileAdmin(PermissionBasedModelAdmin):
                 kwargs["queryset"] = RasterDataset.objects.all()
             else:
                 kwargs["queryset"] = RasterDataset.objects.filter(
+                    created_by=request.user
+                )
+
+        elif db_field.name == "created_by":
+            kwargs["initial"] = request.user.id
+
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(ReferenceFile)
+class ReferenceFileAdmin(PermissionBasedModelAdmin):
+    list_display = ["id", "dataset", "created", "created_by"]
+    fields = ["dataset", "file"]
+    readonly_fields = ["created", "created_by"]
+    list_filter = ["created_by", "dataset"]
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.created_by = request.user
+
+        super().save_model(request, obj, form, change)
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "dataset":
+            if request.user.is_superuser:
+                kwargs["queryset"] = ReferenceDataset.objects.all()
+            else:
+                kwargs["queryset"] = ReferenceDataset.objects.filter(
                     created_by=request.user
                 )
 

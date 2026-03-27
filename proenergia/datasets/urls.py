@@ -17,6 +17,12 @@ urlpatterns = [
         views.RasterDatasetDetailView.as_view(),
         name="raster-detail",
     ),
+    path("reference/", views.ReferenceDatasetListView.as_view(), name="reference-list"),
+    path(
+        "reference/<int:pk>/",
+        views.ReferenceDatasetDetailView.as_view(),
+        name="reference-detail",
+    ),
     path("model/", views.DataModelListView.as_view(), name="model-list"),
     path(
         "model/<int:pk>/",

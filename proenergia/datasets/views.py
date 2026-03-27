@@ -12,10 +12,16 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .aggregation import CombinedFieldAggregator, FilterParser
-from .filters import DataModelFilter, RasterDatasetFilter, VectorDatasetFilter
+from .filters import (
+    DataModelFilter,
+    RasterDatasetFilter,
+    ReferenceDatasetFilter,
+    VectorDatasetFilter,
+)
 from .models import (
     DataModel,
     RasterDataset,
+    ReferenceDataset,
     Scenario,
     ScenarioData,
     ScenarioDataMetrics,
@@ -25,6 +31,7 @@ from .pagination import StandardResultsSetPagination
 from .serializers import (
     DataModelSerializer,
     RasterDatasetSerializer,
+    ReferenceDatasetSerializer,
     ScenarioDataSerializer,
     VectorDatasetSerializer,
 )
@@ -96,11 +103,39 @@ class RasterDatasetDetailView(RetrieveAPIView):
     permission_classes = [PublicApprovedDataset]
 
 
+class ReferenceDatasetListView(ListAPIView):
+    """Lists ReferenceDatasets that are public and approved. For logged-in superadmin users, it returns all datasets."""
+
+    serializer_class = ReferenceDatasetSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = StandardResultsSetPagination
+    filterset_class = ReferenceDatasetFilter
+
+    def get_queryset(self):
+        queryset = ReferenceDataset.objects.select_related(
+            "created_by", "last_updated_by"
+        )
+        if self.request.user and self.request.user.is_superuser:
+            return queryset
+        elif self.request.user.is_authenticated:
+            return queryset.filter(is_approved=True)
+        else:
+            return queryset.filter(is_public=True, is_approved=True)
+
+
+class ReferenceDatasetDetailView(RetrieveAPIView):
+    """Returns information about a specific ReferenceDataset."""
+
+    queryset = ReferenceDataset.objects.all()
+    serializer_class = ReferenceDatasetSerializer
+    permission_classes = [PublicApprovedDataset]
+
+
 class DataModelListView(ListAPIView):
     """Lists all available DataModel entries."""
 
     queryset = DataModel.objects.prefetch_related(
-        "scenarios", "contextual_layers", "raster_layers"
+        "scenarios", "contextual_layers", "raster_layers", "reference_datasets"
     )
     serializer_class = DataModelSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
