@@ -51,7 +51,7 @@ class PublicApprovedDataset(BasePermission):
             return request.method in SAFE_METHODS and obj.is_public and obj.is_approved
 
 
-class PublicApprovedModel(BasePermission):
+class PublicModel(BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.user and request.user.is_superuser:
             return True
@@ -161,7 +161,7 @@ class DataModelDetailView(RetrieveAPIView):
 
     queryset = DataModel.objects.all()
     serializer_class = DataModelSerializer
-    permission_classes = [PublicApprovedModel]
+    permission_classes = [PublicModel]
 
 
 class ScenarioDataDetailView(RetrieveAPIView):
