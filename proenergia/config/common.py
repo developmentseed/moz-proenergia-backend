@@ -260,7 +260,7 @@ class Common(Configuration):
         "SIDEBAR": {
             "navigation": [
                 {
-                    "title": _("Datasets"),
+                    "title": _("Models"),
                     "items": [
                         {
                             "title": _("Data Models"),
@@ -279,6 +279,11 @@ class Common(Configuration):
                                 "admin:datasets_scenariofile_changelist"
                             ),
                         },
+                    ],
+                },
+                {
+                    "title": _("Datasets"),
+                    "items": [
                         {
                             "title": _("Vector Datasets"),
                             "icon": "map",
@@ -305,6 +310,20 @@ class Common(Configuration):
                             "icon": "photo_library",
                             "link": reverse_lazy(
                                 "admin:datasets_rasterfile_changelist"
+                            ),
+                        },
+                        {
+                            "title": _("Reference Datasets"),
+                            "icon": "globe_asia",
+                            "link": reverse_lazy(
+                                "admin:datasets_referencedataset_changelist"
+                            ),
+                        },
+                        {
+                            "title": _("Reference Files"),
+                            "icon": "photo_library",
+                            "link": reverse_lazy(
+                                "admin:datasets_referencefile_changelist"
                             ),
                         },
                     ],

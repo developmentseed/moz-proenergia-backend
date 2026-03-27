@@ -7,7 +7,7 @@ from django_filters import (
     OrderingFilter,
 )
 
-from .models import DataModel, RasterDataset, VectorDataset
+from .models import DataModel, RasterDataset, ReferenceDataset, VectorDataset
 
 
 class DatasetFilter(FilterSet):
@@ -39,6 +39,12 @@ class RasterDatasetFilter(DatasetFilter):
 
     def filter_model(self, queryset, name, value):
         return queryset.filter(models__id=value).distinct()
+
+
+class ReferenceDatasetFilter(RasterDatasetFilter):
+    class Meta:
+        model = ReferenceDataset
+        fields = ["name", "source", "created", "updated", "model"]
 
 
 class DataModelFilter(FilterSet):

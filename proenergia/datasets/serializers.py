@@ -5,11 +5,38 @@ from rest_framework import serializers
 from .models import (
     DataModel,
     RasterDataset,
+    ReferenceDataset,
     Scenario,
     ScenarioData,
     ScenarioFile,
     VectorDataset,
 )
+
+DATASET_FIELDS = [
+    "id",
+    "name",
+    "name_pt",
+    "description",
+    "description_pt",
+    "created",
+    "updated",
+    "created_by",
+    "last_updated_by",
+    "source",
+    "contact",
+    "source",
+    "contact",
+    "published",
+    "temporal_extent",
+    "crs",
+    "frequency",
+    "lineage",
+    "license",
+    "attribute",
+    "is_public",
+    "is_approved",
+    "raw_file",
+]
 
 
 class DatasetSerializer(serializers.ModelSerializer):
@@ -27,61 +54,19 @@ class DatasetSerializer(serializers.ModelSerializer):
 class VectorDatasetSerializer(DatasetSerializer):
     class Meta:
         model = VectorDataset
-        fields = [
-            "id",
-            "name",
-            "name_pt",
-            "description",
-            "description_pt",
-            "created",
-            "updated",
-            "created_by",
-            "last_updated_by",
-            "source",
-            "contact",
-            "source",
-            "contact",
-            "published",
-            "temporal_extent",
-            "crs",
-            "frequency",
-            "lineage",
-            "license",
-            "attribute",
-            "is_public",
-            "is_approved",
-            "raw_file",
-        ]
+        fields = DATASET_FIELDS
 
 
 class RasterDatasetSerializer(DatasetSerializer):
     class Meta:
         model = RasterDataset
-        fields = [
-            "id",
-            "name",
-            "name_pt",
-            "description",
-            "description_pt",
-            "created",
-            "updated",
-            "created_by",
-            "last_updated_by",
-            "source",
-            "contact",
-            "source",
-            "contact",
-            "published",
-            "temporal_extent",
-            "crs",
-            "frequency",
-            "lineage",
-            "license",
-            "attribute",
-            "is_public",
-            "is_approved",
-            "raw_file",
-        ]
+        fields = DATASET_FIELDS
+
+
+class ReferenceDatasetSerializer(DatasetSerializer):
+    class Meta:
+        model = ReferenceDataset
+        fields = DATASET_FIELDS
 
 
 class ScenarioSerializer(serializers.ModelSerializer):

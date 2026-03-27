@@ -1,6 +1,6 @@
 from modeltranslation.translator import TranslationOptions, translator
 
-from .models import DataModel, RasterDataset, Scenario, VectorDataset
+from .models import DataModel, RasterDataset, ReferenceDataset, Scenario, VectorDataset
 
 
 class NameTranslationOptions(TranslationOptions):
@@ -16,4 +16,5 @@ class NameDescriptionTranslationOptions(TranslationOptions):
 translator.register(DataModel, NameDescriptionTranslationOptions)
 translator.register(VectorDataset, NameDescriptionTranslationOptions)
 translator.register(RasterDataset, NameDescriptionTranslationOptions)
+translator.register(ReferenceDataset, NameDescriptionTranslationOptions)
 translator.register(Scenario, NameTranslationOptions)
