@@ -200,9 +200,11 @@ class DataModelAdminForm(ModelForm):
             "visualization_column",
             "color_coding",
             "contextual_layers",
+            "raster_layers",
         ]
         widgets = {
             "contextual_layers": CheckboxSelectMultiple(),
+            "raster_layers": CheckboxSelectMultiple(),
             "filter_fields": JSONEditorWidget(
                 height="400px",
                 width="90%",
