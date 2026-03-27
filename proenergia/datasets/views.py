@@ -12,9 +12,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .aggregation import CombinedFieldAggregator, FilterParser
-from .filters import DataModelFilter, VectorDatasetFilter
+from .filters import DataModelFilter, RasterDatasetFilter, VectorDatasetFilter
 from .models import (
     DataModel,
+    RasterDataset,
     Scenario,
     ScenarioData,
     ScenarioDataMetrics,
@@ -23,6 +24,7 @@ from .models import (
 from .pagination import StandardResultsSetPagination
 from .serializers import (
     DataModelSerializer,
+    RasterDatasetSerializer,
     ScenarioDataSerializer,
     VectorDatasetSerializer,
 )
@@ -68,10 +70,38 @@ class VectorDatasetDetailView(RetrieveAPIView):
     permission_classes = [PublicApprovedDataset]
 
 
+class RasterDatasetListView(ListAPIView):
+    """Lists RasterDatasets that are public and approved. For logged-in superadmin users, it returns all datasets."""
+
+    serializer_class = RasterDatasetSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = StandardResultsSetPagination
+    filterset_class = RasterDatasetFilter
+
+    def get_queryset(self):
+        queryset = RasterDataset.objects.select_related("created_by", "last_updated_by")
+        if self.request.user and self.request.user.is_superuser:
+            return queryset
+        elif self.request.user.is_authenticated:
+            return queryset.filter(is_approved=True)
+        else:
+            return queryset.filter(is_public=True, is_approved=True)
+
+
+class RasterDatasetDetailView(RetrieveAPIView):
+    """Returns information about a specific RasterDataset."""
+
+    queryset = RasterDataset.objects.all()
+    serializer_class = RasterDatasetSerializer
+    permission_classes = [PublicApprovedDataset]
+
+
 class DataModelListView(ListAPIView):
     """Lists all available DataModel entries."""
 
-    queryset = DataModel.objects.prefetch_related("scenarios")
+    queryset = DataModel.objects.prefetch_related(
+        "scenarios", "contextual_layers", "raster_layers"
+    )
     serializer_class = DataModelSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     filterset_class = DataModelFilter

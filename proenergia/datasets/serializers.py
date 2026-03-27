@@ -1,15 +1,30 @@
+from typing import Optional
+
 from rest_framework import serializers
 
-from .models import DataModel, Scenario, ScenarioData, ScenarioFile, VectorDataset
+from .models import (
+    DataModel,
+    RasterDataset,
+    Scenario,
+    ScenarioData,
+    ScenarioFile,
+    VectorDataset,
+)
 
 
-class VectorDatasetSerializer(serializers.ModelSerializer):
+class DatasetSerializer(serializers.ModelSerializer):
     created_by = serializers.ReadOnlyField(source="created_by.name")
     last_updated_by = serializers.ReadOnlyField(source="last_updated_by.name")
     raw_file = serializers.SerializerMethodField()
     name = serializers.CharField(source="name_en")
     description = serializers.CharField(source="description_en")
 
+    def get_raw_file(self, obj):
+        f = obj.latest_file()
+        return f.file.name if f else None
+
+
+class VectorDatasetSerializer(DatasetSerializer):
     class Meta:
         model = VectorDataset
         fields = [
@@ -18,19 +33,55 @@ class VectorDatasetSerializer(serializers.ModelSerializer):
             "name_pt",
             "description",
             "description_pt",
-            "source",
             "created",
             "updated",
             "created_by",
             "last_updated_by",
+            "source",
+            "contact",
+            "source",
+            "contact",
+            "published",
+            "temporal_extent",
+            "crs",
+            "frequency",
+            "lineage",
+            "license",
+            "attribute",
             "is_public",
             "is_approved",
             "raw_file",
         ]
 
-    def get_raw_file(self, obj):
-        vector_file = obj.latest_file()
-        return vector_file.file.name if vector_file else None
+
+class RasterDatasetSerializer(DatasetSerializer):
+    class Meta:
+        model = RasterDataset
+        fields = [
+            "id",
+            "name",
+            "name_pt",
+            "description",
+            "description_pt",
+            "created",
+            "updated",
+            "created_by",
+            "last_updated_by",
+            "source",
+            "contact",
+            "source",
+            "contact",
+            "published",
+            "temporal_extent",
+            "crs",
+            "frequency",
+            "lineage",
+            "license",
+            "attribute",
+            "is_public",
+            "is_approved",
+            "raw_file",
+        ]
 
 
 class ScenarioSerializer(serializers.ModelSerializer):
@@ -49,7 +100,7 @@ class ScenarioSerializer(serializers.ModelSerializer):
             "model_file",
         ]
 
-    def get_model_file(self, obj):
+    def get_model_file(self, obj: Scenario) -> Optional[str]:
         try:
             model_file = obj.latest_file()
             return model_file.file.name if model_file else None

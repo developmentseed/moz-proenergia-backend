@@ -7,10 +7,10 @@ from django_filters import (
     OrderingFilter,
 )
 
-from .models import DataModel, VectorDataset
+from .models import DataModel, RasterDataset, VectorDataset
 
 
-class VectorDatasetFilter(FilterSet):
+class DatasetFilter(FilterSet):
     name = CharFilter(field_name="name", lookup_expr="icontains")
     source = CharFilter(field_name="source", lookup_expr="icontains")
     created = DateFromToRangeFilter()
@@ -25,9 +25,20 @@ class VectorDatasetFilter(FilterSet):
             Q(models__id=value) | Q(scenario__model__id=value)
         ).distinct()
 
+
+class VectorDatasetFilter(DatasetFilter):
     class Meta:
         model = VectorDataset
         fields = ["name", "source", "created", "updated", "model"]
+
+
+class RasterDatasetFilter(DatasetFilter):
+    class Meta:
+        model = RasterDataset
+        fields = ["name", "source", "created", "updated", "model"]
+
+    def filter_model(self, queryset, name, value):
+        return queryset.filter(models__id=value).distinct()
 
 
 class DataModelFilter(FilterSet):
