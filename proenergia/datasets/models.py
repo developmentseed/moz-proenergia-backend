@@ -464,6 +464,7 @@ class DataModel(models.Model):
             "Reference datasets that can be listed together with the model data."
         ),
     )
+    is_public = models.BooleanField(_("is public"), default=True)
 
     def __str__(self):
         return f"{self.name}"

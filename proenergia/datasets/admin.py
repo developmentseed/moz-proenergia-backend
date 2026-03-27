@@ -205,6 +205,7 @@ class DataModelAdminForm(ModelForm):
             "contextual_layers",
             "raster_layers",
             "reference_datasets",
+            "is_public",
         ]
         widgets = {
             "contextual_layers": CheckboxSelectMultiple(),
@@ -370,7 +371,7 @@ class DataModelAdminForm(ModelForm):
 
 @admin.register(DataModel)
 class DataModelAdmin(ModelAdmin, TabbedTranslationAdmin):
-    list_display = ["name", "presentation_order"]
+    list_display = ["name", "presentation_order", "is_public"]
     list_editable = ["presentation_order"]
     form = DataModelAdminForm
 
