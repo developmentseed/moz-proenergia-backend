@@ -314,14 +314,14 @@ class Common(Configuration):
                         },
                         {
                             "title": _("Reference Datasets"),
-                            "icon": "globe_asia",
+                            "icon": "book_ribbon",
                             "link": reverse_lazy(
                                 "admin:datasets_referencedataset_changelist"
                             ),
                         },
                         {
                             "title": _("Reference Files"),
-                            "icon": "photo_library",
+                            "icon": "collections_bookmark",
                             "link": reverse_lazy(
                                 "admin:datasets_referencefile_changelist"
                             ),
