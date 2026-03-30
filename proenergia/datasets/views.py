@@ -51,6 +51,14 @@ class PublicApprovedDataset(BasePermission):
             return request.method in SAFE_METHODS and obj.is_public and obj.is_approved
 
 
+class PublicModel(BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.user and request.user.is_superuser:
+            return True
+        else:
+            return request.method in SAFE_METHODS and obj.is_public
+
+
 class VectorDatasetListView(ListAPIView):
     """Lists VectorDatasets that are public and approved. For logged-in superadmin users, it returns all datasets."""
 
@@ -134,12 +142,18 @@ class ReferenceDatasetDetailView(RetrieveAPIView):
 class DataModelListView(ListAPIView):
     """Lists all available DataModel entries."""
 
-    queryset = DataModel.objects.prefetch_related(
-        "scenarios", "contextual_layers", "raster_layers", "reference_datasets"
-    )
     serializer_class = DataModelSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     filterset_class = DataModelFilter
+
+    def get_queryset(self):
+        queryset = DataModel.objects.prefetch_related(
+            "scenarios", "contextual_layers", "raster_layers", "reference_datasets"
+        )
+        if self.request.user and self.request.user.is_superuser:
+            return queryset
+        else:
+            return queryset.filter(is_public=True)
 
 
 class DataModelDetailView(RetrieveAPIView):
@@ -147,7 +161,7 @@ class DataModelDetailView(RetrieveAPIView):
 
     queryset = DataModel.objects.all()
     serializer_class = DataModelSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [PublicModel]
 
 
 class ScenarioDataDetailView(RetrieveAPIView):
