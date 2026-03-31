@@ -163,8 +163,8 @@ class ReferenceDatasetAdmin(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Make dataset public")
         self.assertContains(response, "Make dataset private")
-        self.assertContains(response, "Publish dataset")
-        self.assertContains(response, "Unpublish dataset")
+        self.assertContains(response, "Approve dataset")
+        self.assertContains(response, "Set as not approved")
 
         # make dataset public
         response = self.client.post(
@@ -191,7 +191,7 @@ class ReferenceDatasetAdmin(TestCase):
             follow=True,
         )
         dataset.refresh_from_db()
-        self.assertContains(response, f"Set {dataset.name} as published")
+        self.assertContains(response, f"Set {dataset.name} as approved")
         self.assertTrue(dataset.is_approved)
 
         # make dataset private
@@ -219,7 +219,7 @@ class ReferenceDatasetAdmin(TestCase):
             follow=True,
         )
         dataset.refresh_from_db()
-        self.assertContains(response, f"Set {dataset.name} as unpublished")
+        self.assertContains(response, f"Set {dataset.name} as not approved")
         self.assertFalse(dataset.is_approved)
 
     def test_admin_actions(self):
@@ -237,8 +237,8 @@ class ReferenceDatasetAdmin(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "Make dataset public")
         self.assertNotContains(response, "Make dataset private")
-        self.assertNotContains(response, "Publish dataset")
-        self.assertNotContains(response, "Unpublish dataset")
+        self.assertNotContains(response, "Approve dataset")
+        self.assertNotContains(response, "Set as not approved")
 
         # confirm that posting actions don't change the public and approved statuses
         response = self.client.post(

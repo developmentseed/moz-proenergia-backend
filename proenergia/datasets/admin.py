@@ -92,7 +92,7 @@ class VectorDatasetAdmin(PermissionBasedModelAdmin, TabbedTranslationAdmin):
 
     def confirmation_message(self, request, queryset, value):
         if queryset.count() == 1:
-            message = f'Set "{queryset[0].name}" as {value}.'
+            message = f"Set {queryset[0].name} as {value}."
         else:
             message = f"Set {queryset.count()} VectorDatasets as {value}."
         messages.success(request, message)
