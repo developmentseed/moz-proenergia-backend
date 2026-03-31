@@ -367,4 +367,5 @@ class Common(Configuration):
     CORS_ALLOW_ALL_ORIGINS = True
 
     # Frontend
-    FRONTEND_URL = os.getenv("FRONTEND_URL", "https://proenergina.netlify.app/")
+    BACKEND_URL = os.getenv("BACKEND_URL", "https://proenergia-staging.ds.io")
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "https://proenergina.netlify.app")

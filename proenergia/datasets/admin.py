@@ -92,7 +92,7 @@ class VectorDatasetAdmin(PermissionBasedModelAdmin, TabbedTranslationAdmin):
 
     def confirmation_message(self, request, queryset, value):
         if queryset.count() == 1:
-            message = f"Set {queryset[0].name} as {value}."
+            message = f'Set "{queryset[0].name}" as {value}.'
         else:
             message = f"Set {queryset.count()} VectorDatasets as {value}."
         messages.success(request, message)
@@ -107,15 +107,15 @@ class VectorDatasetAdmin(PermissionBasedModelAdmin, TabbedTranslationAdmin):
         queryset.update(is_public=False)
         self.confirmation_message(request, queryset, _("private"))
 
-    @admin.action(description=_("Publish dataset"))
+    @admin.action(description=_("Approve dataset"))
     def approve(self, request, queryset):
         queryset.update(is_approved=True)
-        self.confirmation_message(request, queryset, _("published"))
+        self.confirmation_message(request, queryset, _("approved"))
 
-    @admin.action(description=_("Unpublish dataset"))
+    @admin.action(description=_("Set as not approved"))
     def disapprove(self, request, queryset):
         queryset.update(is_approved=False)
-        self.confirmation_message(request, queryset, _("unpublished"))
+        self.confirmation_message(request, queryset, _("not approved"))
 
     def get_actions(self, request):
         actions = super().get_actions(request)

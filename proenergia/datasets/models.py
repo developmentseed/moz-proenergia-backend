@@ -1,6 +1,7 @@
 from os.path import splitext
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import FileExtensionValidator
@@ -11,6 +12,7 @@ from django.dispatch import receiver
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
+from proenergia.datasets.email import send_dataset_approval_email
 from proenergia.datasets.tasks import (
     generate_pmtiles,
     generate_scenario_pmtiles,
@@ -129,6 +131,23 @@ class VectorFile(models.Model):
         ordering = ["id"]
         verbose_name = _("vector file")
         verbose_name_plural = _("vector files")
+
+
+@receiver(post_save, sender=VectorFile)
+def send_request_to_approve_email(sender, instance, created, **kwargs):
+    """Send email to superadmin users when a user that is not superadmin uploads
+    a new version of a not approved dataset."""
+    if (
+        created
+        and instance.dataset.is_approved is False
+        and instance.created_by.is_superuser is False
+    ):
+        superadmin_users = get_user_model().objects.filter(is_superuser=True)
+        send_dataset_approval_email(
+            instance.dataset.name,
+            instance.dataset.id,
+            [i.email for i in superadmin_users if i.email],
+        )
 
 
 @receiver(post_save, sender=VectorFile)
