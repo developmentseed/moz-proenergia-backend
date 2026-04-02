@@ -9,6 +9,7 @@ from django.db import models
 from django.db.models.fields.files import default_storage
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
+from django.urls import reverse
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
@@ -131,23 +132,6 @@ class VectorFile(models.Model):
         ordering = ["id"]
         verbose_name = _("vector file")
         verbose_name_plural = _("vector files")
-
-
-@receiver(post_save, sender=VectorFile)
-def send_request_to_approve_email(sender, instance, created, **kwargs):
-    """Send email to superadmin users when a user that is not superadmin uploads
-    a new version of a not approved dataset."""
-    if (
-        created
-        and instance.dataset.is_approved is False
-        and instance.created_by.is_superuser is False
-    ):
-        superadmin_users = get_user_model().objects.filter(is_superuser=True)
-        send_dataset_approval_email(
-            instance.dataset.name,
-            instance.dataset.id,
-            [i.email for i in superadmin_users if i.email],
-        )
 
 
 @receiver(post_save, sender=VectorFile)
@@ -666,3 +650,34 @@ class ScenarioDataMetrics(models.Model):
             models.Index(fields=["scenario", "key", "string_value"]),
             models.Index(fields=["scenario", "feature_id"]),
         ]
+
+
+@receiver(post_save, sender=RasterFile)
+@receiver(post_save, sender=ReferenceFile)
+@receiver(post_save, sender=VectorFile)
+def send_request_to_approve_email(sender, instance, created, **kwargs):
+    """Send email to superadmin users when a user that is not superadmin uploads
+    a new version of a not approved dataset."""
+    if (
+        created
+        and instance.dataset.is_approved is False
+        and instance.created_by.is_superuser is False
+    ):
+        if sender is RasterFile:
+            url = reverse(
+                "admin:datasets_rasterdataset_change", args=[instance.dataset.id]
+            )
+        elif sender is ReferenceFile:
+            url = reverse(
+                "admin:datasets_referencedataset_change", args=[instance.dataset.id]
+            )
+        elif sender is VectorFile:
+            url = reverse(
+                "admin:datasets_vectordataset_change", args=[instance.dataset.id]
+            )
+        superadmin_users = get_user_model().objects.filter(is_superuser=True)
+        send_dataset_approval_email(
+            instance.dataset.name,
+            url,
+            [i.email for i in superadmin_users if i.email],
+        )

@@ -2,13 +2,9 @@ from typing import List
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
-from django.urls import reverse
 
 
-def send_dataset_approval_email(
-    dataset_name: str, dataset_id: int, email_list: List[str]
-):
-    link = reverse("admin:datasets_vectordataset_change", args=[dataset_id])
+def send_dataset_approval_email(dataset_name: str, link: str, email_list: List[str]):
     url = f"{settings.BACKEND_URL}{link}"
     email = EmailMultiAlternatives(
         f"Dataset {dataset_name} waiting for approval",

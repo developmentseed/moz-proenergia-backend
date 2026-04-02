@@ -293,8 +293,8 @@ class VectorFileAdmin(TestCase):
         self.dataset_2 = VectorDataset.objects.create(
             name="Coastline",
             source="OSM",
-            is_public=True,
-            is_approved=True,
+            is_public=False,
+            is_approved=False,
             created_by=self.admin_user,
             last_updated_by=self.admin_user,
         )
@@ -323,7 +323,6 @@ class VectorFileAdmin(TestCase):
             "file": file,
         }
         response = self.client.post(url, data)
-
         self.assertEqual(VectorFile.objects.count(), 1)
         vector_file = VectorFile.objects.first()
         self.assertEqual(vector_file.created_by, self.superadmin)
@@ -331,8 +330,9 @@ class VectorFileAdmin(TestCase):
         # Delete file
         VectorFile.objects.all().delete()
 
+    @patch("proenergia.datasets.models.send_dataset_approval_email")
     @patch("proenergia.datasets.tasks.generate_pmtiles.delay")
-    def test_vector_file_creation_admin(self, mock_generate_pmtiles):
+    def test_vector_file_creation_admin(self, mock_generate_pmtiles, mock_send_email):
         self.client.login(username="admin_user", password="testpass123")
         url = reverse("admin:datasets_vectorfile_add")
         response = self.client.get(url)
@@ -350,6 +350,7 @@ class VectorFileAdmin(TestCase):
             "boundaries.geojson", b"file_content", content_type="application/json"
         )
 
+        # admin user can not create a File to a VectorDataset they don't have access to
         data = {
             "dataset": str(self.dataset_1.id),
             "file": file,
@@ -357,6 +358,7 @@ class VectorFileAdmin(TestCase):
         response = self.client.post(url, data)
 
         self.assertEqual(VectorFile.objects.count(), 0)
+        self.assertEqual(mock_send_email.call_count, 0)
 
         # upload file to allowed dataset
         data = {
@@ -371,5 +373,10 @@ class VectorFileAdmin(TestCase):
         vector_file = VectorFile.objects.first()
         self.assertEqual(vector_file.created_by, self.admin_user)
         self.assertEqual(vector_file.status, "created")
+        self.assertEqual(mock_send_email.call_count, 1)
+        self.assertEqual(mock_send_email.call_args[0][0], "Coastline")
+        self.assertTrue(
+            f"/vectordataset/{self.dataset_2.id}" in mock_send_email.call_args[0][1]
+        )
         # Delete file
         VectorFile.objects.all().delete()

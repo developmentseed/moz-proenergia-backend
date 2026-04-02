@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
@@ -291,8 +293,8 @@ class ReferenceFileAdmin(TestCase):
         self.dataset_2 = ReferenceDataset.objects.create(
             name="Coastline",
             source="OSM",
-            is_public=True,
-            is_approved=True,
+            is_public=False,
+            is_approved=False,
             created_by=self.admin_user,
             last_updated_by=self.admin_user,
         )
@@ -326,7 +328,8 @@ class ReferenceFileAdmin(TestCase):
         # Delete file
         ReferenceFile.objects.all().delete()
 
-    def test_reference_file_creation_admin(self):
+    @patch("proenergia.datasets.models.send_dataset_approval_email")
+    def test_reference_file_creation_admin(self, mock_send_email):
         self.client.login(username="admin_user", password="testpass123")
         url = reverse("admin:datasets_referencefile_add")
         response = self.client.get(url)
@@ -350,6 +353,7 @@ class ReferenceFileAdmin(TestCase):
         response = self.client.post(url, data)
 
         self.assertEqual(ReferenceFile.objects.count(), 0)
+        self.assertEqual(mock_send_email.call_count, 0)
 
         # upload file to allowed dataset
         data = {
@@ -365,5 +369,10 @@ class ReferenceFileAdmin(TestCase):
         self.assertEqual(ReferenceFile.objects.count(), 1)
         reference_file = ReferenceFile.objects.first()
         self.assertEqual(reference_file.created_by, self.admin_user)
+        self.assertEqual(mock_send_email.call_count, 1)
+        self.assertEqual(mock_send_email.call_args[0][0], "Coastline")
+        self.assertTrue(
+            f"/referencedataset/{self.dataset_2.id}" in mock_send_email.call_args[0][1]
+        )
         # Delete file
         ReferenceFile.objects.all().delete()
