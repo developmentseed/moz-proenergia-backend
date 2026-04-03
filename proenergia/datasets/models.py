@@ -117,6 +117,9 @@ class VectorFile(models.Model):
         validators=[
             FileExtensionValidator(allowed_extensions=["geojson", "gpkg", "zip", "kml"])
         ],
+        help_text=_(
+            "Supported formats: GeoJSON, GeoPackage, KML, or Shapefile.<br> Since shapefiles consist of multiple files (.shp, .shx, .dbf, etc.), please compress them into a single .zip file. Ensure all component files sit at the root level of the zip - don't nest them inside folders."
+        ),
     )
     error_message = models.TextField(
         _("error message"), default="", blank=True, null=True
@@ -245,6 +248,7 @@ class RasterFile(models.Model):
                 allowed_extensions=["tiff", "tif", "geotiff", "gtiff", "vrt"]
             )
         ],
+        help_text=_("Supported formats: Cloud-Optimized GeoTIFFs (.tif)."),
     )
 
     def __str__(self):
@@ -352,11 +356,8 @@ class ReferenceFile(models.Model):
         _("file"),
         upload_to=generate_reference_file_name,
         unique=True,
-        validators=[
-            FileExtensionValidator(
-                allowed_extensions=["pdf", "csv", "xlsx", "xls", "docx", "doc"]
-            )
-        ],
+        validators=[FileExtensionValidator(allowed_extensions=["pdf", "csv"])],
+        help_text=_("Supported formats: PDF and CSV."),
     )
 
     def __str__(self):
@@ -540,6 +541,10 @@ class ScenarioFile(models.Model):
         upload_to=generate_scenario_file_name,
         unique=True,
         validators=[FileExtensionValidator(allowed_extensions=["csv"])],
+        help_text=_(
+            """Supported format: CSV. Ensure the CSV file is well formated and encoded as UTF-8, and that it includes all the columns required by the DataModel configuration.<br>
+            Futhermore, make sure it includes an 'id' column that references the ids of the features in the associated VectorDataset used by the selected scenario."""
+        ),
     )
     low_zoom_as_points = models.BooleanField(
         _("Represent features as points in lower zoom levels"),
