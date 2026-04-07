@@ -17,7 +17,3 @@ class Production(Common):
     AWS_HEADERS = {
         "Cache-Control": "max-age=86400, s-maxage=86400, must-revalidate",
     }
-
-    # Frontend/Backend URLs - Ensure they can be overridden by environment
-    BACKEND_URL = os.getenv("BACKEND_URL", Common.BACKEND_URL)
-    FRONTEND_URL = os.getenv("FRONTEND_URL", Common.FRONTEND_URL)
