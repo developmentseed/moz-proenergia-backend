@@ -34,10 +34,9 @@ class Local(Common):
             "SHOW_COLLAPSED": True,
         }
 
-    # Mail
-    EMAIL_HOST = "localhost"
-    EMAIL_PORT = 1025
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    # Mail - Override backend for local development if not set in environment
+    if not os.getenv("EMAIL_BACKEND"):
+        EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
     if TESTING:
         MEDIA_ROOT = tempfile.mkdtemp()
