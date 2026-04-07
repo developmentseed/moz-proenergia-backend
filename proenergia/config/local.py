@@ -46,7 +46,7 @@ class Local(Common):
     EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() in ["true", "1", "yes"]
     DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "webmaster@localhost")
     SERVER_EMAIL = os.getenv("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
-    
+
     # URLs - Read from environment with fallbacks
     BACKEND_URL = os.getenv("BACKEND_URL", Common.BACKEND_URL)
     FRONTEND_URL = os.getenv("FRONTEND_URL", Common.FRONTEND_URL)

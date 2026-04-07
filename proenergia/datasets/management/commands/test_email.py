@@ -39,11 +39,17 @@ class Command(BaseCommand):
             self.stdout.write(f"EMAIL_HOST: {settings.EMAIL_HOST}")
             self.stdout.write(f"EMAIL_PORT: {settings.EMAIL_PORT}")
             self.stdout.write(f"EMAIL_USE_TLS: {settings.EMAIL_USE_TLS}")
-            self.stdout.write(f"EMAIL_USE_SSL: {getattr(settings, 'EMAIL_USE_SSL', False)}")
+            self.stdout.write(
+                f"EMAIL_USE_SSL: {getattr(settings, 'EMAIL_USE_SSL', False)}"
+            )
             self.stdout.write(f"EMAIL_HOST_USER: {settings.EMAIL_HOST_USER}")
-            self.stdout.write(f"EMAIL_HOST_PASSWORD: {'*' * len(settings.EMAIL_HOST_PASSWORD) if settings.EMAIL_HOST_PASSWORD else '(not set)'}")
+            self.stdout.write(
+                f"EMAIL_HOST_PASSWORD: {'*' * len(settings.EMAIL_HOST_PASSWORD) if settings.EMAIL_HOST_PASSWORD else '(not set)'}"
+            )
             self.stdout.write(f"DEFAULT_FROM_EMAIL: {settings.DEFAULT_FROM_EMAIL}")
-            self.stdout.write(f"SERVER_EMAIL: {getattr(settings, 'SERVER_EMAIL', settings.DEFAULT_FROM_EMAIL)}")
+            self.stdout.write(
+                f"SERVER_EMAIL: {getattr(settings, 'SERVER_EMAIL', settings.DEFAULT_FROM_EMAIL)}"
+            )
             self.stdout.write(f"BACKEND_URL: {settings.BACKEND_URL}")
 
         # Test SMTP connection
@@ -60,7 +66,7 @@ class Command(BaseCommand):
                 if settings.EMAIL_USE_TLS:
                     server = smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT)
                     server.starttls()
-                elif getattr(settings, 'EMAIL_USE_SSL', False):
+                elif getattr(settings, "EMAIL_USE_SSL", False):
                     server = smtplib.SMTP_SSL(settings.EMAIL_HOST, settings.EMAIL_PORT)
                 else:
                     server = smtplib.SMTP(settings.EMAIL_HOST, settings.EMAIL_PORT)
@@ -77,7 +83,9 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR(f"✗ DNS resolution failed: {e}"))
                 return
             except smtplib.SMTPAuthenticationError as e:
-                self.stdout.write(self.style.ERROR(f"✗ SMTP authentication failed: {e}"))
+                self.stdout.write(
+                    self.style.ERROR(f"✗ SMTP authentication failed: {e}")
+                )
                 return
             except smtplib.SMTPException as e:
                 self.stdout.write(self.style.ERROR(f"✗ SMTP error: {e}"))
@@ -125,7 +133,7 @@ This email was sent using the Django email backend: {settings.EMAIL_BACKEND}
 </body>
 </html>
 """
-                
+
                 # Create email with HTML content
                 email = EmailMessage(
                     subject=subject,
@@ -135,19 +143,31 @@ This email was sent using the Django email backend: {settings.EMAIL_BACKEND}
                 )
                 email.content_subtype = "html"
                 email.body = html_message
-                
+
                 # Send the email
                 email.send(fail_silently=False)
-                
-                self.stdout.write(self.style.SUCCESS(f"✓ Test email sent successfully to {recipient}"))
-                self.stdout.write("\nPlease check your inbox (and spam folder) for the test email.")
+
+                self.stdout.write(
+                    self.style.SUCCESS(f"✓ Test email sent successfully to {recipient}")
+                )
+                self.stdout.write(
+                    "\nPlease check your inbox (and spam folder) for the test email."
+                )
 
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f"✗ Failed to send email: {e}"))
                 self.stdout.write("\nTroubleshooting tips:")
                 self.stdout.write("1. Check your email configuration in the .env file")
                 self.stdout.write("2. Ensure the EMAIL_HOST and EMAIL_PORT are correct")
-                self.stdout.write("3. Verify EMAIL_HOST_USER and EMAIL_HOST_PASSWORD are valid")
-                self.stdout.write("4. For AWS SES, ensure your domain/email is verified")
-                self.stdout.write("5. For AWS SES, check if you're still in sandbox mode")
-                self.stdout.write("6. Check firewall rules for outbound SMTP connections")
+                self.stdout.write(
+                    "3. Verify EMAIL_HOST_USER and EMAIL_HOST_PASSWORD are valid"
+                )
+                self.stdout.write(
+                    "4. For AWS SES, ensure your domain/email is verified"
+                )
+                self.stdout.write(
+                    "5. For AWS SES, check if you're still in sandbox mode"
+                )
+                self.stdout.write(
+                    "6. Check firewall rules for outbound SMTP connections"
+                )
