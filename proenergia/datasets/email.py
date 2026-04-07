@@ -6,10 +6,15 @@ from django.core.mail import EmailMultiAlternatives
 
 def send_dataset_approval_email(dataset_name: str, link: str, email_list: List[str]):
     url = f"{settings.BACKEND_URL}{link}"
+    from_email = (
+        f"{settings.UNFOLD.get('SITE_TITLE')} <{settings.DEFAULT_FROM_EMAIL}>"
+        if hasattr(settings, 'DEFAULT_FROM_EMAIL')
+        else f"{settings.UNFOLD.get('SITE_TITLE')} <noreply@proenergia.mz>"
+    )
     email = EmailMultiAlternatives(
         f"Dataset {dataset_name} waiting for approval",
         f"A new version of the dataset {dataset_name} has been uploaded and is waiting for approval. Access {url} to approve it.",
-        f"{settings.UNFOLD.get('SITE_TITLE')} <do_not_reply@edm.co.mz>",
+        from_email,
         email_list,
     )
     html_content = f"""

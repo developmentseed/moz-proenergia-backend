@@ -34,10 +34,22 @@ class Local(Common):
             "SHOW_COLLAPSED": True,
         }
 
-    # Mail
-    EMAIL_HOST = "localhost"
-    EMAIL_PORT = 1025
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    # Mail - Read from environment with fallbacks for local development
+    EMAIL_BACKEND = os.getenv(
+        "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+    )
+    EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")
+    EMAIL_PORT = int(os.getenv("EMAIL_PORT", "1025"))
+    EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+    EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+    EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "False").lower() in ["true", "1", "yes"]
+    EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() in ["true", "1", "yes"]
+    DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "webmaster@localhost")
+    SERVER_EMAIL = os.getenv("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
+    
+    # URLs - Read from environment with fallbacks
+    BACKEND_URL = os.getenv("BACKEND_URL", Common.BACKEND_URL)
+    FRONTEND_URL = os.getenv("FRONTEND_URL", Common.FRONTEND_URL)
 
     if TESTING:
         MEDIA_ROOT = tempfile.mkdtemp()
@@ -46,5 +58,5 @@ class Local(Common):
         CELERY_TASK_EAGER_PROPAGATES = True
 
 
-#    GDAL_LIBRARY_PATH = "/opt/homebrew/opt/gdal/lib/libgdal.dylib"
-#    GEOS_LIBRARY_PATH = "/opt/homebrew/opt/geos/lib/libgeos_c.dylib"
+    GDAL_LIBRARY_PATH = "/opt/homebrew/opt/gdal/lib/libgdal.dylib"
+    GEOS_LIBRARY_PATH = "/opt/homebrew/opt/geos/lib/libgeos_c.dylib"
