@@ -38,7 +38,6 @@ class Local(Common):
     if not os.getenv("EMAIL_BACKEND"):
         EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-
     if TESTING:
         MEDIA_ROOT = tempfile.mkdtemp()
         CELERY_TASK_ALWAYS_EAGER = True
