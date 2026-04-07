@@ -18,19 +18,6 @@ class Production(Common):
         "Cache-Control": "max-age=86400, s-maxage=86400, must-revalidate",
     }
 
-    # Email Configuration - Read from environment variables
-    EMAIL_BACKEND = os.getenv(
-        "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
-    )
-    EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")
-    EMAIL_PORT = int(os.getenv("EMAIL_PORT", "25"))
-    EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
-    EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
-    EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "False").lower() in ["true", "1", "yes"]
-    EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() in ["true", "1", "yes"]
-    DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@proenergia.mz")
-    SERVER_EMAIL = os.getenv("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
-
     # Frontend/Backend URLs - Ensure they can be overridden by environment
     BACKEND_URL = os.getenv("BACKEND_URL", Common.BACKEND_URL)
     FRONTEND_URL = os.getenv("FRONTEND_URL", Common.FRONTEND_URL)
