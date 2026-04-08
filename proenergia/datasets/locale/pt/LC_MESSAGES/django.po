@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-08 11:32+0000\n"
+"POT-Creation-Date: 2026-04-08 21:19+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: PT <LL@li.org>\n"
@@ -481,9 +481,9 @@ msgid ""
 "the ids of the features in the associated VectorDataset used by the selected "
 "scenario."
 msgstr ""
-"Formato suportado: CSV. Certifique de que o arquivo CSV esteja "
-"corretamente formatado e codificado em UTF-8, e também que inclua todas as "
-"colunas exigidas na configuração do Modelo de Dados.<br>\n"
+"Formato suportado: CSV. Certifique de que o arquivo CSV esteja corretamente "
+"formatado e codificado em UTF-8, e também que inclua todas as colunas "
+"exigidas na configuração do Modelo de Dados.<br>\n"
 "Finalmente, certifique que o arquivo possua uma coluna 'id' que referencie "
 "os ids dos itens do Dataset Vetorial utilizado pelo Cenário selecionado."
 
@@ -539,6 +539,19 @@ msgstr "métricas de dados de cenário"
 #: proenergia/datasets/models.py:652
 msgid "scenario data metrics"
 msgstr "métricas de dados de cenário"
+
+#: proenergia/datasets/templates/admin/403.html:4
+#: proenergia/datasets/templates/admin/403.html:15
+msgid "Permission Denied"
+msgstr "Permissão Negada"
+
+#: proenergia/datasets/templates/admin/403.html:19
+msgid "You don't have permission to access this page."
+msgstr "Você não tem permissão para acessar esta página."
+
+#: proenergia/datasets/templates/admin/403.html:27
+msgid "Return to Dashboard"
+msgstr "Retornar ao Painel Administrativo"
 
 #~ msgid "Publish dataset"
 #~ msgstr "Publicar dataset"
