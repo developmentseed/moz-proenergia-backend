@@ -63,8 +63,22 @@ class Common(Configuration):
     SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
     WSGI_APPLICATION = "proenergia.wsgi.application"
 
-    # Email
-    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    # Email Configuration - Read from environment variables
+    EMAIL_BACKEND = os.getenv(
+        "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
+    )
+    EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")
+    EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))  # Default to TLS port
+    EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+    EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+    EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() in [
+        "true",
+        "1",
+        "yes",
+    ]  # Default to TLS enabled
+    EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() in ["true", "1", "yes"]
+    DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@proenergia.mz")
+    SERVER_EMAIL = os.getenv("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
 
     ADMINS = (("Author", "info@developmentseed.org"),)
 
@@ -367,4 +381,5 @@ class Common(Configuration):
     CORS_ALLOW_ALL_ORIGINS = True
 
     # Frontend
-    FRONTEND_URL = os.getenv("FRONTEND_URL", "https://proenergina.netlify.app/")
+    BACKEND_URL = os.getenv("BACKEND_URL", "https://proenergia-staging.ds.io")
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "https://proenergina.netlify.app")
