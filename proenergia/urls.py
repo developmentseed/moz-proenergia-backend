@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.conf.urls import handler403
 from django.conf.urls.i18n import i18n_patterns
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -8,8 +9,12 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.authtoken import views
 from rest_framework.routers import DefaultRouter
 
+from proenergia.datasets.views import error_403
+
 router = DefaultRouter()
 API_BASE_URL = "api/v1"
+
+handler403 = error_403
 
 api_urls = [
     path(

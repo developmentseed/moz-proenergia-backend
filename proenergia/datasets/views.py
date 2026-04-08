@@ -1,6 +1,7 @@
 import hashlib
 
 from django.core.cache import cache
+from django.template.response import TemplateResponse
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView, get_object_or_404
 from rest_framework.permissions import (
@@ -438,3 +439,7 @@ class PurgeSummaryCacheView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+def error_403(request, exception):
+    return TemplateResponse(request, "admin/403.html", {})
