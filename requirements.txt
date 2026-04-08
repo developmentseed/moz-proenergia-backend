@@ -1,5 +1,5 @@
 # Core
-Django==5.2.9
+Django==5.2.13
 django-configurations==2.5.1
 gunicorn==23.0.0
 setuptools==80.9.0
@@ -14,7 +14,7 @@ django-model-utils==5.0.0
 django_unique_upload==0.2.1
 
 # Rest apis
-djangorestframework==3.16.1
+djangorestframework==3.17.1
 django-filter==25.2
 django-cors-headers==4.9.0
 
@@ -34,7 +34,7 @@ django-debug-toolbar==4.4.6
 # Testing
 mock==5.2.0
 factory-boy==3.3.3
-pytest-django==4.9.0
+pytest-django==4.12.0
 coverage==7.6.9
 
 # Async Task Processing
