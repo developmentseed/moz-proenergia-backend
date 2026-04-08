@@ -359,9 +359,9 @@ class ReferenceFileAdmin(TestCase):
         data = {
             "dataset": str(self.dataset_2.id),
             "file": SimpleUploadedFile(
-                "boundaries.xlsx",
+                "boundaries.csv",
                 b"file_content",
-                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                content_type="text/csv",
             ),
         }
         response = self.client.post(url, data)
