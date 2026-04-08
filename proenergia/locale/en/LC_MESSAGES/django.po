@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-27 19:08+0000\n"
+"POT-Creation-Date: 2026-04-08 11:19+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,62 +18,62 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: proenergia/config/common.py:250
+#: proenergia/config/common.py:264
 msgid "Administration Interface"
 msgstr ""
 
-#: proenergia/config/common.py:263
+#: proenergia/config/common.py:277
 msgid "Models"
 msgstr ""
 
-#: proenergia/config/common.py:266
+#: proenergia/config/common.py:280
 msgid "Data Models"
 msgstr ""
 
-#: proenergia/config/common.py:271
+#: proenergia/config/common.py:285
 msgid "Scenarios"
 msgstr ""
 
-#: proenergia/config/common.py:276
+#: proenergia/config/common.py:290
 msgid "Scenario Files"
 msgstr ""
 
-#: proenergia/config/common.py:285
+#: proenergia/config/common.py:299
 msgid "Datasets"
 msgstr ""
 
-#: proenergia/config/common.py:288
+#: proenergia/config/common.py:302
 msgid "Vector Datasets"
 msgstr ""
 
-#: proenergia/config/common.py:295
+#: proenergia/config/common.py:309
 msgid "Vector Files"
 msgstr ""
 
-#: proenergia/config/common.py:302
+#: proenergia/config/common.py:316
 msgid "Raster Datasets"
 msgstr ""
 
-#: proenergia/config/common.py:309
+#: proenergia/config/common.py:323
 msgid "Raster Files"
 msgstr ""
 
-#: proenergia/config/common.py:316
+#: proenergia/config/common.py:330
 msgid "Reference Datasets"
 msgstr ""
 
-#: proenergia/config/common.py:323
+#: proenergia/config/common.py:337
 msgid "Reference Files"
 msgstr ""
 
-#: proenergia/config/common.py:332
+#: proenergia/config/common.py:346
 msgid "Users & Groups"
 msgstr ""
 
-#: proenergia/config/common.py:335
+#: proenergia/config/common.py:349
 msgid "Users"
 msgstr ""
 
-#: proenergia/config/common.py:340
+#: proenergia/config/common.py:354
 msgid "Groups"
 msgstr ""
