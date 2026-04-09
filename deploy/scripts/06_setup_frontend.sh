@@ -43,7 +43,7 @@ chown -R proenergia:proenergia "$FRONTEND_DIR"
 echo ""
 echo "=== Step 4: Building frontend ==="
 
-sudo -u proenergia bash -c "cd $FRONTEND_DIR && pnpm install && pnpm run build"
+sudo -u proenergia bash -c "cd $FRONTEND_DIR && pnpm install && pnpm run build-prod"
 
 # Note: Nginx configuration for /app is already included in the main proenergia.conf
 echo ""
