@@ -9,21 +9,10 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-# Check for required domain parameter
-if [ $# -eq 0 ] || [ -z "$1" ]; then
-    echo "Error: Domain parameter is required"
-    echo "Usage: $0 <frontend_domain> [email]"
-    echo "Example: $0 frontend.example.com admin@example.com"
-    exit 1
-fi
-
-DOMAIN="$1"
-EMAIL=${2:-"admin@$DOMAIN"}
 FRONTEND_DIR="/var/www/proenergia/frontend"
 REPO_URL="https://github.com/developmentseed/moz-proenergia-web.git"
 
-echo "Setting up frontend for domain: $DOMAIN"
-echo "SSL certificate email: $EMAIL"
+echo "Setting up frontend to be served at /app"
 
 echo ""
 echo "=== Step 1: Installing Node.js v24 ==="
@@ -54,47 +43,18 @@ chown -R proenergia:proenergia "$FRONTEND_DIR"
 echo ""
 echo "=== Step 4: Building frontend ==="
 
-sudo -u proenergia bash -c "cd $FRONTEND_DIR && pnpm install && pnpm run build"
+sudo -u proenergia bash -c "cd $FRONTEND_DIR && pnpm install && pnpm run build-prod"
 
+# Note: Nginx configuration for /app is already included in the main proenergia.conf
 echo ""
-echo "=== Step 5: Configuring nginx ==="
-
-# Copy nginx configuration
-cp /var/www/proenergia/app/deploy/configs/nginx/proenergia-frontend.conf /etc/nginx/sites-available/
-sed -i "s/your-frontend-domain.com/$DOMAIN/g" /etc/nginx/sites-available/proenergia-frontend.conf
-
-# Enable nginx site
-ln -sf /etc/nginx/sites-available/proenergia-frontend.conf /etc/nginx/sites-enabled/
-
-# Test nginx configuration
-nginx -t
-
-# Reload nginx
-systemctl reload nginx
-
-echo ""
-echo "=== Step 6: Setting up SSL certificate ==="
-
-certbot --nginx -d $DOMAIN --email $EMAIL --agree-tos --non-interactive --redirect || {
-    echo ""
-    echo "WARNING: SSL certificate setup failed. The frontend will run on HTTP only."
-    echo "To retry SSL setup later, run:"
-    echo "  sudo certbot --nginx -d $DOMAIN --email $EMAIL --agree-tos --non-interactive --redirect"
-    echo ""
-}
-
-# Setup auto-renewal (only if certbot is installed)
-if command -v certbot &> /dev/null; then
-    systemctl enable certbot.timer 2>/dev/null || true
-    systemctl start certbot.timer 2>/dev/null || true
-fi
+echo "Frontend build complete. It will be served at /app on the main domain."
 
 echo ""
 echo "========================================================================="
 echo "                     FRONTEND SETUP COMPLETE                            "
 echo "========================================================================="
 echo ""
-echo "Your frontend should now be available at: https://$DOMAIN"
+echo "Your frontend should now be available at: /app on your main domain"
 echo ""
 echo "To update the frontend later, run as proenergia user:"
 echo "  sudo -u proenergia /var/www/proenergia/app/deploy/scripts/07_update_frontend.sh"

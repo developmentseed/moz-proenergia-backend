@@ -22,6 +22,6 @@ echo "Installing dependencies..."
 pnpm install
 
 echo "Building frontend..."
-pnpm run build
+pnpm run build-prod
 
 echo "=== Frontend update complete ==="
