@@ -51,19 +51,19 @@ msgstr "não aprovado"
 
 #: proenergia/datasets/admin.py:169 proenergia/datasets/admin.py:436
 msgid "Reprocess files"
-msgstr "Reprocessar arquivos"
+msgstr "Reprocessar ficheiros"
 
 #: proenergia/datasets/admin.py:180 proenergia/datasets/admin.py:447
 #, python-format
 msgid "%(count)d file queued for reprocessing."
 msgid_plural "%(count)d files queued for reprocessing."
-msgstr[0] "%(count)d arquivo enviado para reprocessamento"
-msgstr[1] "%(count)d arquivos enviados para reprocessamento"
+msgstr[0] "%(count)d ficheiro enviado para reprocessamento"
+msgstr[1] "%(count)d ficheiros enviados para reprocessamento"
 
 #: proenergia/datasets/admin.py:189 proenergia/datasets/admin.py:456
 msgid "Files in created or processing state cannot be reprocessed."
 msgstr ""
-"Arquivos com status 'Criado ou 'Em Processamento' não podem ser "
+"Ficheiros com status 'Criado ou 'Em Processamento' não podem ser "
 "reprocessados."
 
 #: proenergia/datasets/admin.py:268
@@ -239,7 +239,7 @@ msgstr "status"
 #: proenergia/datasets/models.py:117 proenergia/datasets/models.py:246
 #: proenergia/datasets/models.py:359 proenergia/datasets/models.py:543
 msgid "file"
-msgstr "arquivo"
+msgstr "ficheiro"
 
 #: proenergia/datasets/models.py:124
 msgid ""
@@ -249,9 +249,9 @@ msgid ""
 "root level of the zip - don't nest them inside folders."
 msgstr ""
 "Formatos suportados: GeoJSON, GeoPackage, KML, or Shapefile.<br> Como "
-"Shapefile é composto por múltiplos arquivos (.shp, .shx, .dbf, etc.), por "
-"favor, comprima-os em um único arquivo .zip. Certifique-se de que todos os "
-"arquivos estejam na raiz do arquivo zip - não coloque-os dentro de uma pasta."
+"Shapefile é composto por múltiplos ficheiros (.shp, .shx, .dbf, etc.), por "
+"favor, comprima-os em um único ficheiro .zip. Certifique-se de que todos os "
+"ficheiros estejam na raiz do ficheiro zip - não coloque-os dentro de uma pasta."
 
 #: proenergia/datasets/models.py:128 proenergia/datasets/models.py:560
 msgid "error message"
@@ -259,11 +259,11 @@ msgstr "mensagem de erro"
 
 #: proenergia/datasets/models.py:136
 msgid "vector file"
-msgstr "arquivo vetorial"
+msgstr "ficheiro vetorial"
 
 #: proenergia/datasets/models.py:137
 msgid "vector files"
-msgstr "arquivos vetoriais"
+msgstr "ficheiros vetoriais"
 
 #: proenergia/datasets/models.py:183 proenergia/datasets/models.py:296
 msgid "source"
@@ -283,11 +283,11 @@ msgstr "Formatos suportados: Cloud-Optimized GeoTIFFs (.tif)."
 
 #: proenergia/datasets/models.py:262
 msgid "raster file"
-msgstr "arquivo raster"
+msgstr "ficheiro raster"
 
 #: proenergia/datasets/models.py:263
 msgid "raster files"
-msgstr "arquivos raster"
+msgstr "ficheiros raster"
 
 #: proenergia/datasets/models.py:331
 msgid "reference dataset"
@@ -303,11 +303,11 @@ msgstr "Formatos suportados: PDF e CSV."
 
 #: proenergia/datasets/models.py:371
 msgid "reference file"
-msgstr "arquivo de referência"
+msgstr "ficheiro de referência"
 
 #: proenergia/datasets/models.py:372
 msgid "reference files"
-msgstr "arquivos de referência"
+msgstr "ficheiros de referência"
 
 #: proenergia/datasets/models.py:389 proenergia/datasets/models.py:485
 msgid "presentation order"
@@ -481,10 +481,10 @@ msgid ""
 "the ids of the features in the associated VectorDataset used by the selected "
 "scenario."
 msgstr ""
-"Formato suportado: CSV. Certifique de que o arquivo CSV esteja corretamente "
+"Formato suportado: CSV. Certifique de que o ficheiro CSV esteja corretamente "
 "formatado e codificado em UTF-8, e também que inclua todas as colunas "
 "exigidas na configuração do Modelo de Dados.<br>\n"
-"Finalmente, certifique que o arquivo possua uma coluna 'id' que referencie "
+"Finalmente, certifique que o ficheiro possua uma coluna 'id' que referencie "
 "os ids dos itens do Dataset Vetorial utilizado pelo Cenário selecionado."
 
 #: proenergia/datasets/models.py:553
@@ -502,11 +502,11 @@ msgstr ""
 
 #: proenergia/datasets/models.py:568
 msgid "scenario file"
-msgstr "arquivo de cenário"
+msgstr "ficheiro de cenário"
 
 #: proenergia/datasets/models.py:569
 msgid "scenario files"
-msgstr "arquivos de cenário"
+msgstr "ficheiros de cenário"
 
 #: proenergia/datasets/models.py:596 proenergia/datasets/models.py:631
 msgid "feature id"

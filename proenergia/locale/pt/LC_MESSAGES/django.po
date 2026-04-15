@@ -36,7 +36,7 @@ msgstr "Cenários"
 
 #: proenergia/config/common.py:290
 msgid "Scenario Files"
-msgstr "Arquivos de Cenário"
+msgstr "Ficheiros de Cenário"
 
 #: proenergia/config/common.py:299
 msgid "Datasets"
@@ -48,7 +48,7 @@ msgstr "Datasets Vetoriais"
 
 #: proenergia/config/common.py:309
 msgid "Vector Files"
-msgstr "Arquivos Vetoriais"
+msgstr "Ficheiros Vetoriais"
 
 #: proenergia/config/common.py:316
 msgid "Raster Datasets"
@@ -56,7 +56,7 @@ msgstr "Datasets Raster"
 
 #: proenergia/config/common.py:323
 msgid "Raster Files"
-msgstr "Arquivos Raster"
+msgstr "Ficheiros Raster"
 
 #: proenergia/config/common.py:330
 msgid "Reference Datasets"
@@ -64,7 +64,7 @@ msgstr "Datasets de Referência"
 
 #: proenergia/config/common.py:337
 msgid "Reference Files"
-msgstr "Arquivos de Referência"
+msgstr "Ficheiros de Referência"
 
 #: proenergia/config/common.py:346
 msgid "Users & Groups"
