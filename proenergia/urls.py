@@ -6,10 +6,10 @@ from django.contrib import admin
 from django.urls import include, path, re_path
 from django.views.generic.base import RedirectView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from rest_framework.authtoken import views
 from rest_framework.routers import DefaultRouter
 
 from proenergia.datasets.views import error_403
+from proenergia.users.views import AuthTokenView
 
 router = DefaultRouter()
 API_BASE_URL = "api/v1"
@@ -31,7 +31,7 @@ api_urls = [
         f"{API_BASE_URL}/tasks/",
         include(("proenergia.tasks.urls", "proenergia.tasks"), namespace="tasks"),
     ),
-    path(f"{API_BASE_URL}/token-auth/", views.obtain_auth_token),
+    path(f"{API_BASE_URL}/token-auth/", AuthTokenView.as_view()),
 ]
 
 urlpatterns = [

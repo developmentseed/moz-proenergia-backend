@@ -1,4 +1,7 @@
-from rest_framework import viewsets, mixins
+from rest_framework import mixins, viewsets
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.authtoken.views import ObtainAuthToken
+
 from .models import User
 from .permissions import IsUserOrCreatingAccountOrReadOnly
 from .serializers import CreateUserSerializer, UserSerializer
@@ -23,3 +26,7 @@ class UserViewSet(
         if is_creating_a_new_user:
             return CreateUserSerializer
         return self.serializer_class
+
+
+class AuthTokenView(ObtainAuthToken):
+    authentication_classes = [TokenAuthentication]
