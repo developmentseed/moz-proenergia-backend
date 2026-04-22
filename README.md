@@ -1,8 +1,8 @@
-# moz-proenergia-backend
+# Plataforma Integrada de Electrificação de Moçambique - PIEM
 
 [![Built with](https://img.shields.io/badge/Built_with-Cookiecutter_Django_Rest-F7B633.svg)](https://github.com/agconti/cookiecutter-django-rest)
 
-Mozambique Proenergia backend.
+Plataforma Integrada de Electrificação de Moçambique (PIEM) backend.
 
 ## Prerequisites
 
