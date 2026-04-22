@@ -252,15 +252,15 @@ class Common(Configuration):
     }
     # API Docs
     SPECTACULAR_SETTINGS = {
-        "TITLE": "Mozambique PROENERGIA+ API Docs",
-        "DESCRIPTION": "Mozambique PROENERGIA+ API Documentation",
+        "TITLE": "PIEM - API Docs",
+        "DESCRIPTION": "Plataforma Integrada de Electrificação de Moçambique (PIEM) - API Documentation",
         "VERSION": "1.0.0",
         "SERVE_INCLUDE_SCHEMA": False,
     }
     # Django Unfold
     UNFOLD = {
-        "SITE_TITLE": "Mozambique PROENERGIA+",
-        "SITE_HEADER": "Mozambique PROENERGIA+",
+        "SITE_TITLE": "Plataforma Integrada de Electrificação de Moçambique - PIEM",
+        "SITE_HEADER": "PIEM - SDI",
         "SITE_SUBHEADER": _("Administration Interface"),
         "SHOW_LANGUAGES": True,
         "EXTENSIONS": {
