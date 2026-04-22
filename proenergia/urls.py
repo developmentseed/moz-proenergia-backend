@@ -4,6 +4,7 @@ from django.conf.urls.i18n import i18n_patterns
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path, re_path
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import RedirectView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.authtoken import views
@@ -31,7 +32,7 @@ api_urls = [
         f"{API_BASE_URL}/tasks/",
         include(("proenergia.tasks.urls", "proenergia.tasks"), namespace="tasks"),
     ),
-    path(f"{API_BASE_URL}/token-auth/", views.obtain_auth_token),
+    path(f"{API_BASE_URL}/token-auth/", csrf_exempt(views.obtain_auth_token)),
 ]
 
 urlpatterns = [
