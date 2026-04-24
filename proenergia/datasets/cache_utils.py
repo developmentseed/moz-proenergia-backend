@@ -8,6 +8,7 @@ when scenario data is updated.
 import logging
 from typing import List
 
+from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
 
@@ -30,7 +31,7 @@ def get_scenario_summary_cache_keys(scenario_id: int) -> List[str]:
     Returns:
         List of cache keys that match the scenario's summary pattern
     """
-    cache_location = cache.location  # This is 'summaries_cache_table' by default
+    cache_location = settings.CACHES["default"]["LOCATION"]
     prefix = f"summaries:{scenario_id}:"
 
     try:

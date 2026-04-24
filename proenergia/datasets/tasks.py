@@ -13,6 +13,7 @@ from celery import shared_task
 from django.apps import apps
 from django.db import connection, transaction
 
+from proenergia.datasets.cache_utils import invalidate_scenario_summary_cache
 from proenergia.datasets.utils import detect_csv_delimiter, get_file_variant
 
 logger = logging.getLogger(__name__)
@@ -386,3 +387,9 @@ def import_scenario_data_csv(scenario_file_id: int):
         sf.status = "error"
         sf.error_message = e
         sf.save(update_fields=["status", "error_message"])
+        return
+
+    try:
+        invalidate_scenario_summary_cache(sf.scenario.id)
+    except Exception as e:
+        logger.warning(f"Cache invalidation failed for scenario {sf.scenario.id}: {e}")
