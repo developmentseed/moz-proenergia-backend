@@ -421,11 +421,6 @@ class DataModelAdmin(ModelAdmin, TabbedTranslationAdmin):
             model_name="DataModel",
         )
 
-    def delete_model(self, request, instance):
-        delete_item.delay("DataModel", instance.id)
-
-        messages.success(request, _(f"{instance.name} was queued for deletion."))
-
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == "contextual_layers":
             kwargs["queryset"] = VectorDataset.objects.filter(
@@ -464,12 +459,6 @@ class ScenarioAdmin(ModelAdmin, TabbedTranslationAdmin):
             queryset=queryset,
             model_name="Scenario",
         )
-
-    def delete_model(self, request, instance):
-        delete_item.delay("Scenario", instance.id)
-        # for item in queryset:
-
-        messages.success(request, _(f"{instance.name} was queued for deletion."))
 
     def get_actions(self, request):
         actions = super().get_actions(request)

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-29 12:40+0000\n"
+"POT-Creation-Date: 2026-04-29 13:07+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -61,18 +61,18 @@ msgstr ""
 msgid "not approved"
 msgstr ""
 
-#: proenergia/datasets/admin.py:205 proenergia/datasets/admin.py:515
+#: proenergia/datasets/admin.py:205 proenergia/datasets/admin.py:504
 msgid "Reprocess files"
 msgstr ""
 
-#: proenergia/datasets/admin.py:216 proenergia/datasets/admin.py:526
+#: proenergia/datasets/admin.py:216 proenergia/datasets/admin.py:515
 #, python-format
 msgid "%(count)d file queued for reprocessing."
 msgid_plural "%(count)d files queued for reprocessing."
 msgstr[0] ""
 msgstr[1] ""
 
-#: proenergia/datasets/admin.py:225 proenergia/datasets/admin.py:535
+#: proenergia/datasets/admin.py:225 proenergia/datasets/admin.py:524
 msgid "Files in created or processing state cannot be reprocessed."
 msgstr ""
 
@@ -119,11 +119,11 @@ msgstr ""
 msgid "Delete selected Data Models"
 msgstr ""
 
-#: proenergia/datasets/admin.py:459
+#: proenergia/datasets/admin.py:454
 msgid "Delete selected Scenarios"
 msgstr ""
 
-#: proenergia/datasets/admin.py:485
+#: proenergia/datasets/admin.py:474
 msgid "Is active"
 msgstr ""
 
