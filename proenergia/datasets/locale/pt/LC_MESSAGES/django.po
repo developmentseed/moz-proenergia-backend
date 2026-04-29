@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-08 21:19+0000\n"
+"POT-Creation-Date: 2026-04-29 12:40+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: PT <LL@li.org>\n"
@@ -17,79 +17,92 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: proenergia/datasets/admin.py:100
+#: proenergia/datasets/admin.py:41
+#, fuzzy, python-format
+#| msgid "%(count)d file queued for reprocessing."
+#| msgid_plural "%(count)d files queued for reprocessing."
+msgid "%(count)d item queued for deletion."
+msgid_plural "%(count)d items queued for deletion."
+msgstr[0] "%(count)d ficheiro enviado para reprocessamento"
+msgstr[1] "%(count)d ficheiros enviados para reprocessamento"
+
+#: proenergia/datasets/admin.py:52
+msgid "Are you sure?"
+msgstr ""
+
+#: proenergia/datasets/admin.py:136
 msgid "Make dataset public"
 msgstr "Tornar dataset público"
 
-#: proenergia/datasets/admin.py:103
+#: proenergia/datasets/admin.py:139
 msgid "public"
 msgstr "público"
 
-#: proenergia/datasets/admin.py:105
+#: proenergia/datasets/admin.py:141
 msgid "Make dataset private"
 msgstr "Tornar dataset privado"
 
-#: proenergia/datasets/admin.py:108
+#: proenergia/datasets/admin.py:144
 msgid "private"
 msgstr "privado"
 
-#: proenergia/datasets/admin.py:110
+#: proenergia/datasets/admin.py:146
 msgid "Approve dataset"
 msgstr "Aprovar dataset"
 
-#: proenergia/datasets/admin.py:113
+#: proenergia/datasets/admin.py:149
 msgid "approved"
 msgstr "aprovado"
 
-#: proenergia/datasets/admin.py:115
+#: proenergia/datasets/admin.py:151
 msgid "Set as not approved"
 msgstr "Definir como não aprovado"
 
-#: proenergia/datasets/admin.py:118
+#: proenergia/datasets/admin.py:154
 msgid "not approved"
 msgstr "não aprovado"
 
-#: proenergia/datasets/admin.py:169 proenergia/datasets/admin.py:436
+#: proenergia/datasets/admin.py:205 proenergia/datasets/admin.py:515
 msgid "Reprocess files"
 msgstr "Reprocessar ficheiros"
 
-#: proenergia/datasets/admin.py:180 proenergia/datasets/admin.py:447
+#: proenergia/datasets/admin.py:216 proenergia/datasets/admin.py:526
 #, python-format
 msgid "%(count)d file queued for reprocessing."
 msgid_plural "%(count)d files queued for reprocessing."
 msgstr[0] "%(count)d ficheiro enviado para reprocessamento"
 msgstr[1] "%(count)d ficheiros enviados para reprocessamento"
 
-#: proenergia/datasets/admin.py:189 proenergia/datasets/admin.py:456
+#: proenergia/datasets/admin.py:225 proenergia/datasets/admin.py:535
 msgid "Files in created or processing state cannot be reprocessed."
 msgstr ""
 "Ficheiros com status 'Criado ou 'Em Processamento' não podem ser "
 "reprocessados."
 
-#: proenergia/datasets/admin.py:268
+#: proenergia/datasets/admin.py:304
 msgid "Content should be a list."
 msgstr "Conteúdo deve ser uma lista."
 
-#: proenergia/datasets/admin.py:277 proenergia/datasets/admin.py:290
-#: proenergia/datasets/admin.py:303 proenergia/datasets/admin.py:358
+#: proenergia/datasets/admin.py:313 proenergia/datasets/admin.py:326
+#: proenergia/datasets/admin.py:339 proenergia/datasets/admin.py:394
 msgid "Missing a required key."
 msgstr "Falta um campo obrigatório."
 
-#: proenergia/datasets/admin.py:281 proenergia/datasets/admin.py:294
-#: proenergia/datasets/admin.py:353
+#: proenergia/datasets/admin.py:317 proenergia/datasets/admin.py:330
+#: proenergia/datasets/admin.py:389
 msgid "Content should be a list"
 msgstr "Conteúdo deve ser uma lista."
 
-#: proenergia/datasets/admin.py:308
+#: proenergia/datasets/admin.py:344
 msgid "The value for the columns key should be a list."
 msgstr "O valor para o campo columns deve ser uma lista."
 
-#: proenergia/datasets/admin.py:321
+#: proenergia/datasets/admin.py:357
 msgid ""
 "The value for the methods key should be sum, count, average, min or max."
 msgstr "O valor para o campo methods deve ser sum, count, average, min ou max."
 
-#: proenergia/datasets/admin.py:336
+#: proenergia/datasets/admin.py:372
 msgid ""
 "The value for the chartType key should be bar, donut, stacked, column, area "
 "or highlight."
@@ -97,7 +110,7 @@ msgstr ""
 "O valor para o campo chartType deve ser bar, donut, stacked, column, area ou "
 "highlight."
 
-#: proenergia/datasets/admin.py:347
+#: proenergia/datasets/admin.py:383
 msgid ""
 "The value for the hasDecimal key should be true or false. If not specified, "
 "it's assumed to be false."
@@ -105,12 +118,20 @@ msgstr ""
 "O valor para o campo hasDecimal deve ser true ou false. Se não especificado, "
 "é assumido que seja false."
 
-#: proenergia/datasets/admin.py:367
+#: proenergia/datasets/admin.py:403
 msgid "The value for the color key should be a valid hex color code."
 msgstr ""
 "O valor para o campo color deve ser um código hexadecimal de cor válido."
 
-#: proenergia/datasets/admin.py:406
+#: proenergia/datasets/admin.py:415
+msgid "Delete selected Data Models"
+msgstr ""
+
+#: proenergia/datasets/admin.py:459
+msgid "Delete selected Scenarios"
+msgstr ""
+
+#: proenergia/datasets/admin.py:485
 msgid "Is active"
 msgstr "Ativo"
 
@@ -251,7 +272,8 @@ msgstr ""
 "Formatos suportados: GeoJSON, GeoPackage, KML, or Shapefile.<br> Como "
 "Shapefile é composto por múltiplos ficheiros (.shp, .shx, .dbf, etc.), por "
 "favor, comprima-os em um único ficheiro .zip. Certifique-se de que todos os "
-"ficheiros estejam na raiz do ficheiro zip - não coloque-os dentro de uma pasta."
+"ficheiros estejam na raiz do ficheiro zip - não coloque-os dentro de uma "
+"pasta."
 
 #: proenergia/datasets/models.py:128 proenergia/datasets/models.py:560
 msgid "error message"
@@ -552,6 +574,29 @@ msgstr "Você não tem permissão para acessar esta página."
 #: proenergia/datasets/templates/admin/403.html:27
 msgid "Return to Dashboard"
 msgstr "Retornar ao Painel Administrativo"
+
+#: proenergia/datasets/templates/admin/datasets/async_delete_confirmation.html:6
+msgid ""
+"\n"
+"    The following items will be <strong>queued for asynchronous deletion</"
+"strong>.\n"
+"    All the data related to these items will be removed too, including "
+"scenario files and data. This action cannot be undone.\n"
+"  "
+msgstr ""
+"\n"
+"    Os seguintes items serão <strong>agendados para exclusão assíncrona</strong>.\n"
+"    Todos os dados relacionados a estes items também serão removidos, incluindo "
+"os ficheiros de cenário e seus dados. Esta ação não poderá ser revertida.\n"
+"  "
+
+#: proenergia/datasets/templates/admin/datasets/async_delete_confirmation.html:29
+msgid "Yes, queue deletion"
+msgstr "Sim, agendar para exclusão"
+
+#: proenergia/datasets/templates/admin/datasets/async_delete_confirmation.html:31
+msgid "No, take me back"
+msgstr "Não, voltar"
 
 #~ msgid "Publish dataset"
 #~ msgstr "Publicar dataset"
