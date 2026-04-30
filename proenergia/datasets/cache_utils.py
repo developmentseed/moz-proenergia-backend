@@ -72,10 +72,8 @@ def invalidate_scenario_summary_cache(scenario_id: int) -> int:
     """
     cache_keys = get_scenario_summary_cache_keys(scenario_id)
 
-    deleted_count = 0
-    for key in cache_keys:
-        cache.delete(key)
-        deleted_count += 1
+    deleted_count = len(cache_keys)
+    cache.delete_many(cache_keys)
 
     if deleted_count > 0:
         logger.info(
