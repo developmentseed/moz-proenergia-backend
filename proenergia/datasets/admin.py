@@ -1,8 +1,10 @@
 import re
 
 from django.contrib import admin, messages
+from django.contrib.admin import helpers
 from django.contrib.admin.decorators import display
 from django.forms import CheckboxSelectMultiple, ModelForm
+from django.template.response import TemplateResponse
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 from django_json_widget.widgets import JSONEditorWidget
@@ -10,6 +12,7 @@ from modeltranslation.admin import TabbedTranslationAdmin
 from unfold.admin import ModelAdmin
 
 from proenergia.datasets.tasks import (
+    delete_item,
     generate_pmtiles,
     generate_scenario_pmtiles,
 )
@@ -25,6 +28,39 @@ from .models import (
     VectorDataset,
     VectorFile,
 )
+
+
+def _async_delete_action(model_admin, request, queryset, model_name):
+    if request.POST.get("post"):
+        count = queryset.count()
+        for item in queryset:
+            delete_item.delay(model_name, item.id)
+        messages.success(
+            request,
+            ngettext(
+                "%(count)d item queued for deletion.",
+                "%(count)d items queued for deletion.",
+                count,
+            )
+            % {"count": count},
+        )
+        return None
+
+    opts = model_admin.model._meta
+    context = {
+        **model_admin.admin_site.each_context(request),
+        "title": _("Are you sure?"),
+        "objects_name": str(opts.verbose_name_plural),
+        "queryset": queryset,
+        "opts": opts,
+        "action_checkbox_name": helpers.ACTION_CHECKBOX_NAME,
+        "media": model_admin.media,
+    }
+    return TemplateResponse(
+        request,
+        "admin/datasets/async_delete_confirmation.html",
+        context,
+    )
 
 
 class PermissionBasedModelAdmin(ModelAdmin):
@@ -374,6 +410,16 @@ class DataModelAdmin(ModelAdmin, TabbedTranslationAdmin):
     list_display = ["name", "presentation_order", "is_public"]
     list_editable = ["presentation_order"]
     form = DataModelAdminForm
+    actions = ["async_delete"]
+
+    @admin.action(description=_("Delete selected Data Models"), permissions=["delete"])
+    def async_delete(self, request, queryset):
+        return _async_delete_action(
+            model_admin=self,
+            request=request,
+            queryset=queryset,
+            model_name="DataModel",
+        )
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == "contextual_layers":
@@ -390,6 +436,12 @@ class DataModelAdmin(ModelAdmin, TabbedTranslationAdmin):
             ).distinct()
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if "delete_selected" in actions:
+            del actions["delete_selected"]
+        return actions
+
 
 @admin.register(Scenario)
 class ScenarioAdmin(ModelAdmin, TabbedTranslationAdmin):
@@ -397,6 +449,22 @@ class ScenarioAdmin(ModelAdmin, TabbedTranslationAdmin):
     list_editable = ["presentation_order"]
     list_filter = ["model"]
     fields = ["name", "model", "vector_dataset", "presentation_order"]
+    actions = ["async_delete"]
+
+    @admin.action(description=_("Delete selected Scenarios"), permissions=["delete"])
+    def async_delete(self, request, queryset):
+        return _async_delete_action(
+            model_admin=self,
+            request=request,
+            queryset=queryset,
+            model_name="Scenario",
+        )
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if "delete_selected" in actions:
+            del actions["delete_selected"]
+        return actions
 
 
 @admin.register(ScenarioFile)

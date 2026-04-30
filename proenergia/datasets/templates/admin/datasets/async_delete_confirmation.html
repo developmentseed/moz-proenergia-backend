@@ -1,0 +1,35 @@
+{% extends "admin/delete_selected_confirmation.html" %}
+{% load admin_urls i18n unfold %}
+
+{% block content %}
+<p>
+  {% blocktranslate %}
+    The following items will be <strong>queued for asynchronous deletion</strong>.
+    All the data related to these items will be removed too, including scenario files and data. This action cannot be undone.
+  {% endblocktranslate %}
+</p>
+<br>
+
+<ul class="p-2 list-disc list-inside m-2">
+  {% for obj in queryset %}
+    <li>{{ obj }}</li>
+  {% endfor %}
+</ul>
+<br>
+
+<form method="post">{% csrf_token %}
+  {# Re-submit the same selected ids and the same action #}
+  {% for obj in queryset %}
+    <input type="hidden" name="{{ action_checkbox_name }}" value="{{ obj.pk }}">
+  {% endfor %}
+  <input type="hidden" name="action" value="async_delete">
+  <input type="hidden" name="post" value="yes">
+
+  <div class="flex gap-3 items-center mx-auto container lg:h-[64px]">
+    <input type="submit" value="{% translate 'Yes, queue deletion' %}" class="inline bg-primary-600 block border border-transparent cursor-pointer font-medium px-3 py-2 rounded-default text-white w-full lg:w-auto">
+    <a href="#" onclick="window.history.back(); return false;" class="inline border border-base-200 cursor-pointer font-medium px-3 py-2 rounded-default transition-all w-full hover:bg-base-50 lg:block lg:w-auto dark:border-base-700  dark:hover:text-base-200 dark:hover:bg-base-900">
+        {% translate "No, take me back" %}
+    </a>
+  </div>
+</form>
+{% endblock %}

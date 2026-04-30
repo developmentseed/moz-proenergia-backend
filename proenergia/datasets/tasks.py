@@ -393,3 +393,9 @@ def import_scenario_data_csv(scenario_file_id: int):
         invalidate_scenario_summary_cache(sf.scenario.id)
     except Exception as e:
         logger.warning(f"Cache invalidation failed for scenario {sf.scenario.id}: {e}")
+
+
+@shared_task
+def delete_item(model_name: str, id: int):
+    M = apps.get_model("datasets", model_name)
+    M.objects.get(id=id).delete()
