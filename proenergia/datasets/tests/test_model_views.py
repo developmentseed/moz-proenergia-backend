@@ -247,7 +247,7 @@ class TestDataModelViews(APITestCase):
         self.client.force_authenticate(user=self.admin_user)
         req = self.client.get(self.url)
         assert req.status_code == status.HTTP_200_OK
-        assert req.data.get("count") == 2
+        assert req.data.get("count") == 3
 
     def test_model_list_superadmin(self):
         self.client.force_authenticate(user=self.superadmin_user)
@@ -302,11 +302,11 @@ class TestDataModelViews(APITestCase):
         assert req.status_code == status.HTTP_403_FORBIDDEN
 
     def test_model_detail_admin_user(self):
-        # model_private is not accessible by admin users
+        # model_private is accessible by admin users
         self.client.force_authenticate(user=self.admin_user)
         url = reverse("datasets:model-detail", args=[self.model_private.id])
         req = self.client.get(url)
-        assert req.status_code == status.HTTP_403_FORBIDDEN
+        assert req.status_code == status.HTTP_200_OK
 
         # model 2 is accessible by admin users
         url = reverse("datasets:model-detail", args=[self.model_2.id])

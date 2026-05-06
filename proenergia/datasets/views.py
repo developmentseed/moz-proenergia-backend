@@ -53,8 +53,10 @@ class PublicApprovedDataset(BasePermission):
 
 
 class PublicModel(BasePermission):
+    """Limit access to private models to staff users."""
+
     def has_object_permission(self, request, view, obj):
-        if request.user and request.user.is_superuser:
+        if request.user and request.user.is_staff:
             return True
         else:
             return request.method in SAFE_METHODS and obj.is_public
@@ -141,7 +143,7 @@ class ReferenceDatasetDetailView(RetrieveAPIView):
 
 
 class DataModelListView(ListAPIView):
-    """Lists all available DataModel entries."""
+    """Lists all available DataModel entries. Non-staff users only see public models."""
 
     serializer_class = DataModelSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -151,7 +153,7 @@ class DataModelListView(ListAPIView):
         queryset = DataModel.objects.prefetch_related(
             "scenarios", "contextual_layers", "raster_layers", "reference_datasets"
         )
-        if self.request.user and self.request.user.is_superuser:
+        if self.request.user and self.request.user.is_staff:
             return queryset
         else:
             return queryset.filter(is_public=True)
