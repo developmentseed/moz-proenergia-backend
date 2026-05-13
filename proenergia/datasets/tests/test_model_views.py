@@ -80,6 +80,8 @@ class TestDataModelViews(APITestCase):
                 }
             ],
             visualization_column="Pop",
+            visualization_column_description="Population in 2025",
+            visualization_column_description_pt="População em 2025",
             color_coding=[
                 {"value": 1000, "color": "#ddd"},
                 {"value": 10000, "color": "#ff00dd"},
@@ -169,6 +171,14 @@ class TestDataModelViews(APITestCase):
         assert req.data.get("results")[0]["name"] == "PUE"
         assert (
             req.data.get("results")[0]["description"] == "Productive Use of Electricity"
+        )
+        assert (
+            req.data.get("results")[0]["visualization_column_description"]
+            == "Population in 2025"
+        )
+        assert (
+            req.data.get("results")[0]["visualization_column_description_pt"]
+            == "População em 2025"
         )
         assert req.data.get("results")[1]["name"] == "Clean Cooking"
         assert (

@@ -13,7 +13,12 @@ class NameDescriptionTranslationOptions(TranslationOptions):
     required_languages = ["en"]
 
 
-translator.register(DataModel, NameDescriptionTranslationOptions)
+class DataModelTranslationOptions(TranslationOptions):
+    fields = ["name", "description", "visualization_column_description"]
+    required_languages = ["en"]
+
+
+translator.register(DataModel, DataModelTranslationOptions)
 translator.register(VectorDataset, NameDescriptionTranslationOptions)
 translator.register(RasterDataset, NameDescriptionTranslationOptions)
 translator.register(ReferenceDataset, NameDescriptionTranslationOptions)

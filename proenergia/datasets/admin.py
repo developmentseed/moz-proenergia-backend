@@ -237,6 +237,7 @@ class DataModelAdminForm(ModelForm):
             "popup_fields",
             "summary_fields",
             "visualization_column",
+            "visualization_column_description",
             "color_coding",
             "contextual_layers",
             "raster_layers",

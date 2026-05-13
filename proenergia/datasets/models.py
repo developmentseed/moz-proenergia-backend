@@ -431,6 +431,15 @@ class DataModel(models.Model):
         blank=True,
         null=True,
     )
+    visualization_column_description = models.CharField(
+        _("visualization column description"),
+        max_length=2000,
+        null=True,
+        blank=True,
+        help_text=_(
+            "Label to be used in the map legend to describe the visualization column."
+        ),
+    )
     color_coding = models.JSONField(
         _("color coding"),
         default=list,

@@ -97,6 +97,9 @@ class DataModelSerializer(serializers.ModelSerializer):
     scenarios = ScenarioSerializer(many=True, read_only=True)
     name = serializers.CharField(source="name_en")
     description = serializers.CharField(source="description_en")
+    visualization_column_description = serializers.CharField(
+        source="visualization_column_description_en"
+    )
 
     class Meta:
         model = DataModel
@@ -112,6 +115,8 @@ class DataModelSerializer(serializers.ModelSerializer):
             "summary_fields",
             "metric_field_types",
             "visualization_column",
+            "visualization_column_description",
+            "visualization_column_description_pt",
             "color_coding",
             "scenarios",
         ]
