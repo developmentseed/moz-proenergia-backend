@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-29 13:07+0000\n"
+"POT-Creation-Date: 2026-05-13 19:26+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: PT <LL@li.org>\n"
@@ -60,47 +60,47 @@ msgstr "Definir como não aprovado"
 msgid "not approved"
 msgstr "não aprovado"
 
-#: proenergia/datasets/admin.py:205 proenergia/datasets/admin.py:504
+#: proenergia/datasets/admin.py:205 proenergia/datasets/admin.py:505
 msgid "Reprocess files"
 msgstr "Reprocessar ficheiros"
 
-#: proenergia/datasets/admin.py:216 proenergia/datasets/admin.py:515
+#: proenergia/datasets/admin.py:216 proenergia/datasets/admin.py:516
 #, python-format
 msgid "%(count)d file queued for reprocessing."
 msgid_plural "%(count)d files queued for reprocessing."
 msgstr[0] "%(count)d ficheiro enviado para reprocessamento"
 msgstr[1] "%(count)d ficheiros enviados para reprocessamento"
 
-#: proenergia/datasets/admin.py:225 proenergia/datasets/admin.py:524
+#: proenergia/datasets/admin.py:225 proenergia/datasets/admin.py:525
 msgid "Files in created or processing state cannot be reprocessed."
 msgstr ""
 "Ficheiros com status 'Criado ou 'Em Processamento' não podem ser "
 "reprocessados."
 
-#: proenergia/datasets/admin.py:304
+#: proenergia/datasets/admin.py:305
 msgid "Content should be a list."
 msgstr "Conteúdo deve ser uma lista."
 
-#: proenergia/datasets/admin.py:313 proenergia/datasets/admin.py:326
-#: proenergia/datasets/admin.py:339 proenergia/datasets/admin.py:394
+#: proenergia/datasets/admin.py:314 proenergia/datasets/admin.py:327
+#: proenergia/datasets/admin.py:340 proenergia/datasets/admin.py:395
 msgid "Missing a required key."
 msgstr "Falta um campo obrigatório."
 
-#: proenergia/datasets/admin.py:317 proenergia/datasets/admin.py:330
-#: proenergia/datasets/admin.py:389
+#: proenergia/datasets/admin.py:318 proenergia/datasets/admin.py:331
+#: proenergia/datasets/admin.py:390
 msgid "Content should be a list"
 msgstr "Conteúdo deve ser uma lista."
 
-#: proenergia/datasets/admin.py:344
+#: proenergia/datasets/admin.py:345
 msgid "The value for the columns key should be a list."
 msgstr "O valor para o campo columns deve ser uma lista."
 
-#: proenergia/datasets/admin.py:357
+#: proenergia/datasets/admin.py:358
 msgid ""
 "The value for the methods key should be sum, count, average, min or max."
 msgstr "O valor para o campo methods deve ser sum, count, average, min ou max."
 
-#: proenergia/datasets/admin.py:372
+#: proenergia/datasets/admin.py:373
 msgid ""
 "The value for the chartType key should be bar, donut, stacked, column, area "
 "or highlight."
@@ -108,7 +108,7 @@ msgstr ""
 "O valor para o campo chartType deve ser bar, donut, stacked, column, area ou "
 "highlight."
 
-#: proenergia/datasets/admin.py:383
+#: proenergia/datasets/admin.py:384
 msgid ""
 "The value for the hasDecimal key should be true or false. If not specified, "
 "it's assumed to be false."
@@ -116,26 +116,26 @@ msgstr ""
 "O valor para o campo hasDecimal deve ser true ou false. Se não especificado, "
 "é assumido que seja false."
 
-#: proenergia/datasets/admin.py:403
+#: proenergia/datasets/admin.py:404
 msgid "The value for the color key should be a valid hex color code."
 msgstr ""
 "O valor para o campo color deve ser um código hexadecimal de cor válido."
 
-#: proenergia/datasets/admin.py:415
+#: proenergia/datasets/admin.py:416
 msgid "Delete selected Data Models"
 msgstr ""
 
-#: proenergia/datasets/admin.py:454
+#: proenergia/datasets/admin.py:455
 msgid "Delete selected Scenarios"
 msgstr ""
 
-#: proenergia/datasets/admin.py:474
+#: proenergia/datasets/admin.py:475
 msgid "Is active"
 msgstr "Ativo"
 
 #: proenergia/datasets/models.py:25 proenergia/datasets/models.py:165
 #: proenergia/datasets/models.py:278 proenergia/datasets/models.py:387
-#: proenergia/datasets/models.py:483
+#: proenergia/datasets/models.py:492
 msgid "name"
 msgstr "nome"
 
@@ -147,7 +147,7 @@ msgstr "resumo"
 #: proenergia/datasets/models.py:29 proenergia/datasets/models.py:106
 #: proenergia/datasets/models.py:169 proenergia/datasets/models.py:238
 #: proenergia/datasets/models.py:282 proenergia/datasets/models.py:351
-#: proenergia/datasets/models.py:532
+#: proenergia/datasets/models.py:541
 msgid "created"
 msgstr "data de criação"
 
@@ -159,7 +159,7 @@ msgstr "atualizado em"
 #: proenergia/datasets/models.py:34 proenergia/datasets/models.py:110
 #: proenergia/datasets/models.py:174 proenergia/datasets/models.py:242
 #: proenergia/datasets/models.py:287 proenergia/datasets/models.py:355
-#: proenergia/datasets/models.py:536
+#: proenergia/datasets/models.py:545
 msgid "created by"
 msgstr "criado por"
 
@@ -213,7 +213,7 @@ msgid "attribute definitions"
 msgstr "definições de atribuição"
 
 #: proenergia/datasets/models.py:64 proenergia/datasets/models.py:204
-#: proenergia/datasets/models.py:317 proenergia/datasets/models.py:471
+#: proenergia/datasets/models.py:317 proenergia/datasets/models.py:480
 msgid "is public"
 msgstr "público"
 
@@ -222,7 +222,7 @@ msgstr "público"
 msgid "is approved"
 msgstr "aprovado"
 
-#: proenergia/datasets/models.py:78 proenergia/datasets/models.py:498
+#: proenergia/datasets/models.py:78 proenergia/datasets/models.py:507
 msgid "vector dataset"
 msgstr "dataset vetorial"
 
@@ -251,12 +251,12 @@ msgstr "Erro"
 msgid "dataset"
 msgstr "dataset"
 
-#: proenergia/datasets/models.py:114 proenergia/datasets/models.py:540
+#: proenergia/datasets/models.py:114 proenergia/datasets/models.py:549
 msgid "status"
 msgstr "status"
 
 #: proenergia/datasets/models.py:117 proenergia/datasets/models.py:246
-#: proenergia/datasets/models.py:359 proenergia/datasets/models.py:543
+#: proenergia/datasets/models.py:359 proenergia/datasets/models.py:552
 msgid "file"
 msgstr "ficheiro"
 
@@ -273,7 +273,7 @@ msgstr ""
 "ficheiros estejam na raiz do ficheiro zip - não coloque-os dentro de uma "
 "pasta."
 
-#: proenergia/datasets/models.py:128 proenergia/datasets/models.py:560
+#: proenergia/datasets/models.py:128 proenergia/datasets/models.py:569
 msgid "error message"
 msgstr "mensagem de erro"
 
@@ -313,7 +313,7 @@ msgstr "ficheiros raster"
 msgid "reference dataset"
 msgstr "dataset de referência"
 
-#: proenergia/datasets/models.py:332 proenergia/datasets/models.py:463
+#: proenergia/datasets/models.py:332 proenergia/datasets/models.py:472
 msgid "reference datasets"
 msgstr "datasets de referência"
 
@@ -329,11 +329,11 @@ msgstr "ficheiro de referência"
 msgid "reference files"
 msgstr "ficheiros de referência"
 
-#: proenergia/datasets/models.py:389 proenergia/datasets/models.py:485
+#: proenergia/datasets/models.py:389 proenergia/datasets/models.py:494
 msgid "presentation order"
 msgstr "ordem de apresentação"
 
-#: proenergia/datasets/models.py:391 proenergia/datasets/models.py:487
+#: proenergia/datasets/models.py:391 proenergia/datasets/models.py:496
 msgid "Order of the item to be presented in the application."
 msgstr "Ordem de apresentação do item na aplicação."
 
@@ -434,10 +434,19 @@ msgstr ""
 "estilo de visualização baseado em dados."
 
 #: proenergia/datasets/models.py:435
+msgid "visualization column description"
+msgstr "Descrição da coluna de visualização"
+
+#: proenergia/datasets/models.py:440
+msgid ""
+"Label to be used in the map legend to describe the visualization column."
+msgstr "Texto a ser usado para descrever a coluna de visualização na legenda do mapa."
+
+#: proenergia/datasets/models.py:444
 msgid "color coding"
 msgstr "codificação de cores"
 
-#: proenergia/datasets/models.py:438
+#: proenergia/datasets/models.py:447
 msgid ""
 "A list containing JSON objects following this structure: {\"value\": "
 "\"visualization column value\", \"color\": \"#000000\"}"
@@ -445,54 +454,54 @@ msgstr ""
 "Uma lista contendo objetos JSON seguindo esta estrutura: {\"value\": \"valor "
 "da coluna de visualização\", \"color\": \"#000000\"}"
 
-#: proenergia/datasets/models.py:443
+#: proenergia/datasets/models.py:452
 msgid "contextual layers"
 msgstr "camadas contextuais"
 
-#: proenergia/datasets/models.py:448
+#: proenergia/datasets/models.py:457
 msgid "Vector datasets that can be visualized together with the model data."
 msgstr ""
 "Conjuntos de dados vetoriais que podem ser visualizados em conjunto com os "
 "dados do modelo."
 
-#: proenergia/datasets/models.py:453
+#: proenergia/datasets/models.py:462
 msgid "raster layers"
 msgstr "camadas raster"
 
-#: proenergia/datasets/models.py:458
+#: proenergia/datasets/models.py:467
 msgid "Raster datasets that can be visualized together with the model data."
 msgstr ""
 "Conjuntos de dados raster que podem ser visualizados em conjunto com os "
 "dados do modelo."
 
-#: proenergia/datasets/models.py:468
+#: proenergia/datasets/models.py:477
 msgid "Reference datasets that can be listed together with the model data."
 msgstr ""
 "Datasets de referência que podem ser listados em conjunto com os dados do "
 "modelo."
 
-#: proenergia/datasets/models.py:478
+#: proenergia/datasets/models.py:487
 msgid "data model"
 msgstr "modelo de dados"
 
-#: proenergia/datasets/models.py:479
+#: proenergia/datasets/models.py:488
 msgid "data models"
 msgstr "modelos de dados"
 
-#: proenergia/datasets/models.py:492
+#: proenergia/datasets/models.py:501
 msgid "model"
 msgstr "modelo"
 
-#: proenergia/datasets/models.py:512 proenergia/datasets/models.py:529
-#: proenergia/datasets/models.py:600 proenergia/datasets/models.py:628
+#: proenergia/datasets/models.py:521 proenergia/datasets/models.py:538
+#: proenergia/datasets/models.py:609 proenergia/datasets/models.py:637
 msgid "scenario"
 msgstr "cenário"
 
-#: proenergia/datasets/models.py:513
+#: proenergia/datasets/models.py:522
 msgid "scenarios"
 msgstr "cenários"
 
-#: proenergia/datasets/models.py:548
+#: proenergia/datasets/models.py:557
 msgid ""
 "Supported format: CSV. Ensure the CSV file is well formated and encoded as "
 "UTF-8, and that it includes all the columns required by the DataModel "
@@ -507,11 +516,11 @@ msgstr ""
 "Finalmente, certifique que o ficheiro possua uma coluna 'id' que referencie "
 "os ids dos itens do Dataset Vetorial utilizado pelo Cenário selecionado."
 
-#: proenergia/datasets/models.py:553
+#: proenergia/datasets/models.py:562
 msgid "Represent features as points in lower zoom levels"
 msgstr "Visualizar elementos como pontos em níveis de zoom mais baixos"
 
-#: proenergia/datasets/models.py:556
+#: proenergia/datasets/models.py:565
 msgid ""
 "If enabled, features will be represented as points in lower zoom levels. "
 "It's recommended for large datasets composed by many squared polygons."
@@ -520,43 +529,43 @@ msgstr ""
 "mais baixos. É recomendado para grandes conjuntos de dados compostos por "
 "muitos polígonos quadrados."
 
-#: proenergia/datasets/models.py:568
+#: proenergia/datasets/models.py:577
 msgid "scenario file"
 msgstr "ficheiro de cenário"
 
-#: proenergia/datasets/models.py:569
+#: proenergia/datasets/models.py:578
 msgid "scenario files"
 msgstr "ficheiros de cenário"
 
-#: proenergia/datasets/models.py:596 proenergia/datasets/models.py:631
+#: proenergia/datasets/models.py:605 proenergia/datasets/models.py:640
 msgid "feature id"
 msgstr "id do elemento"
 
-#: proenergia/datasets/models.py:603
+#: proenergia/datasets/models.py:612
 msgid "metadata"
 msgstr "metadados"
 
-#: proenergia/datasets/models.py:611 proenergia/datasets/models.py:612
+#: proenergia/datasets/models.py:620 proenergia/datasets/models.py:621
 msgid "scenario data"
 msgstr "dados de cenário"
 
-#: proenergia/datasets/models.py:632
+#: proenergia/datasets/models.py:641
 msgid "key"
 msgstr "chave"
 
-#: proenergia/datasets/models.py:634
+#: proenergia/datasets/models.py:643
 msgid "numeric value"
 msgstr "valor numérico"
 
-#: proenergia/datasets/models.py:642
+#: proenergia/datasets/models.py:651
 msgid "string value"
 msgstr "valor textual"
 
-#: proenergia/datasets/models.py:651
+#: proenergia/datasets/models.py:660
 msgid "scenario data metric"
 msgstr "métricas de dados de cenário"
 
-#: proenergia/datasets/models.py:652
+#: proenergia/datasets/models.py:661
 msgid "scenario data metrics"
 msgstr "métricas de dados de cenário"
 
