@@ -404,7 +404,7 @@ class DataModel(models.Model):
         _("popup fields"),
         default=list,
         help_text=_(
-            """A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "column": "File/Database column name", "unit": "Unit of measurement", "label_pt": "Label in Portuguese", "description_pt": "Description in Portuguese"}"""
+            """A list containing JSON objects following this structure: {"label": "Field label", "description": "Field description", "column": "File/Database column name", "unit": "Unit of measurement", "label_pt": "Label in Portuguese", "description_pt": "Description in Portuguese", "hasDecimal": true/false }"""
         ),
     )
     summary_fields = models.JSONField(

@@ -105,6 +105,7 @@ class TestScenarioAdmin(TestCase):
                         "label": "Population",
                         "description": "Population in 2025",
                         "column": "Pop",
+                        "hasDecimal": True,
                     }
                 ]
             ),

@@ -326,6 +326,17 @@ class DataModelAdminForm(ModelForm):
                     ):
                         self.add_error("popup_fields", _("Missing a required key."))
 
+                    if "hasDecimal" in keys and i[1].get("hasDecimal") not in [
+                        True,
+                        False,
+                    ]:
+                        self.add_error(
+                            "popup_fields",
+                            _(
+                                "The value for the hasDecimal key should be true or false. If not specified, it's assumed to be false."
+                            ),
+                        )
+
         if summary_fields:
             if type(summary_fields) is not list:
                 self.add_error("summary_fields", _("Content should be a list"))
